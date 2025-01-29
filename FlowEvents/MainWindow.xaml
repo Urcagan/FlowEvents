@@ -5,8 +5,23 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:FlowEvents"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="Журнал событий" Height="450" Width="800">
+
     <Grid>
         
+
+        <ToolBar Height="25" VerticalAlignment="Top">
+            <Menu Height="25" VerticalAlignment="Top">
+            <MenuItem Header="Меню">
+                <MenuItem Header="Объекты"></MenuItem>
+                <MenuItem Header="События"></MenuItem>
+                <MenuItem Header="Пользователи"></MenuItem>
+                <Separator />
+                <MenuItem Header="Настройка"></MenuItem>
+            </MenuItem>
+        
+        </Menu>
+        </ToolBar>
+       
     </Grid>
 </Window>
