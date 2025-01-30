@@ -24,9 +24,9 @@
             </Menu>
 
             <ToolBar x:Name="toolBar" DockPanel.Dock="Top">
-            <Button x:Name="btnBack" Content="Back" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-            <DatePicker/>
-            <Button x:Name="btnForvard" Content="Button" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+            <Button x:Name="btnBack" Content="Back" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+            <DatePicker VerticalAlignment="Center"/>
+            <Button x:Name="btnForvard" Content="Button" HorizontalAlignment="Left" VerticalAlignment="Center"/>
 
                 <ComboBox x:Name="comboBox"
                       HorizontalAlignment="Left" VerticalAlignment="Top" Width="200" Margin="10"
@@ -42,11 +42,18 @@
             </ToolBar>
             
             <StatusBar x:Name="statusBar" DockPanel.Dock="Bottom">
+                <Border BorderBrush="Black" BorderThickness="1" >
+                <TextBlock x:Name="lblPath" Text="Path to DB" HorizontalAlignment="Center" Margin="3 0 3 0 "/>
+            </Border>
                 <Border BorderBrush="Black" BorderThickness="1" Width="40" >
                     <TextBlock x:Name="cap1" Text="CAP"
                                HorizontalAlignment="Center"/>
                 </Border>
             </StatusBar>
+            
+            <Grid>
+            
+            </Grid>
         </DockPanel>
         
 </Window>

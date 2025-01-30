@@ -24,7 +24,7 @@ namespace ShiftTaskLog
         public DatabaseHelper(string databasePath)
         {
             // Возможно надо сначало проверять путь и наличие файла
-            //Проверяем не является ли тутть сетевым
+            //Проверяем не является ли путь сетевым
             if (databasePath.StartsWith("\\"))
             {
                 _databasePath = @"\\" + databasePath;

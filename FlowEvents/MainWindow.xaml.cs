@@ -33,6 +33,7 @@ namespace FlowEvents
 
             _databaseHelper = new DatabaseHelper(Global_Var.pathDB);    // Инициализация копии класса работы с БД
 
+            lblPath.Text = "Путь: " + Global_Var.pathDB;
 
             //Инициализация коллекции с данными
             Items = new ObservableCollection<Item>
