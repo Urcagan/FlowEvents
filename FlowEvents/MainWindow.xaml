@@ -7,21 +7,46 @@
         mc:Ignorable="d"
         Title="Журнал событий" Height="450" Width="800">
 
-    <Grid>
-        
+    
+        <DockPanel>
+            <Menu DockPanel.Dock="Top">
+                <MenuItem Header="Меню">
+                    <MenuItem Header="Объекты"></MenuItem>
+                    <MenuItem Header="События"></MenuItem>
+                    <MenuItem Header="Пользователи"></MenuItem>
+                    <Separator />
+                    <MenuItem Header="Настройки"></MenuItem>
+                    <MenuItem Header="О программе"></MenuItem>
+                    <Separator />
+                    <MenuItem Header="Login"></MenuItem>
+                </MenuItem>
 
-        <ToolBar Height="25" VerticalAlignment="Top">
-            <Menu Height="25" VerticalAlignment="Top">
-            <MenuItem Header="Меню">
-                <MenuItem Header="Объекты"></MenuItem>
-                <MenuItem Header="События"></MenuItem>
-                <MenuItem Header="Пользователи"></MenuItem>
-                <Separator />
-                <MenuItem Header="Настройка"></MenuItem>
-            </MenuItem>
+            </Menu>
+
+            <ToolBar x:Name="toolBar" DockPanel.Dock="Top">
+            <Button x:Name="btnBack" Content="Back" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+            <DatePicker/>
+            <Button x:Name="btnForvard" Content="Button" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+
+                <ComboBox x:Name="comboBox"
+                      HorizontalAlignment="Left" VerticalAlignment="Top" Width="200" Margin="10"
+                      IsEditable="False" StaysOpenOnEdit="True" IsDropDownOpen="True">
+                    <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <CheckBox Content="{Binding Name}" IsChecked="{Binding IsSelected}" />
+                        </DataTemplate>
+                    
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+                
+            </ToolBar>
+            
+            <StatusBar x:Name="statusBar" DockPanel.Dock="Bottom">
+                <Border BorderBrush="Black" BorderThickness="1" Width="40" >
+                    <TextBlock x:Name="cap1" Text="CAP"
+                               HorizontalAlignment="Center"/>
+                </Border>
+            </StatusBar>
+        </DockPanel>
         
-        </Menu>
-        </ToolBar>
-       
-    </Grid>
 </Window>
