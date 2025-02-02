@@ -9,7 +9,7 @@ using System.Globalization;
 using System.Threading.Tasks;
 using System.Windows;
 
-namespace ShiftTaskLog
+namespace FlowEvents
 {
     public class DatabaseHelper
     {
@@ -604,8 +604,22 @@ namespace ShiftTaskLog
             DataRow firstRow = result.Rows[0];
             //object valVer = firstRow["Ver"];
             return verProg == firstRow["Ver"].ToString();
+        
         }
 
+        /// <summary>
+        /// Метод, который выполняет проверку наличия записи в таблице базы данных 
+        /// </summary>
+        /// <param name="tableName"> Имя таблицы в которой нужно выполнит проверку </param>
+        /// <param name="Column"> Имя колонки в которой надо искать </param>
+        /// <param name="record"> СОдержимое которое надо искать </param> 
+        /// <returns> true/false </returns>
+        public bool isRecordPresent( string tableName, string column, string record)
+        {
+            string query = $"SELECT COUNT(*) FROM {tableName} WHERE {column} = '{record}';";
+            DataTable result = GetDataTable(query);
+            return result.Rows.Count > 0;
+        }
 
         /// <summary>
         /// Возвращает путь к базе данных из строки подключения 

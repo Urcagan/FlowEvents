@@ -2,7 +2,7 @@
 using System.Globalization;
 using System.Security.Principal;
 
-namespace ShiftTaskLog
+namespace FlowEvents
 {
     public static class Global_Var
     {
@@ -12,7 +12,7 @@ namespace ShiftTaskLog
 
         //public static string pathDB = Properties.Settings.Default.selectedPathDB;   // Получаем из свойств путь к базе данных
         //public static string pathDB = "D:\\VS_Dev\\EventFlow.db";
-        public static string pathDB = "G:\\VS Dev\\FlowEvents\\FlowEvents.db";
+        public static string pathDB;
 
         public static WindowsIdentity UserId = WindowsIdentity.GetCurrent();   // статическая переменная UserId типа WindowsIdentity, которая получает текущую идентичность пользователя Windows
         public static string User_Name_Full = UserId.Name;  //Это свойство Name возвращает имя пользователя в формате, который обычно используется в Windows для идентификации пользователей.

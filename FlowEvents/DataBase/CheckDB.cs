@@ -16,7 +16,7 @@ using System.Data;
 using System.IO;
 using System.Windows;
 
-namespace ShiftTaskLog
+namespace FlowEvents
 {
      
     public class CheckDB
@@ -44,7 +44,7 @@ namespace ShiftTaskLog
             }
             else if (!databaseHelper.CheckVer(verProg))  //проверка версии базы данных
             {
-             //   MessageBox.Show($"Версия БД не соответствует требуемой версии {Properties.Settings.Default.VerDB}", "Ошибка", MessageBoxButtons.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Версия БД не соответствует требуемой версии {verProg}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return false;
             }
             else    // Все условия выполнены

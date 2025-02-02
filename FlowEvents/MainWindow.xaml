@@ -5,55 +5,60 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:FlowEvents"
         mc:Ignorable="d"
-        Title="Журнал событий" Height="450" Width="800">
+        Title="Журнал событий" Height="450" Width="800" Loaded="Window_Loaded">
 
-    
-        <DockPanel>
-            <Menu DockPanel.Dock="Top">
-                <MenuItem Header="Меню">
-                    <MenuItem Header="Объекты"></MenuItem>
-                    <MenuItem Header="События"></MenuItem>
-                    <MenuItem Header="Пользователи"></MenuItem>
-                    <Separator />
-                    <MenuItem Header="Настройки"></MenuItem>
-                    <MenuItem Header="О программе"></MenuItem>
-                    <Separator />
-                    <MenuItem Header="Login"></MenuItem>
-                </MenuItem>
 
-            </Menu>
+    <DockPanel>
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="Меню">
+                <MenuItem Header="Объекты" Click="UnitWindow_Click"></MenuItem>
+                <MenuItem Header="События"></MenuItem>
+                <MenuItem Header="Пользователи"></MenuItem>
+                <Separator />
+                <MenuItem Header="Настройка" Click="SettingsMenuItem_Click"></MenuItem>
+                <MenuItem Header="О программе"></MenuItem>
+                <Separator />
+                <MenuItem Header="Login"></MenuItem>
+            </MenuItem>
 
-            <ToolBar x:Name="toolBar" DockPanel.Dock="Top">
+        </Menu>
+
+        <ToolBar x:Name="toolBar" DockPanel.Dock="Top">
             <Button x:Name="btnBack" Content="Back" HorizontalAlignment="Left" VerticalAlignment="Center"/>
             <DatePicker VerticalAlignment="Center"/>
             <Button x:Name="btnForvard" Content="Button" HorizontalAlignment="Left" VerticalAlignment="Center"/>
 
-                <ComboBox x:Name="comboBox"
+            <ComboBox x:Name="comboBox"
                       HorizontalAlignment="Left" VerticalAlignment="Top" Width="200" Margin="10"
-                      IsEditable="False" StaysOpenOnEdit="True" IsDropDownOpen="True">
-                    <ComboBox.ItemTemplate>
+                      IsEditable="False" StaysOpenOnEdit="True" IsDropDownOpen="False">
+                <ComboBox.ItemTemplate>
                     <DataTemplate>
-                        <CheckBox Content="{Binding Name}" IsChecked="{Binding IsSelected}" />
-                        </DataTemplate>
-                    
-                    </ComboBox.ItemTemplate>
-                </ComboBox>
-                
-            </ToolBar>
-            
-            <StatusBar x:Name="statusBar" DockPanel.Dock="Bottom">
-                <Border BorderBrush="Black" BorderThickness="1" >
+
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+            <Border BorderBrush="Black" Margin="20 0 1 0" >
+                <Button Content="Тестирование пути" HorizontalAlignment="Left" VerticalAlignment="Center" RenderTransformOrigin="8.218,1.051" Click="Button_Click" Width="119"/>
+            </Border>
+        </ToolBar>
+
+        <StatusBar x:Name="statusBar" DockPanel.Dock="Bottom">
+            <Border BorderBrush="Black" BorderThickness="1" >
                 <TextBlock x:Name="lblPath" Text="Path to DB" HorizontalAlignment="Center" Margin="3 0 3 0 "/>
             </Border>
-                <Border BorderBrush="Black" BorderThickness="1" Width="40" >
-                    <TextBlock x:Name="cap1" Text="CAP"
+            <Border BorderBrush="Black" BorderThickness="1" Width="40" >
+                <TextBlock x:Name="cap1" Text="CAP"
                                HorizontalAlignment="Center"/>
-                </Border>
-            </StatusBar>
-            
-            <Grid>
-            
-            </Grid>
-        </DockPanel>
-        
+            </Border>
+        </StatusBar>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="28"/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+
+        </Grid>
+    </DockPanel>
+
 </Window>

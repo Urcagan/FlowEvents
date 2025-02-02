@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Globalization;
 using System.IO;
+using System.Reflection;
 using System.Security.Principal;
 using System.Windows;
 using System.Xml.Serialization;
 
-namespace ShiftTaskLog
+namespace FlowEvents
 {
 
     public static class AppBaseConfig
@@ -22,43 +23,45 @@ namespace ShiftTaskLog
 
     public class AppSettings
     {
-        public string UserName { get; set; }
-        public bool IsLoggedIn { get; set; }
-        
+        // Параметры програы с параметрами по умолчанию
+        public string pathDB { get; set; } = ".\\";  // Путь к базе данных по умолчанию
+        public string VerDB { get; set; } = "0.1.0"; //Версия БД для проверки
+
         //Путь к файлу настроек в папке AppData
-        private static string settingsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), 
-            "MyApp", //Папка приложения
-            "settings.xml"  // Файл настроек
-        );
+        // private static string settingsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), 
+        //     "MyApp", //Папка приложения
+        //     "settings.xml"  // Файл настроек
+        // );
+        // Этот код вернет путь к каталогу, где находится ваш исполняемый файл.exe вашего приложения.
+        // Assembly.GetExecutingAssembly().Location — возвращает путь к исполняемому файлу.
+        // Path.GetDirectoryName(...) — извлекает директорию из полного пути.
+
+        private static string settingsPath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "settings.xml"); // Файл настроек
 
         // Метод для загрузки настроек
         public static AppSettings Load()
         {
             try
             {
-                //Если файл настроек существует, загружаем данные
-                if (File.Exists(settingsPath))
+                // Проверяем, существует ли файл конфигурации
+                if (!File.Exists(settingsPath))
                 {
-                    using (var fs = new FileStream(settingsPath, FileMode.Open))
-                    {
-                        var serializer = new XmlSerializer(typeof(AppSettings));
-                        return (AppSettings)serializer.Deserialize(fs);
-                    }
+                    // Если нет, создаем новый файл настроек с параметрами по умолчанию
+                    var defaultSettings = new AppSettings();
+                    defaultSettings.Save();  // Сохранение нового файла
+                    return defaultSettings;
                 }
-                else
+                // Загружаем существующий файл настроек
+                using (var fs = new FileStream(settingsPath, FileMode.Open))
                 {
-                    //Если файл не найден, возвращаем новые настройки по умолчанию
-                    return new AppSettings
-                    {
-                        UserName = "Guest",
-                        IsLoggedIn = false
-                    };
+                    var serializer = new XmlSerializer(typeof(AppSettings));
+                    return (AppSettings)serializer.Deserialize(fs);
                 }
 
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка при загрузке настроек: {ex.Message}","Ошибка");
+                MessageBox.Show($"Ошибка при загрузке настроек: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return new AppSettings(); //Вернуть настройки по умолчанию в случае ошибки
             }
         }
@@ -68,10 +71,10 @@ namespace ShiftTaskLog
         {
             try
             {
-                //Убедимся что папка существует
+                // Убедимся, что папка для настроек существует
                 var directory = Path.GetDirectoryName(settingsPath);
-                if (!Directory.Exists(directory)) 
-                { 
+                if (!Directory.Exists(directory))
+                {
                     Directory.CreateDirectory(directory);
                 }
 
@@ -81,15 +84,13 @@ namespace ShiftTaskLog
                     var serializer = new XmlSerializer(typeof(AppSettings));
                     serializer.Serialize(fs, this);
                 }
-                MessageBox.Show("Настройки успешно сохранены");
+               // MessageBox.Show("Настройки успешно сохранены");
             }
-            catch(Exception ex) 
+            catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка при сохранении настроек {ex.Message}");
+                MessageBox.Show($"Ошибка при сохранении настроек: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
     }
 
-    
-    
 }

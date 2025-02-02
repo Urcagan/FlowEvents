@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 /// Класс для работы со строкой SQL запроса
 /// </summary>
 
-namespace ShiftTaskLog
+namespace FlowEvents
 {
     public static class SQLqueryTrim
     {
