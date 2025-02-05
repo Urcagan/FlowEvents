@@ -33,25 +33,37 @@ namespace FlowEvents
         {
             InitializeComponent();
 
+        }
+
+
+
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
             // Загружаем настройки при запуске программы
             appSettings = AppSettings.Load();
 
             //Необходимо проверить есть ли файл базы данных по указанному пути
 
             // Проверяем, существует ли база данных
-            CheckDatabaseFile();
-             Global_Var.pathDB = appSettings.pathDB;
+            if (!CheckDB.CheckDatabaseFile(appSettings))
+            {
+                Application.Current.Shutdown(); // Закрываем приложение, если файл не выбран
+            }
+
+            Global_Var.pathDB = appSettings.pathDB;
 
             databaseHelper = new DatabaseHelper(Global_Var.pathDB);    // Инициализация копии класса работы с БД
 
             lblPath.Text = "Путь: " + Global_Var.pathDB; //Global_Var.pathDB;
 
-        }
-
-        private void Window_Loaded(object sender, RoutedEventArgs e)
-        {
-
-            CheckStateDB();
+            bool stateDB;   // переменная состояния проверки базы данных
+            // Проверка базы данных на исправность
+            if(!CheckDB.ALLCheckDB(databaseHelper, Global_Var.pathDB, "Config", appSettings.VerDB))
+            {
+                // Создаем и показываем окно настроек
+                SettingsWindow settingsWindow = new SettingsWindow();
+                settingsWindow.ShowDialog(); // Открываем окно как модальное
+            }
 
         }
 
@@ -73,46 +85,7 @@ namespace FlowEvents
             settingsWindow.ShowDialog(); // Открываем окно как модальное
         }
 
-        // Проверка наличия файла БД
-        private void CheckDatabaseFile()
-        {
-            // Проверяем, указан ли путь и существует ли файл
-            if (string.IsNullOrWhiteSpace(appSettings.pathDB) || !File.Exists(appSettings.pathDB))
-            {
-                MessageBox.Show("Файл базы данных не найден. Укажите корректный путь.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
-
-                // Открываем диалог выбора файла
-                OpenFileDialog openFileDialog = new OpenFileDialog
-                {
-                    Title = "Выберите файл базы данных",
-                    Filter = "Файлы базы данных (*.db;*.sqlite)|*.db;*.sqlite|Все файлы (*.*)|*.*"
-                };
-
-                if (openFileDialog.ShowDialog() == true)
-                {
-                    // Обновляем путь в настройках
-                    appSettings.pathDB = openFileDialog.FileName;
-                    appSettings.Save(); // Сохраняем обновленные настройки
-
-                    MessageBox.Show("Новый путь к базе данных сохранен.", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
-                }
-                else
-                {
-                    MessageBox.Show("Программа не может продолжить без базы данных!", "Критическая ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-                    Application.Current.Shutdown(); // Закрываем приложение
-                }
-            }
-        }
-
-        // Проверка БД на исправеность
-        public void CheckStateDB()
-        {
-            bool stateDB;   // переменная состояния проверки базы данных
-            // Проверка базы данных на исправность
-            stateDB = CheckDB.ALLCheckDB(databaseHelper, Global_Var.pathDB, "VerDB", appSettings.VerDB);
-        }
-
-        
+                
     }
 
 

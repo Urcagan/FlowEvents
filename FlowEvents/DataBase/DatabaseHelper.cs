@@ -121,7 +121,7 @@ namespace FlowEvents
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Ошибка при выполнении запроса: " + ex.Message, "Сообщение", MessageBoxButton.OK,  MessageBoxImage.Information);
+                MessageBox.Show("Ошибка при выполнении запроса: " + ex.Message, "Сообщение", MessageBoxButton.OK, MessageBoxImage.Information);
                 throw;
             }
             finally
@@ -582,12 +582,12 @@ namespace FlowEvents
         }
 
         /// <summary>
-        /// Проверка на наличие строки в таблице VerDB
+        /// Проверка на наличие строки с параметром Version 
         /// </summary>
         /// <returns> true/ false </returns>
-        public bool CheckRow()
+        public bool CheckRow(string tableName)
         {
-            string query = $"Select * From VerDB";
+            string query = $"Select * From {tableName} WHERE Parameter = 'VersionDB'";
             DataTable result = GetDataTable(query);
             return result.Rows.Count > 0;
         }
@@ -597,14 +597,25 @@ namespace FlowEvents
         /// </summary>
         /// <param name="verProg"> Версия программы </param>
         /// <returns> true/false </returns>
-        public bool CheckVer(string verProg)
+        public bool CheckVer(string tableName, string verProg)
         {
-            string query = $"Select * From VerDB";
-            DataTable result = GetDataTable(query);
-            DataRow firstRow = result.Rows[0];
-            //object valVer = firstRow["Ver"];
-            return verProg == firstRow["Ver"].ToString();
-        
+            // Формируем SQL-запрос для выбора строки, где Parameter = "Version"
+            string query = $"SELECT Value FROM {tableName} WHERE Parameter = 'VersionDB'";
+            
+            DataTable result = GetDataTable(query);     // Получаем DataTable с результатом запроса
+
+            // Проверяем, есть ли данные в результате
+            if (result.Rows.Count > 0)
+            {
+                
+                DataRow firstRow = result.Rows[0];                      // Берем первую строку (если Parameter уникальный, она будет единственной)
+                
+                string versionFromDb = firstRow["Value"].ToString();    // Получаем значение из столбца "Value"
+
+                return verProg == versionFromDb;                        // Сравниваем значение из базы данных с verProg
+            }
+
+            return false; // Если строка с Parameter = "Version" не найдена, возвращаем false
         }
 
         /// <summary>
@@ -614,7 +625,7 @@ namespace FlowEvents
         /// <param name="Column"> Имя колонки в которой надо искать </param>
         /// <param name="record"> СОдержимое которое надо искать </param> 
         /// <returns> true/false </returns>
-        public bool isRecordPresent( string tableName, string column, string record)
+        public bool isRecordPresent(string tableName, string column, string record)
         {
             string query = $"SELECT COUNT(*) FROM {tableName} WHERE {column} = '{record}';";
             DataTable result = GetDataTable(query);
@@ -930,5 +941,7 @@ namespace FlowEvents
                 }
             }
         }
+
     }
+
 }
