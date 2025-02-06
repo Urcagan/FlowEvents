@@ -26,7 +26,7 @@
         <ToolBar x:Name="toolBar" DockPanel.Dock="Top">
             <Button x:Name="btnBack" Content="Back" HorizontalAlignment="Left" VerticalAlignment="Center"/>
             <DatePicker VerticalAlignment="Center"/>
-            <Button x:Name="btnForvard" Content="Button" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+            <Button x:Name="btnForvard" Content="Forvard" HorizontalAlignment="Left" VerticalAlignment="Center"/>
 
             <ComboBox x:Name="comboBox"
                       HorizontalAlignment="Left" VerticalAlignment="Top" Width="200" Margin="10"
@@ -53,10 +53,13 @@
         </StatusBar>
 
         <Grid>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="28"/>
-                <ColumnDefinition/>
-            </Grid.ColumnDefinitions>
+            <DataGrid x:Name="MainDG">
+                <DataGrid.Columns>
+                    <DataGridTextColumn IsReadOnly="true" Header="Дата" Width="100"/>
+                    <DataGridTextColumn Header="Объект" Width="200"/>
+                    <DataGridTextColumn Header="Описание" Width="300"/>
+                </DataGrid.Columns>
+            </DataGrid>
 
         </Grid>
     </DockPanel>

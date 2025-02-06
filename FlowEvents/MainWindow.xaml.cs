@@ -28,6 +28,7 @@ namespace FlowEvents
         private AppSettings appSettings;
 
         public DatabaseHelper databaseHelper;
+        private bool IsCheckDB = false;
 
         public MainWindow()
         {
@@ -49,27 +50,46 @@ namespace FlowEvents
             {
                 Application.Current.Shutdown(); // Закрываем приложение, если файл не выбран
             }
-
-            Global_Var.pathDB = appSettings.pathDB;
-
-            databaseHelper = new DatabaseHelper(Global_Var.pathDB);    // Инициализация копии класса работы с БД
-
-            lblPath.Text = "Путь: " + Global_Var.pathDB; //Global_Var.pathDB;
-
-            bool stateDB;   // переменная состояния проверки базы данных
-            // Проверка базы данных на исправность
-            if(!CheckDB.ALLCheckDB(databaseHelper, Global_Var.pathDB, "Config", appSettings.VerDB))
+            else
             {
-                // Создаем и показываем окно настроек
-                SettingsWindow settingsWindow = new SettingsWindow( databaseHelper );
-                settingsWindow.ShowDialog(); // Открываем окно как модальное
+                Global_Var.pathDB = appSettings.pathDB;
+
+                databaseHelper = new DatabaseHelper(Global_Var.pathDB);    // Инициализация копии класса работы с БД
+
+                lblPath.Text = "Путь: " + Global_Var.pathDB; //Global_Var.pathDB;
+
+                bool stateDB;   // переменная состояния проверки базы данных
+                                // Проверка базы данных на исправность
+                if (CheckDB.ALLCheckDB(databaseHelper, Global_Var.pathDB, "Config", appSettings.VerDB))
+                {
+                    // Создаем и показываем окно настроек
+                    //SettingsWindow settingsWindow = new SettingsWindow( databaseHelper );
+                    //settingsWindow.ShowDialog(); // Открываем окно как модальное
+                    IsCheckDB = true;
+                }
+
+                Execute();
             }
 
+
+        }
+
+
+        public void Execute()
+        {
+            if (IsCheckDB)
+            {
+                MessageBox.Show("Программа проверела БД и загрузила данные");
+            }
+            else
+            {
+                MessageBox.Show("Ошибка БД.");
+            }
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
         {
-  
+
         }
 
         private void UnitWindow_Click(object sender, RoutedEventArgs e)
@@ -81,11 +101,17 @@ namespace FlowEvents
         private void SettingsMenuItem_Click(object sender, RoutedEventArgs e)
         {
             // Создаем и показываем окно настроек
-            SettingsWindow settingsWindow = new SettingsWindow(databaseHelper);
-            settingsWindow.ShowDialog(); // Открываем окно как модальное
+            SettingsWindow settingsWindow = new SettingsWindow(this);
+            if (settingsWindow.ShowDialog() == true) // Открываем окно как модальное
+            {
+                // Получаем данные из дочернего окна
+                //string message = childWindow.ResultMessage;
+                IsCheckDB = settingsWindow.stateDB;
+                Execute(); // Вызываем метод который обновляет данные 
+            }
         }
 
-                
+
     }
 
 

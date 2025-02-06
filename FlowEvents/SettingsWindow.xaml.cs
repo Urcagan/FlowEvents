@@ -21,15 +21,15 @@ namespace FlowEvents
     public partial class SettingsWindow : Window
     {
 
-        private DatabaseHelper _databaseHelper;
+        private MainWindow _MainWindow;
 
-        public SettingsWindow(DatabaseHelper databaseHelper)
+        public SettingsWindow(MainWindow mainWindow)
         {
             InitializeComponent();
-            _databaseHelper = databaseHelper;
+            _MainWindow = mainWindow;
         }
 
-
+        public bool stateDB { get; private set; }
 
         // Обработчик события для кнопки "Выбрать файл"
         private void BrowseButton_Click(object sender, RoutedEventArgs e)
@@ -52,22 +52,25 @@ namespace FlowEvents
                 // изменить путь к базе данных и обновить соединение с новым путем.
                 DatabaseHelper.ChangeDatabasePath(Global_Var.pathDB);
 
-                if (CheckDB.ALLCheckDB(_databaseHelper, Global_Var.pathDB, "Config", appSettings.VerDB))
-                {                    
+                if (CheckDB.ALLCheckDB(_MainWindow.databaseHelper, Global_Var.pathDB, "Config", appSettings.VerDB))
+                {
                     appSettings.Save(); // Сохраняем обновленные настройки пути к БД
+                    FilePathTextBox.Text = Global_Var.pathDB; 
                     MessageBox.Show("Новый путь к базе данных сохранен.", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
-                    return;
+                    stateDB =true;
+                }
+                else
+                {
+                    MessageBox.Show("База данных не соответствует необходимым требованиям. Выберите другой файл!", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
+                    stateDB = false; // Файл выбран и путь обновлен
                 }
 
-
-                MessageBox.Show("База данных не соответствует необходимым требованиям. Выберите другой файл!", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;//true; // Файл выбран и путь обновлен
             }
             else
             {
                 MessageBox.Show("Программа не может продолжить без базы данных!", "Критическая ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
 
-                return; // false; // Файл не выбран
+                stateDB = false; // Файл не выбран
                         // Application.Current.Shutdown(); // Закрываем приложение
             }
 
@@ -76,6 +79,14 @@ namespace FlowEvents
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             FilePathTextBox.Text = Global_Var.pathDB;
+        }
+
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            this.DialogResult = true;
+
+            // Вызываем метод родительского окна который обновляет данные 
+           // _MainWindow.Execute();
         }
     }
 }
