@@ -20,25 +20,62 @@ namespace FlowEvents
     /// </summary>
     public partial class SettingsWindow : Window
     {
-        public SettingsWindow()
+
+        private DatabaseHelper _databaseHelper;
+
+        public SettingsWindow(DatabaseHelper databaseHelper)
         {
             InitializeComponent();
+            _databaseHelper = databaseHelper;
         }
+
+
 
         // Обработчик события для кнопки "Выбрать файл"
         private void BrowseButton_Click(object sender, RoutedEventArgs e)
         {
-            // Создаем новый диалог для выбора файла
-            OpenFileDialog openFileDialog = new OpenFileDialog();
-            // Настроить фильтрацию файлов по типу, если нужно
-            openFileDialog.Filter = "Data Base (*.db)|*.db";
+            AppSettings appSettings = new AppSettings();
 
+            // Открываем диалог выбора файла
+            OpenFileDialog openFileDialog = new OpenFileDialog
+            {
+                Title = "Выберите файл базы данных",
+                Filter = "Файлы базы данных (*.db;*.sqlite)|*.db;*.sqlite|Все файлы (*.*)|*.*" // Настроить фильтрацию файлов по типу, если нужно
+            };
 
-            // Если файл выбран, то выводим путь в TextBox
             if (openFileDialog.ShowDialog() == true)
             {
-                FilePathTextBox.Text = openFileDialog.FileName;
+                // Обновляем путь в настройках
+                appSettings.pathDB = openFileDialog.FileName;
+                Global_Var.pathDB = appSettings.pathDB;
+
+                // изменить путь к базе данных и обновить соединение с новым путем.
+                DatabaseHelper.ChangeDatabasePath(Global_Var.pathDB);
+
+                if (CheckDB.ALLCheckDB(_databaseHelper, Global_Var.pathDB, "Config", appSettings.VerDB))
+                {                    
+                    appSettings.Save(); // Сохраняем обновленные настройки пути к БД
+                    MessageBox.Show("Новый путь к базе данных сохранен.", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
+
+
+                MessageBox.Show("База данных не соответствует необходимым требованиям. Выберите другой файл!", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;//true; // Файл выбран и путь обновлен
             }
+            else
+            {
+                MessageBox.Show("Программа не может продолжить без базы данных!", "Критическая ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+
+                return; // false; // Файл не выбран
+                        // Application.Current.Shutdown(); // Закрываем приложение
+            }
+
+        }
+
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            FilePathTextBox.Text = Global_Var.pathDB;
         }
     }
 }

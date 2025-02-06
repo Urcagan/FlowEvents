@@ -582,7 +582,7 @@ namespace FlowEvents
         }
 
         /// <summary>
-        /// Проверка на наличие строки с параметром Version 
+        /// Проверка на наличие строки с параметром VersionDB 
         /// </summary>
         /// <returns> true/ false </returns>
         public bool CheckRow(string tableName)

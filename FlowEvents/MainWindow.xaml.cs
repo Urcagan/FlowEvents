@@ -61,7 +61,7 @@ namespace FlowEvents
             if(!CheckDB.ALLCheckDB(databaseHelper, Global_Var.pathDB, "Config", appSettings.VerDB))
             {
                 // Создаем и показываем окно настроек
-                SettingsWindow settingsWindow = new SettingsWindow();
+                SettingsWindow settingsWindow = new SettingsWindow( databaseHelper );
                 settingsWindow.ShowDialog(); // Открываем окно как модальное
             }
 
@@ -81,7 +81,7 @@ namespace FlowEvents
         private void SettingsMenuItem_Click(object sender, RoutedEventArgs e)
         {
             // Создаем и показываем окно настроек
-            SettingsWindow settingsWindow = new SettingsWindow();
+            SettingsWindow settingsWindow = new SettingsWindow(databaseHelper);
             settingsWindow.ShowDialog(); // Открываем окно как модальное
         }
 
