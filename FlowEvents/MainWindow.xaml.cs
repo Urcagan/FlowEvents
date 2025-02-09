@@ -1,7 +1,9 @@
-﻿using Microsoft.Win32;
+﻿using FlowEvents.Models;
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -74,12 +76,20 @@ namespace FlowEvents
 
         }
 
+        private BindingList<EventsModel> _eventsData;
 
         public void Execute()
         {
             if (IsCheckDB)
             {
                 MessageBox.Show("Программа проверела БД и загрузила данные");
+
+                _eventsData = new BindingList<EventsModel>()
+                {
+                    new EventsModel(){EventDateTime = DateTime.Now},
+                };
+
+                dgMain.ItemsSource = _eventsData;
             }
             else
             {
@@ -111,7 +121,14 @@ namespace FlowEvents
             }
         }
 
+        private void Category_Click(object sender, RoutedEventArgs e)
+        {
+            CategoryWindow categoryWindow = new CategoryWindow(this);
+            if(categoryWindow.ShowDialog() == true)
+            {
 
+            }
+        }
     }
 
 

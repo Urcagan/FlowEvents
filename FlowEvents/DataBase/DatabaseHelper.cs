@@ -23,18 +23,18 @@ namespace FlowEvents
 
         public DatabaseHelper(string databasePath)
         {
-            // Возможно надо сначало проверять путь и наличие файла
-            //Проверяем не является ли путь сетевым
-            if (databasePath.StartsWith("\\"))
-            {
-                _databasePath = @"\\" + databasePath;
-            }
-            else
-            {
-                _databasePath = databasePath;
-            }
+            // Проверяем и корректируем путь
+            _databasePath = AdjustNetworkPath(databasePath);
 
             InitializeConnection();
+        }
+
+        /// <summary>
+        /// Корректирует путь, если он является сетевым.
+        /// </summary>
+        private string AdjustNetworkPath(string path)
+        {
+            return path.StartsWith("\\") ? @"\\" + path : path;
         }
 
         /// <summary>
