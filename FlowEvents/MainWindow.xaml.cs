@@ -82,7 +82,7 @@ namespace FlowEvents
         {
             if (IsCheckDB)
             {
-                MessageBox.Show("Программа проверела БД и загрузила данные");
+                //MessageBox.Show("Программа проверела БД и загрузила данные");
 
                 _eventsData = new BindingList<EventsModel>()
                 {
@@ -102,10 +102,14 @@ namespace FlowEvents
 
         }
 
-        private void UnitWindow_Click(object sender, RoutedEventArgs e)
+
+        private void Unit_Click(object sender, RoutedEventArgs e)
         {
-            UnitsWindow unitsWindow = new UnitsWindow(databaseHelper); // Передаем объект в конструктор
-            unitsWindow.ShowDialog();
+            UnitsView unitsView = new UnitsView();
+            if(unitsView.ShowDialog() == true)
+            {
+
+            }
         }
 
         private void SettingsMenuItem_Click(object sender, RoutedEventArgs e)
@@ -121,10 +125,12 @@ namespace FlowEvents
             }
         }
 
+
+
         private void Category_Click(object sender, RoutedEventArgs e)
         {
-            CategoryWindow categoryWindow = new CategoryWindow(this);
-            if(categoryWindow.ShowDialog() == true)
+            CategoryView categoryView = new CategoryView();
+            if (categoryView.ShowDialog() == true)
             {
 
             }

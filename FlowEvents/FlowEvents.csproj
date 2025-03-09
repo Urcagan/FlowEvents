@@ -58,19 +58,24 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="CategoryWindow.xaml.cs">
-      <DependentUpon>CategoryWindow.xaml</DependentUpon>
+    <Compile Include="Category\CategoryView.xaml.cs">
+      <DependentUpon>CategoryView.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Category\CategoryViewModel.cs" />
     <Compile Include="Global_Var.cs" />
+    <Compile Include="Models\CategoryModel.cs" />
     <Compile Include="Models\EventsModel.cs" />
+    <Compile Include="Models\UnitModel.cs" />
+    <Compile Include="RelayCommand.cs" />
     <Compile Include="SettingsWindow.xaml.cs">
       <DependentUpon>SettingsWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="SQLqueryTrim.cs" />
-    <Compile Include="UnitsWindow.xaml.cs">
-      <DependentUpon>UnitsWindow.xaml</DependentUpon>
+    <Compile Include="Units\UnitsView.xaml.cs">
+      <DependentUpon>UnitsView.xaml</DependentUpon>
     </Compile>
-    <Page Include="CategoryWindow.xaml">
+    <Compile Include="Units\UnitViewModel.cs" />
+    <Page Include="Category\CategoryView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -93,7 +98,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="UnitsWindow.xaml">
+    <Page Include="Units\UnitsView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -125,6 +130,9 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="MvvmLightLibs">
+      <Version>5.4.1.1</Version>
+    </PackageReference>
     <PackageReference Include="Newtonsoft.Json">
       <Version>13.0.3</Version>
     </PackageReference>

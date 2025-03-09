@@ -1,0 +1,127 @@
+﻿<Window x:Class="FlowEvents.CategoryView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:FlowEvents"
+        mc:Ignorable="d"
+        Title="CategoryView" Height="400" Width="600" ResizeMode="NoResize">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+        <!--
+        Добавляем конвертер в ресурсы окна 
+        BooleanToVisibilityConverter — встроенный конвертер в WPF
+        x:Key="BoolToVisibilityConverter" — задает ключ, по которому можно ссылаться на этот конвертер.
+        Конвертер преобразует:
+            true → Visibility.Visible
+            false → Visibility.Collapsed
+        -->
+    </Window.Resources>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="330"></ColumnDefinition>
+            <ColumnDefinition Width="*"></ColumnDefinition>
+        </Grid.ColumnDefinitions>
+
+        <DataGrid Grid.Column="0"
+                  ItemsSource="{Binding Categories}" 
+                  SelectedItem="{Binding SelectedCategory, Mode=TwoWay}" 
+                  AutoGenerateColumns="False" 
+                  CanUserAddRows="False" 
+                  IsReadOnly="True"
+                  SelectionMode="Single"
+                  Margin="5">
+            <!--  
+                  Categories — это свойство в DataContext (обычно во ViewModel), которое представляет собой коллекцию (например, ObservableCollection<Category>).
+                  DataGrid автоматически отображает элементы этой коллекции в виде строк.
+                  При изменении коллекции (добавление, удаление элементов) 
+                  DataGrid автоматически обновляется, если используется ObservableCollection<T>.
+            
+                SelectedItem="{Binding SelectedCategory, Mode=TwoWay}"
+                Назначение: Привязывает выбранный элемент в DataGrid к свойству SelectedCategory в DataContext.
+                SelectedCategory — это свойство в ViewModel, которое хранит текущий выбранный элемент (например, объект типа Category).
+                
+                Mode=TwoWay означает, что изменения в DataGrid (например, выбор строки) будут передаваться в свойство SelectedCategory, и наоборот — если значение SelectedCategory изменится в коде, то DataGrid выделит соответствующую строку.
+            -->
+            <DataGrid.Columns >
+                <DataGridTextColumn Header="Название" Binding="{Binding Name}" Width="100"/>
+                <DataGridTextColumn Header="Описание" Binding="{Binding Description}" Width="*"/>
+                <DataGridTextColumn Header="Цвет" Binding="{Binding Colour}" Width="50"/>
+            </DataGrid.Columns>
+        </DataGrid>
+        <Grid Grid.Column="1" 
+              Margin="10">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <StackPanel Grid.Row="0"
+                        Visibility="{Binding IsEditPanelVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+                <TextBlock Text="Название:"/>
+                <TextBox x:Name="NameTextBox" 
+                         Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" 
+                         Margin="0 5 0 10"/>
+
+                <TextBlock Text="Описание:"/>
+                <TextBox x:Name="DescriptionTextBox" 
+                         Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}" 
+                         Margin="0 5 0 10"/>
+
+                <TextBlock Text="Цвет (HEX):"/>
+                <TextBox x:Name="ColourTextBox" 
+                         Text="{Binding Colour, UpdateSourceTrigger=PropertyChanged}" 
+                         Margin="0 5 0 15"/>
+                <!--
+                    Привязка TextBox к свойствам:
+                    Text="{Binding Name}" связывает текст в TextBox с свойством Name в ViewModel.
+                    UpdateSourceTrigger=PropertyChanged обновляет свойство в ViewModel при каждом изменении текста (без необходимости нажимать Enter или терять фокус).
+                    Двусторонняя синхронизация:
+                    Если значение свойства в ViewModel изменяется, TextBox автоматически обновляется.
+                    Если пользователь вводит текст в TextBox, свойство в ViewModel автоматически обновляется.
+                -->
+
+                <TextBlock x:Name="ErrorTextBlock" Foreground="Red" 
+                            Text="{Binding ErrorText}"
+                            Visibility="{Binding IsErrorTextVisible, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                <!--привязываем TextBlock к свойствам ErrorText и IsErrorTextVisible. Используем конвертер BooleanToVisibilityConverter для управления видимостью.-->
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                    <Button Content="Создать" 
+                            Command="{Binding SaveCommand}"
+                            Width="80" 
+                            Margin="0 0 10 0" 
+                            IsDefault="True" 
+                            Visibility="{Binding IsCreateButtonVisible, Converter={StaticResource BoolToVisibilityConverter}}"/>
+
+                    <Button Content="Обновить"
+                            Command="{Binding UpdateCommand}"
+                            Width="80" 
+                            Margin="0 0 10 0"
+                            Visibility="{Binding IsUpdateButtonVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                    <Button Content="Отмена" 
+                            Command="{Binding CancelCommand}"
+                            Width="80" 
+                            IsCancel="True"/>
+                </StackPanel>
+            </StackPanel>
+
+            <StackPanel Grid.Row="1"
+                        Orientation="Horizontal" 
+                        HorizontalAlignment="Right">
+                <Button Content="Добавить" 
+                        Command="{Binding AddCommand}" 
+                        HorizontalAlignment="Left" 
+                        VerticalAlignment="Bottom" 
+                        Height="30" Width="80" Margin="10" 
+                        Visibility="{Binding IsAddButtonVisible ,Converter={StaticResource BoolToVisibilityConverter}}"/>
+
+                <Button Content="Удалить"  
+                        Command="{Binding DeleteCommand}" 
+                        Height="30" Width="80" Margin="10"
+                        Visibility="{Binding IsDeleteButtonVisible, Converter={StaticResource BoolToVisibilityConverter} }"/>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Window>
