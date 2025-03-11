@@ -17,7 +17,8 @@ namespace FlowEvents
 {
     public class CategoryViewModel : INotifyPropertyChanged
     {
-        private string _connectionString = "Data Source=G:\\VS Dev\\FlowEvents\\FlowEvents.db;Version=3;";
+        private string _connectionString = $"Data Source={Global_Var.pathDB};Version=3;";
+        //private string _connectionString = "Data Source=G:\\VS Dev\\FlowEvents\\FlowEvents.db;Version=3;";
 
         // Коллекция для хранения категорий (источник данных (коллекцию))
         public ObservableCollection<CategoryModel> Categories { get; set; } = new ObservableCollection<CategoryModel>();

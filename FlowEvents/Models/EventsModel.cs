@@ -22,40 +22,5 @@ namespace FlowEvents.Models
         public string Unit { get; set; }
     }
 
-    //internal class CategoryModel: INotifyPropertyChanged
-    //{
-    //    public int id { get; }
-
-    //    private string _name;
-    //    private string _description;
-    //    private string _colour;
-
-        
-
-    //    public string Name
-    //    {
-    //        get { return _name; }
-    //        set { _name = value; }
-    //    }
-
-    //    public string Description
-    //    {
-    //        get { return _description; }
-    //        set { _description = value; }
-    //    }
-
-    //    public string Colour
-    //    {
-    //        get { return _colour; }
-    //        set { _colour = value; }
-    //    }
-
-    //    public event PropertyChangedEventHandler PropertyChanged;
-
-    //    protected virtual void OnPropertyChanged(string propertyName = "")
-    //    {
-    //        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-    //        //PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
-    //    }
-    //}
+    
 }

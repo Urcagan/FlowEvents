@@ -63,6 +63,7 @@
     </Compile>
     <Compile Include="Category\CategoryViewModel.cs" />
     <Compile Include="Global_Var.cs" />
+    <Compile Include="View\MainViewModel.cs" />
     <Compile Include="Models\CategoryModel.cs" />
     <Compile Include="Models\EventsModel.cs" />
     <Compile Include="Models\UnitModel.cs" />

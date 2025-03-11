@@ -11,9 +11,6 @@ checkDB()           - Основной цикл условий проверки 
 ---------------------------
 */
 using Microsoft.Win32;
-using System;
-using System.Collections.Generic;
-using System.Data;
 using System.IO;
 using System.Windows;
 
@@ -22,6 +19,42 @@ namespace FlowEvents
 
     public class CheckDB
     {
+
+        // Проверка наличия файла БД
+        public static bool CheckDatabaseFile(AppSettings appSettings)
+        {
+            // Проверяем, указан ли путь и существует ли файл
+            if (string.IsNullOrWhiteSpace(appSettings.pathDB) || !File.Exists(appSettings.pathDB))
+            {
+                MessageBox.Show("Файл базы данных не найден. Укажите корректный путь.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+
+                // Открываем диалог выбора файла
+                OpenFileDialog openFileDialog = new OpenFileDialog
+                {
+                    Title = "Выберите файл базы данных",
+                    Filter = "Файлы базы данных (*.db;*.sqlite)|*.db;*.sqlite|Все файлы (*.*)|*.*"
+                };
+
+                if (openFileDialog.ShowDialog() == true)
+                {
+                    // Обновляем путь в настройках
+                    appSettings.pathDB = openFileDialog.FileName;
+                    appSettings.Save(); // Сохраняем обновленные настройки
+
+                    MessageBox.Show("Новый путь к базе данных сохранен.", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return true; // Файл выбран и путь обновлен
+                }
+                else
+                {
+                    MessageBox.Show("Программа не может продолжить без базы данных!", "Критическая ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+
+                    return false; // Файл не выбран
+                    // Application.Current.Shutdown(); // Закрываем приложение
+                }
+            }
+            return true; // Файл существует
+        }
+
         // ПОЛНАЯ ПРОВЕРКА ВСЕХ УСЛОВИЙ
         public static bool ALLCheckDB(DatabaseHelper databaseHelper, string PathDB, string tableName, string verProg)
         {
@@ -68,40 +101,7 @@ namespace FlowEvents
             }
         }
 
-        // Проверка наличия файла БД
-        public static bool CheckDatabaseFile(AppSettings appSettings)
-        {
-            // Проверяем, указан ли путь и существует ли файл
-            if (string.IsNullOrWhiteSpace(appSettings.pathDB) || !File.Exists(appSettings.pathDB))
-            {
-                MessageBox.Show("Файл базы данных не найден. Укажите корректный путь.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
 
-                // Открываем диалог выбора файла
-                OpenFileDialog openFileDialog = new OpenFileDialog
-                {
-                    Title = "Выберите файл базы данных",
-                    Filter = "Файлы базы данных (*.db;*.sqlite)|*.db;*.sqlite|Все файлы (*.*)|*.*"
-                };
-
-                if (openFileDialog.ShowDialog() == true)
-                {
-                    // Обновляем путь в настройках
-                    appSettings.pathDB = openFileDialog.FileName;
-                    appSettings.Save(); // Сохраняем обновленные настройки
-
-                    MessageBox.Show("Новый путь к базе данных сохранен.", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
-                    return true; // Файл выбран и путь обновлен
-                }
-                else
-                {
-                    MessageBox.Show("Программа не может продолжить без базы данных!", "Критическая ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-
-                    return false; // Файл не выбран
-                    // Application.Current.Shutdown(); // Закрываем приложение
-                }
-            }
-            return true; // Файл существует
-        }
 
     }
 
