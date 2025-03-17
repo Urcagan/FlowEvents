@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:FlowEvents"
         mc:Ignorable="d"
-        Title="Журнал событий" Height="450" Width="800" Loaded="Window_Loaded">
+        Title="Журнал событий" Height="450" Width="800" >
 
 
     <DockPanel>
@@ -54,17 +54,19 @@
         </StatusBar>
 
         <Grid>
-            <DataGrid x:Name="dgMain" Margin="5" 
-                      AutoGenerateColumns="False" 
-                        CanUserAddRows="False" 
-                        IsReadOnly="True"
-                        SelectionMode="Single" >
+            <DataGrid ItemsSource="{Binding Events}"  
+                  AutoGenerateColumns="False" 
+                  CanUserAddRows="False" 
+                  IsReadOnly="True"
+                  SelectionMode="Single"
+                  Margin="5" Grid.Column="0">
+                
                 <DataGrid.Columns>
-                    <DataGridTextColumn Binding="{Binding Path = EventDateTime}" IsReadOnly="true" Header="Дата события" Width="100"/>
-                    <DataGridTextColumn Header="Объект" Width="150"/>
-                    <DataGridTextColumn Header="Событие" Width="0.25*"/>
-                    <DataGridTextColumn Header="Описание" Width="*"/>
-                    <DataGridTextColumn Header="Мероприятия" Width="*"/>
+                    <DataGridTextColumn Header="Дата события" Binding="{Binding DateEvent}" IsReadOnly="true"  Width="100"/>
+                    <DataGridTextColumn Header="Объект" Binding="{Binding UnitID}" Width="150"/>
+                    <DataGridTextColumn Header="Событие" Binding="{Binding Category}" Width="0.25*"/>
+                    <DataGridTextColumn Header="Описание" Binding="{Binding Description}" Width="*"/>
+                    <DataGridTextColumn Header="Мероприятия" Binding="{Binding Action}" Width="*"/>
                 </DataGrid.Columns>
             </DataGrid>
 

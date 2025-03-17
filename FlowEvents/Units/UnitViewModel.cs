@@ -162,7 +162,7 @@ namespace FlowEvents
                 ShowError("Название обязательно для заполнения!");
                 return;
             }
-
+            
             // Проверка на уникальность
             //if (!IsUnitUnique(Unit))
             //{

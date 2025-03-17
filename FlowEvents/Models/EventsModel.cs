@@ -7,19 +7,22 @@ using System.Threading.Tasks;
 
 namespace FlowEvents.Models
 {
-    internal class EventsModel
+    public class EventsModel
     {
         public int Id { get; set; }
 
-        private DateTime _EventDateTime;
+        private string _dateEvent;
 
-        public DateTime EventDateTime
+        public string DateEvent
         {
-            get { return _EventDateTime; }
-            set { _EventDateTime = value; }
+            get { return _dateEvent; }
+            set { _dateEvent = value; }
         }
 
-        public string Unit { get; set; }
+        public int UnitID {  get; set; }
+        public int Category { get; set; }
+        public string Description { get; set; }
+        public string Action { get; set; }
     }
 
     

@@ -1,38 +1,59 @@
-﻿using System;
+﻿using FlowEvents.Models;
+using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 
 namespace FlowEvents
 {
-    internal class MainViewModel : INotifyPropertyChanged
+    public class MainViewModel : INotifyPropertyChanged
     {
+        // Коллекция для хранения данных (автоматически уведомляет об изменениях)
+        public ObservableCollection<EventsModel> Events { get; set; } = new ObservableCollection<EventsModel>();
 
-        public MainViewModel() 
+        // Сервис для работы с базой данных
+        private readonly IDatabaseService _databaseService;
+
+        public MainViewModel( IDatabaseService databaseService) 
         {
-            PathLoad();
+            _databaseService = databaseService;
+
+            // Загрузка данных при создании ViewModel
+            LoadEvents();
+
+            //PathLoad();
+        }
+
+
+        // Метод для загрузки данных из базы
+        private void LoadEvents()
+        {
+            // Очищаем коллекцию перед загрузкой новых данных
+            Events.Clear();
+
+            // Получаем данные из базы
+            var eventsFromDb = _databaseService.GetEvents();
+
+            // Добавляем данные в коллекцию
+            foreach (var eventModel in eventsFromDb)
+            {
+                Events.Add(eventModel);
+            }
         }
 
         private void PathLoad()
         {
-            // Загружаем настройки при запуске программы
-            appSettings = AppSettings.Load();
 
-            //Необходимо проверить есть ли файл базы данных по указанному пути
+            appSettings = AppSettings.Load(); // Загружаем настройки программы из файла при запуске программы
+            string pathDB = appSettings.pathDB;
+            
+            if ( !CheckDB.CheckPathDB(pathDB)) 
+                return;  // Проверяем путь к базе данных и выходим, если он неверен
 
-            // Проверяем, существует ли база данных
-            if (!CheckDB.CheckDatabaseFile(appSettings))
-            {
-                //Application.Current.Shutdown(); // Закрываем приложение, если файл не выбран
-                MessageBox.Show("Необходимо выбрать базу данных !!!");
-            }
-            else
-            {
-                Global_Var.pathDB = appSettings.pathDB;
+            Global_Var.pathDB = pathDB; //Записываем в глобальную переменную
 
                 databaseHelper = new DatabaseHelper(Global_Var.pathDB);    // Инициализация копии класса работы с БД
 
@@ -49,11 +70,11 @@ namespace FlowEvents
                     IsCheckDB = true;
                 }
 
-                //Execute();
-            }
+            //Execute();
+
         }
 
-
+         
         //===============================================================================================================================================
         //Поля, Переменный, Свойства
 

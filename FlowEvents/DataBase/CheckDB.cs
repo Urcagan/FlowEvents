@@ -20,6 +20,8 @@ namespace FlowEvents
     public class CheckDB
     {
 
+        private string _connectionString = $"Data Source={Global_Var.pathDB};Version=3;";
+
         // Проверка наличия файла БД
         public static bool CheckDatabaseFile(AppSettings appSettings)
         {
@@ -88,19 +90,32 @@ namespace FlowEvents
         }
 
         // Проверка наличия пути и файла базы данных
-        public static bool CheckPathDB(string PathDataBase) // Проверка файла БД
+        public static bool CheckPathDB(string pathDataBase) // Проверка файла БД
         {
-            if (string.IsNullOrEmpty(PathDataBase) || !File.Exists(PathDataBase))
-            {
-                MessageBox.Show(string.IsNullOrEmpty(PathDataBase) ? "Пожалуйста, укажите путь к базе данных 'TaskLog.db'." : "По указанному пути файла БД 'TaskLog.db' нет! \n Задайте новый путь", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-                return false;
-            }
-            else
+            if (IsPathValid(pathDataBase))
             {
                 return true;
-            }
+            }  
+
+            ShowErrorMessage(pathDataBase);
+            return false;
         }
 
+        // Проверка, является ли путь корректным и существует ли файл
+        private static bool IsPathValid(string pathDataBase)
+        {
+            return !string.IsNullOrEmpty(pathDataBase) && File.Exists(pathDataBase);
+        }
+
+        // Отображение сообщения об ошибке в зависимости от состояния пути
+        private static void ShowErrorMessage(string pathDataBase)
+        {
+            string errorMessage = string.IsNullOrEmpty(pathDataBase)
+                        ? "Пожалуйста, укажите путь к базе данных 'TaskLog.db'."
+                        : "По указанному пути файла БД 'TaskLog.db' нет! \n Задайте новый путь";
+
+            MessageBox.Show(errorMessage, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
 
 
     }

@@ -32,10 +32,17 @@ namespace FlowEvents
         public DatabaseHelper databaseHelper;
         private bool IsCheckDB = false;
 
+        // Конструктор по умолчанию (без параметров)
         public MainWindow()
         {
             InitializeComponent();
+        }
 
+        // Конструктор с параметрами для DI
+        public MainWindow( MainViewModel viewModel) : this() // Вызов конструктора по умолчанию
+        {
+           //DataContext = new MainViewModel( ); // Установить DataContext
+            DataContext = viewModel; // Установить DataContext
         }
 
 
@@ -84,12 +91,7 @@ namespace FlowEvents
             {
                 //MessageBox.Show("Программа проверела БД и загрузила данные");
 
-                _eventsData = new BindingList<EventsModel>()
-                {
-                    new EventsModel(){EventDateTime = DateTime.Now},
-                };
-
-                dgMain.ItemsSource = _eventsData;
+               //dgMain.ItemsSource = _eventsData;
             }
             else
             {
