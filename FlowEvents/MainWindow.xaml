@@ -38,9 +38,8 @@
                     </DataTemplate>
                 </ComboBox.ItemTemplate>
             </ComboBox>
-            <Border BorderBrush="Black" Margin="20 0 1 0" >
-                <Button Content="Тестирование пути" HorizontalAlignment="Left" VerticalAlignment="Center" RenderTransformOrigin="8.218,1.051" Click="Button_Click" Width="119"/>
-            </Border>
+            <Border BorderBrush="Black" Margin="20 0 1 0" />
+            <Button x:Name="AddEvent" Content="Добавить событие" HorizontalAlignment="Left" VerticalAlignment="Center" BorderBrush="#FF617584" Click="AddEvent_Click"/>
         </ToolBar>
 
         <StatusBar x:Name="statusBar" DockPanel.Dock="Bottom">

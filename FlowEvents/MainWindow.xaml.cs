@@ -99,10 +99,6 @@ namespace FlowEvents
             }
         }
 
-        private void Button_Click(object sender, RoutedEventArgs e)
-        {
-
-        }
 
 
         private void Unit_Click(object sender, RoutedEventArgs e)
@@ -136,6 +132,12 @@ namespace FlowEvents
             {
 
             }
+        }
+
+        private void AddEvent_Click(object sender, RoutedEventArgs e)
+        {
+            EventView eventView = new EventView();
+            if (eventView.ShowDialog() == true) { }
         }
     }
 
