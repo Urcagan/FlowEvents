@@ -19,10 +19,12 @@ namespace FlowEvents.Models
             set { _dateEvent = value; }
         }
 
-        public int UnitID {  get; set; }
-        public int Category { get; set; }
+        public string Unit {  get; set; }
+        public string Category { get; set; }
         public string Description { get; set; }
         public string Action { get; set; }
+        public string DateCreate { get; set; }
+        public string Creator { get; set; }
     }
 
     

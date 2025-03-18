@@ -20,11 +20,11 @@
                 Margin="10"/>
             <ComboBox 
                 x:Name="Unit"
-                Width="120"
+                Width="250"
                 Margin="10"/>
             <ComboBox 
                 x:Name="Category"
-                Width="120"
+                Width="300"
                 Margin="10"/>
         </StackPanel>
 
