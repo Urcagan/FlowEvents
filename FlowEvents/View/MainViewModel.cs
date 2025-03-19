@@ -8,25 +8,20 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
 using System.IO;
+using System.Data.SQLite;
 
 namespace FlowEvents
 {
     public class MainViewModel : INotifyPropertyChanged
     {
-       
+        private string _connectionString = $"Data Source={Global_Var.pathDB};Version=3;";
         // Коллекция для хранения данных (автоматически уведомляет об изменениях)
         public ObservableCollection<EventsModel> Events { get; set; } = new ObservableCollection<EventsModel>();
 
-        // Сервис для работы с базой данных
-        private IDatabaseService _databaseService;
-        private readonly AppSettings _appSettings;
-
-        public MainViewModel( IDatabaseService databaseService, AppSettings appSettings) 
+        
+        public MainViewModel( ) 
         {
-            _databaseService = databaseService;
-            _appSettings = appSettings;
-
-
+      
             // Проверка наличия файла базы данных перед загрузкой данных
             if (CheckDatabaseFile())
             {
@@ -36,22 +31,11 @@ namespace FlowEvents
             //PathLoad();
         }
 
-        // Метод для обновления пути к базе данных
-    public void UpdateDatabasePath(string newPath)
-        {
-            _appSettings.pathDB = newPath;
-            _appSettings.Save();
-
-            // Пересоздаем сервис базы данных с новым путем
-            _databaseService = new DatabaseService(newPath);
-
-            // Перезагружаем данные
-            LoadEvents();
-        }
+       
 
         private bool CheckDatabaseFile()
         {
-            if (!File.Exists(_appSettings.pathDB))
+            if (!File.Exists(Global_Var.pathDB))
             {
                 MessageBox.Show("Файл базы данных не найден. Пожалуйста, укажите новый путь к базе данных.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return false;
@@ -63,11 +47,10 @@ namespace FlowEvents
         // Метод для загрузки данных из базы
         private void LoadEvents()
         {
-            // Очищаем коллекцию перед загрузкой новых данных
-            Events.Clear();
-
+            appSettings = AppSettings.Load();
+            
             // Получаем данные из базы
-            var eventsFromDb = _databaseService.GetEvents();
+            var eventsFromDb = GetEvents();
 
             // Добавляем данные в коллекцию
             foreach (var eventModel in eventsFromDb)
@@ -107,6 +90,80 @@ namespace FlowEvents
         }
 
          
+
+
+        // Загрузка категорий из базы данных
+        public List<EventsModel> GetEvents()
+        {
+            var events = new List<EventsModel>();
+
+            using (var connection = new SQLiteConnection(_connectionString))
+            {
+                connection.Open();
+                var command = new SQLiteCommand("SELECT id, DateEvent, Unit, Category, Description, Action, DateCreate, Creator  FROM vwEvents", connection);
+                using (var reader = command.ExecuteReader())
+                {
+                    int idIndex = reader.GetOrdinal("id");
+                    int dateIndex = reader.GetOrdinal("DateEvent");
+                    int unitIndex = reader.GetOrdinal("Unit");
+                    int categotyIndex = reader.GetOrdinal("Category");
+                    int descriptionIndex = reader.GetOrdinal("Description");
+                    int actionIndex = reader.GetOrdinal("Action");
+                    int createIndex = reader.GetOrdinal("DateCreate");
+                    int creatorIndex = reader.GetOrdinal("Creator");
+
+                    while (reader.Read())
+                    {
+                        events.Add(new EventsModel
+                        {
+                            Id = reader.GetInt32(idIndex),
+                            DateEvent = reader.GetString(dateIndex),
+                            Unit = reader.GetString(unitIndex),
+                            Category = reader.GetString(categotyIndex),
+                            Description = reader.IsDBNull(descriptionIndex) ? null : reader.GetString(descriptionIndex),
+                            Action = reader.IsDBNull(actionIndex) ? null : reader.GetString(actionIndex),
+                            DateCreate = reader.GetString(createIndex),
+                            Creator = reader.GetString(creatorIndex)
+                        });
+                    }
+                }
+                return events;
+            }
+        }
+
+
+
+        // Вставка нового события в базу данных
+        public void AddEvent(EventsModel newEvent)
+        {
+            using (var connection = new SQLiteConnection(_connectionString))
+            {
+                connection.Open();
+
+                // SQL-запрос для вставки данных
+                var query = @"
+                INSERT INTO Events (DateEvent, Unit, Category, Description, Action, DateCreate, Creator)
+                VALUES (@DateEvent, @UnitID, @Category, @Description, @Action);";
+
+                using (var command = new SQLiteCommand(query, connection))
+                {
+                    // Добавление параметров
+                    command.Parameters.AddWithValue("@DateEvent", newEvent.DateEvent);
+                    command.Parameters.AddWithValue("@Unit", newEvent.Unit);
+                    command.Parameters.AddWithValue("@Category", newEvent.Category);
+                    command.Parameters.AddWithValue("@Description", newEvent.Description ?? (object)DBNull.Value); // Если Description == null, вставляем NULL
+                    command.Parameters.AddWithValue("@Action", newEvent.Action ?? (object)DBNull.Value); // Если Action == null, вставляем NULL
+                    command.Parameters.AddWithValue("@DateCtreate", newEvent.DateCreate);
+                    command.Parameters.AddWithValue("@Creator", newEvent.Creator);
+
+                    // Выполнение запроса
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+
+
+
         //===============================================================================================================================================
         //Поля, Переменный, Свойства
 

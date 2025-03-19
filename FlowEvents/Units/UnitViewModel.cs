@@ -40,7 +40,7 @@ namespace FlowEvents
             UpdateCommand = new RelayCommand(UpdateUnit, CanEditOrDelete);
 
             // Загрузка данных из базы
-            LoadUnits();
+            GetUnits();
             IsAddButtonVisible = true; // Показать кнопку "Добавить"
             IsDeleteButtonVisible = false; // Скрыть кнопку "Удалить"
 
@@ -50,7 +50,7 @@ namespace FlowEvents
 
 
         // Метод для загрузки данных из таблицы Units
-        private void LoadUnits()
+        private void GetUnits()
         {
             try
             {

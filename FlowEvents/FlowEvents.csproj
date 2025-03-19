@@ -67,7 +67,6 @@
     </Compile>
     <Compile Include="Services\DatabaseService.cs" />
     <Compile Include="Global_Var.cs" />
-    <Compile Include="Services\IDatabaseService.cs" />
     <Compile Include="View\MainViewModel.cs" />
     <Compile Include="Models\CategoryModel.cs" />
     <Compile Include="Models\EventsModel.cs" />

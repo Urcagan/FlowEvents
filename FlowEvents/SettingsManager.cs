@@ -24,7 +24,7 @@ namespace FlowEvents
     public class AppSettings
     {
         // Параметры програы с параметрами по умолчанию
-        public string pathDB { get; set; } = ".\\";  // Путь к базе данных по умолчанию
+        public string pathDB { get; set; } = "C:\\";  // Путь к базе данных по умолчанию
         public string VerDB { get; set; } = "0.1.0"; //Версия БД для проверки
 
         //Путь к файлу настроек в папке AppData
@@ -37,7 +37,7 @@ namespace FlowEvents
         // Path.GetDirectoryName(...) — извлекает директорию из полного пути.
 
         private static string settingsPath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "settings.xml"); // Файл настроек
-
+        
         // Метод для загрузки настроек
         public static AppSettings Load()
         {

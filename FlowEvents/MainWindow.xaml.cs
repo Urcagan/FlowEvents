@@ -28,8 +28,7 @@ namespace FlowEvents
     /// </summary>
     public partial class MainWindow : Window
     {
-        private readonly MainViewModel _viewModel;
-
+        
         private AppSettings appSettings;
 
         public DatabaseHelper databaseHelper;
@@ -39,18 +38,10 @@ namespace FlowEvents
         public MainWindow()
         {
             InitializeComponent();
+            DataContext = new MainViewModel();
         }
 
-        // Конструктор с параметрами для DI
-        public MainWindow( MainViewModel viewModel) : this() // Вызов конструктора по умолчанию
-        {
-            //DataContext = new MainViewModel( ); // Установить DataContext
-            _viewModel = viewModel;
-            DataContext = _viewModel; // Установить DataContext
-        }
-
-
-
+        
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             // Загружаем настройки при запуске программы
@@ -98,7 +89,6 @@ namespace FlowEvents
 
         private void SettingsMenuItem_Click(object sender, RoutedEventArgs e)
         {
-            /**
             // Создаем и показываем окно настроек
             SettingsWindow settingsWindow = new SettingsWindow(this);
             if (settingsWindow.ShowDialog() == true) // Открываем окно как модальное
@@ -106,17 +96,9 @@ namespace FlowEvents
                 // Получаем данные из дочернего окна
                 //string message = childWindow.ResultMessage;
                 IsCheckDB = settingsWindow.stateDB;
-                Execute(); // Вызываем метод который обновляет данные 
+               // Execute(); // Вызываем метод который обновляет данные 
             }
-            **/
-
-            var appSettings = ((App)Application.Current).ServiceProvider.GetRequiredService<AppSettings>();
-
-            // Передаем MainViewModel в SettingsWindow
-            var settingsWindow = new SettingsWindow(appSettings, _viewModel);
-            settingsWindow.Owner = this; // Устанавливаем владельца окна
-            settingsWindow.ShowDialog(); // Открываем окно как модальное
-
+           
         }
 
 
