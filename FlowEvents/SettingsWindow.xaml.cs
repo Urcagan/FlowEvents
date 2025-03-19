@@ -12,6 +12,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using System.IO;
 
 namespace FlowEvents
 {
@@ -20,17 +21,39 @@ namespace FlowEvents
     /// </summary>
     public partial class SettingsWindow : Window
     {
+        private readonly AppSettings _appSettings;
+        private readonly MainViewModel _mainViewModel;
 
-        private MainWindow _MainWindow;
+        private readonly MainWindow _MainWindow;
 
-        public SettingsWindow(MainWindow mainWindow)
+        public SettingsWindow(AppSettings appSettings, MainViewModel mainViewModel)
         {
             InitializeComponent();
-            _MainWindow = mainWindow;
+            _appSettings = appSettings;
+            _mainViewModel = mainViewModel;
+            //_MainWindow = mainWindow;
+
+            // Загружаем текущий путь к базе данных в текстовое поле
+            FilePathTextBox.Text = _appSettings.pathDB;
         }
 
         public bool stateDB { get; private set; }
 
+        // Обработчик события для кнопки "Выбрать файл..."
+        private void BrowseButton_Click(object sender, RoutedEventArgs e)
+        {
+            var openFileDialog = new Microsoft.Win32.OpenFileDialog();
+            openFileDialog.Filter = "Database files (*.db)|*.db|All files (*.*)|*.*";
+            openFileDialog.InitialDirectory = System.IO.Path.GetDirectoryName(_appSettings.pathDB);
+
+            if (openFileDialog.ShowDialog() == true)
+            {
+                // Обновляем текстовое поле с новым путем
+                FilePathTextBox.Text = openFileDialog.FileName;
+            }
+        }
+
+        /**
         // Обработчик события для кнопки "Выбрать файл"
         private void BrowseButton_Click(object sender, RoutedEventArgs e)
         {
@@ -75,6 +98,7 @@ namespace FlowEvents
             }
 
         }
+        **/
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
@@ -83,6 +107,14 @@ namespace FlowEvents
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
+
+            // Сохраняем новый путь к базе данных в настройках
+            _appSettings.pathDB = FilePathTextBox.Text;
+            _appSettings.Save();
+
+            // Обновляем путь к базе данных в MainViewModel
+     //       _mainViewModel.UpdateDatabasePath(_appSettings.pathDB);
+
             this.DialogResult = true;
 
             // Вызываем метод родительского окна который обновляет данные 

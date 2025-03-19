@@ -19,6 +19,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using static FlowEvents.Global_Var;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace FlowEvents
 {
@@ -27,6 +28,8 @@ namespace FlowEvents
     /// </summary>
     public partial class MainWindow : Window
     {
+        private readonly MainViewModel _viewModel;
+
         private AppSettings appSettings;
 
         public DatabaseHelper databaseHelper;
@@ -41,8 +44,9 @@ namespace FlowEvents
         // Конструктор с параметрами для DI
         public MainWindow( MainViewModel viewModel) : this() // Вызов конструктора по умолчанию
         {
-           //DataContext = new MainViewModel( ); // Установить DataContext
-            DataContext = viewModel; // Установить DataContext
+            //DataContext = new MainViewModel( ); // Установить DataContext
+            _viewModel = viewModel;
+            DataContext = _viewModel; // Установить DataContext
         }
 
 
@@ -76,28 +80,10 @@ namespace FlowEvents
                     //settingsWindow.ShowDialog(); // Открываем окно как модальное
                     IsCheckDB = true;
                 }
-
-                Execute();
             }
-
-
         }
 
         private BindingList<EventsModel> _eventsData;
-
-        public void Execute()
-        {
-            if (IsCheckDB)
-            {
-                //MessageBox.Show("Программа проверела БД и загрузила данные");
-
-               //dgMain.ItemsSource = _eventsData;
-            }
-            else
-            {
-                MessageBox.Show("Ошибка БД.");
-            }
-        }
 
 
 
@@ -112,6 +98,7 @@ namespace FlowEvents
 
         private void SettingsMenuItem_Click(object sender, RoutedEventArgs e)
         {
+            /**
             // Создаем и показываем окно настроек
             SettingsWindow settingsWindow = new SettingsWindow(this);
             if (settingsWindow.ShowDialog() == true) // Открываем окно как модальное
@@ -121,6 +108,15 @@ namespace FlowEvents
                 IsCheckDB = settingsWindow.stateDB;
                 Execute(); // Вызываем метод который обновляет данные 
             }
+            **/
+
+            var appSettings = ((App)Application.Current).ServiceProvider.GetRequiredService<AppSettings>();
+
+            // Передаем MainViewModel в SettingsWindow
+            var settingsWindow = new SettingsWindow(appSettings, _viewModel);
+            settingsWindow.Owner = this; // Устанавливаем владельца окна
+            settingsWindow.ShowDialog(); // Открываем окно как модальное
+
         }
 
 

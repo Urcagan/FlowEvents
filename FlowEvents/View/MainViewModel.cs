@@ -1,4 +1,5 @@
 ﻿using FlowEvents.Models;
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -6,25 +7,56 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
+using System.IO;
 
 namespace FlowEvents
 {
     public class MainViewModel : INotifyPropertyChanged
     {
+       
         // Коллекция для хранения данных (автоматически уведомляет об изменениях)
         public ObservableCollection<EventsModel> Events { get; set; } = new ObservableCollection<EventsModel>();
 
         // Сервис для работы с базой данных
-        private readonly IDatabaseService _databaseService;
+        private IDatabaseService _databaseService;
+        private readonly AppSettings _appSettings;
 
-        public MainViewModel( IDatabaseService databaseService) 
+        public MainViewModel( IDatabaseService databaseService, AppSettings appSettings) 
         {
             _databaseService = databaseService;
+            _appSettings = appSettings;
 
-            // Загрузка данных при создании ViewModel
-            LoadEvents();
+
+            // Проверка наличия файла базы данных перед загрузкой данных
+            if (CheckDatabaseFile())
+            {
+                LoadEvents();   // Загрузка данных при создании ViewModel
+            }
 
             //PathLoad();
+        }
+
+        // Метод для обновления пути к базе данных
+    public void UpdateDatabasePath(string newPath)
+        {
+            _appSettings.pathDB = newPath;
+            _appSettings.Save();
+
+            // Пересоздаем сервис базы данных с новым путем
+            _databaseService = new DatabaseService(newPath);
+
+            // Перезагружаем данные
+            LoadEvents();
+        }
+
+        private bool CheckDatabaseFile()
+        {
+            if (!File.Exists(_appSettings.pathDB))
+            {
+                MessageBox.Show("Файл базы данных не найден. Пожалуйста, укажите новый путь к базе данных.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                return false;
+            }
+            return true;
         }
 
 

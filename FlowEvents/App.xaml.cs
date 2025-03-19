@@ -19,6 +19,9 @@ namespace FlowEvents
     {
         private IServiceProvider _serviceProvider;
 
+        // Публичное свойство для доступа к ServiceProvider
+        public IServiceProvider ServiceProvider => _serviceProvider;
+
         // Переопределяем метод OnStartup, Внем задаем наш формат
         protected override void OnStartup(StartupEventArgs e)
         {
@@ -46,10 +49,12 @@ namespace FlowEvents
         private void ConfigureServices(IServiceCollection services)
         {
             AppSettings appSettings = AppSettings.Load(); // Загружаем настройки программы из файла при запуске программы
-           
+            services.AddSingleton(appSettings);
+
             // Регистрация сервиса базы данных
             services.AddSingleton<IDatabaseService>(provider =>
                 new DatabaseService(appSettings.pathDB));
+
 
             // Регистрация главного окна
             services.AddTransient<MainWindow>();
