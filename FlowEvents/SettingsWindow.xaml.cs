@@ -11,12 +11,12 @@ namespace FlowEvents
     /// </summary>
     public partial class SettingsWindow : Window
     {
-        private readonly MainWindow _MainWindow;
+        private readonly MainViewModel _MainViewModel;
 
-        public SettingsWindow(MainWindow mainWindow)
+        public SettingsWindow(MainViewModel mainViewModel)
         {
             InitializeComponent();
-            _MainWindow = mainWindow;
+            _MainViewModel = mainViewModel;
 
             // Загружаем текущий путь к базе данных в текстовое поле
            // FilePathTextBox.Text = -----------------
@@ -46,7 +46,7 @@ namespace FlowEvents
                 // изменить путь к базе данных и обновить соединение с новым путем.
                 DatabaseHelper.ChangeDatabasePath(Global_Var.pathDB);
 
-                if (CheckDB.ALLCheckDB(_MainWindow.databaseHelper, Global_Var.pathDB, "Config", appSettings.VerDB))
+                if (CheckDB.ALLCheckDB(_MainViewModel.databaseHelper, Global_Var.pathDB, "Config", appSettings.VerDB))
                 {
                     appSettings.SaveSettingsApp(); // Сохраняем обновленные настройки пути к БД
                     FilePathTextBox.Text = Global_Var.pathDB; 

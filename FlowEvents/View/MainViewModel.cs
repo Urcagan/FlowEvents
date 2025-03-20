@@ -18,12 +18,15 @@ namespace FlowEvents
         // Коллекция для хранения данных (автоматически уведомляет об изменениях)
         public ObservableCollection<EventsModel> Events { get; set; } = new ObservableCollection<EventsModel>();
 
-        
-        public MainViewModel( ) 
+        public RelayCommand SettingOpenWindow {  get; }
+
+
+        public MainViewModel()
         {
+            SettingOpenWindow = new RelayCommand(SettingsMenuItem);
             // загрузка настроек программы из файла конфигурации
- //           appSettings = AppSettings.GetSettingsApp(); // Загружаем настройки программы из файла при запуске программы
- //           string pathDB = appSettings.pathDB;     // получаем путь располажения файла БД
+            //           appSettings = AppSettings.GetSettingsApp(); // Загружаем настройки программы из файла при запуске программы
+            //           string pathDB = appSettings.pathDB;     // получаем путь располажения файла БД
 
             // Проверяем наличие файла БД по указанному пути 
             //if (!File.Exists(pathDB))
@@ -39,10 +42,21 @@ namespace FlowEvents
             //{
             //    LoadEvents();   // Загрузка данных при создании ViewModel
             //}
-                       
+
         }
 
-       
+        private void SettingsMenuItem(object parameter)
+        {
+            // Создаем и показываем окно настроек
+            SettingsWindow settingsWindow = new SettingsWindow(this);
+            if (settingsWindow.ShowDialog() == true) // Открываем окно как модальное
+            {
+                // Получаем данные из дочернего окна
+                //string message = childWindow.ResultMessage;
+                IsCheckDB = settingsWindow.stateDB;
+                // Execute(); // Вызываем метод который обновляет данные 
+            }
+        }
 
         private bool CheckDatabaseFile()
         {
@@ -59,7 +73,7 @@ namespace FlowEvents
         private void LoadEvents()
         {
             appSettings = AppSettings.GetSettingsApp();
-            
+
             // Получаем данные из базы
             var eventsFromDb = GetEvents();
 
@@ -70,37 +84,49 @@ namespace FlowEvents
             }
         }
 
-        public void PathLoad()
+        public void DBset()
         {
-
             appSettings = AppSettings.GetSettingsApp(); // Загружаем настройки программы из файла при запуске программы
             string pathDB = appSettings.pathDB;
-            
-            if ( !CheckDB.CheckPathDB(pathDB)) 
+            if (!CheckDB.CheckPathToFile(pathDB))
                 return;  // Проверяем путь к базе данных и выходим, если он неверен
+        }
 
-            Global_Var.pathDB = pathDB; //Записываем в глобальную переменную
+
+        public void PathLoad()
+        {
+            appSettings = AppSettings.GetSettingsApp(); // Загружаем настройки программы из файла при запуске программы
+            string pathDB = appSettings.pathDB;
+
+            if (!CheckDB.CheckPathToFile(pathDB))
+            {
+                Global_Var.pathDB = pathDB; //Записываем в глобальную переменную
 
                 databaseHelper = new DatabaseHelper(Global_Var.pathDB);    // Инициализация копии класса работы с БД
+                return;  // Проверяем путь к базе данных и выходим, если он неверен
+            }
 
-                //НЕОБХОДИМО ПЕРЕДЕЛАТЬ ДЛЯ ВЫВОДА ПУТИ В ОКНО
-                //lblPath.Text = "Путь: " + Global_Var.pathDB; //Global_Var.pathDB;
 
-                
-                // Проверка базы данных на исправность
-                if (CheckDB.ALLCheckDB(databaseHelper, Global_Var.pathDB, "Config", appSettings.VerDB))
-                {
-                    // Создаем и показываем окно настроек
-                    //SettingsWindow settingsWindow = new SettingsWindow( databaseHelper );
-                    //settingsWindow.ShowDialog(); // Открываем окно как модальное
-                    IsCheckDB = true;
-                }
+
+
+            //НЕОБХОДИМО ПЕРЕДЕЛАТЬ ДЛЯ ВЫВОДА ПУТИ В ОКНО
+            //lblPath.Text = "Путь: " + Global_Var.pathDB; //Global_Var.pathDB;
+
+
+            // Проверка базы данных на исправность
+            if (CheckDB.ALLCheckDB(databaseHelper, Global_Var.pathDB, "Config", appSettings.VerDB))
+            {
+                // Создаем и показываем окно настроек
+                //SettingsWindow settingsWindow = new SettingsWindow( databaseHelper );
+                //settingsWindow.ShowDialog(); // Открываем окно как модальное
+                IsCheckDB = true;
+            }
 
             //Execute();
 
         }
 
-         
+
 
 
         // Загрузка категорий из базы данных

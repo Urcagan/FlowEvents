@@ -5,8 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:FlowEvents"
         mc:Ignorable="d"
-        Title="Журнал событий" Height="450" Width="800" 
-        Loaded="Window_Loaded">
+        Title="Журнал событий" Height="450" Width="800" >
+   <!-- Loaded="Window_Loaded"> -->
 
 
     <DockPanel>
@@ -17,7 +17,8 @@
                 <MenuItem Header="Категории" Click ="Category_Click"></MenuItem>
                 <MenuItem Header="Пользователи"></MenuItem>
                 <Separator />
-                <MenuItem Header="Настройка" Click="SettingsMenuItem_Click"></MenuItem>
+         <!--       <MenuItem Header="Настройка" Click="SettingsMenuItem_Click"></MenuItem>  -->
+                <MenuItem Header="Настройка" Command="{Binding SettingOpenWindow}"></MenuItem>
                 <MenuItem Header="О программе"></MenuItem>
                 <Separator />
                 <MenuItem Header="Login"></MenuItem>

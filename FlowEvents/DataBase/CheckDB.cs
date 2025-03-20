@@ -90,7 +90,7 @@ namespace FlowEvents
         }
 
         // Проверка наличия пути и файла базы данных
-        public static bool CheckPathDB(string pathDataBase) // Проверка файла БД
+        public static bool CheckPathToFile(string pathDataBase) // Проверка файла БД
         {
             if (IsPathValid(pathDataBase))
             {
