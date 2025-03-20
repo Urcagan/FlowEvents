@@ -48,7 +48,7 @@ namespace FlowEvents
 
                 if (CheckDB.ALLCheckDB(_MainWindow.databaseHelper, Global_Var.pathDB, "Config", appSettings.VerDB))
                 {
-                    appSettings.Save(); // Сохраняем обновленные настройки пути к БД
+                    appSettings.SaveSettingsApp(); // Сохраняем обновленные настройки пути к БД
                     FilePathTextBox.Text = Global_Var.pathDB; 
                     MessageBox.Show("Новый путь к базе данных сохранен.", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
                     stateDB =true;

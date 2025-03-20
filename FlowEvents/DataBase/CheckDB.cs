@@ -41,7 +41,7 @@ namespace FlowEvents
                 {
                     // Обновляем путь в настройках
                     appSettings.pathDB = openFileDialog.FileName;
-                    appSettings.Save(); // Сохраняем обновленные настройки
+                    appSettings.SaveSettingsApp(); // Сохраняем обновленные настройки
 
                     MessageBox.Show("Новый путь к базе данных сохранен.", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
                     return true; // Файл выбран и путь обновлен

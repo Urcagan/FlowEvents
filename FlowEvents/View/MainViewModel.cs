@@ -14,21 +14,32 @@ namespace FlowEvents
 {
     public class MainViewModel : INotifyPropertyChanged
     {
-        private string _connectionString = $"Data Source={Global_Var.pathDB};Version=3;";
+        private string _connectionString; // = $"Data Source={Global_Var.pathDB};Version=3;";
         // Коллекция для хранения данных (автоматически уведомляет об изменениях)
         public ObservableCollection<EventsModel> Events { get; set; } = new ObservableCollection<EventsModel>();
 
         
         public MainViewModel( ) 
         {
-      
-            // Проверка наличия файла базы данных перед загрузкой данных
-            if (CheckDatabaseFile())
-            {
-                LoadEvents();   // Загрузка данных при создании ViewModel
-            }
+            // загрузка настроек программы из файла конфигурации
+ //           appSettings = AppSettings.GetSettingsApp(); // Загружаем настройки программы из файла при запуске программы
+ //           string pathDB = appSettings.pathDB;     // получаем путь располажения файла БД
+
+            // Проверяем наличие файла БД по указанному пути 
+            //if (!File.Exists(pathDB))
+            //{
+            //    MessageBox.Show("Файл базы данных не найден. Пожалуйста, укажите новый путь к базе данных.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            //    return;
+            //}
 
             //PathLoad();
+
+            // Проверка наличия файла базы данных перед загрузкой данных
+            //if (CheckDatabaseFile())
+            //{
+            //    LoadEvents();   // Загрузка данных при создании ViewModel
+            //}
+                       
         }
 
        
@@ -47,7 +58,7 @@ namespace FlowEvents
         // Метод для загрузки данных из базы
         private void LoadEvents()
         {
-            appSettings = AppSettings.Load();
+            appSettings = AppSettings.GetSettingsApp();
             
             // Получаем данные из базы
             var eventsFromDb = GetEvents();
@@ -59,10 +70,10 @@ namespace FlowEvents
             }
         }
 
-        private void PathLoad()
+        public void PathLoad()
         {
 
-            appSettings = AppSettings.Load(); // Загружаем настройки программы из файла при запуске программы
+            appSettings = AppSettings.GetSettingsApp(); // Загружаем настройки программы из файла при запуске программы
             string pathDB = appSettings.pathDB;
             
             if ( !CheckDB.CheckPathDB(pathDB)) 

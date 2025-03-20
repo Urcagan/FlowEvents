@@ -39,7 +39,7 @@ namespace FlowEvents
         private static string settingsPath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "settings.xml"); // Файл настроек
         
         // Метод для загрузки настроек
-        public static AppSettings Load()
+        public static AppSettings GetSettingsApp()
         {
             try
             {
@@ -48,7 +48,7 @@ namespace FlowEvents
                 {
                     // Если нет, создаем новый файл настроек с параметрами по умолчанию
                     var defaultSettings = new AppSettings();
-                    defaultSettings.Save();  // Сохранение нового файла
+                    defaultSettings.SaveSettingsApp();  // Сохранение нового файла
                     return defaultSettings;
                 }
                 // Загружаем существующий файл настроек
@@ -67,7 +67,7 @@ namespace FlowEvents
         }
 
         //Метод для сохранения настроек
-        public void Save()
+        public void SaveSettingsApp()
         {
             try
             {

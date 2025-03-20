@@ -39,13 +39,27 @@ namespace FlowEvents
         {
             InitializeComponent();
             DataContext = new MainViewModel();
+
+            // Подписываемся на событие загрузки окна
+            this.Loaded += MainWindow_Loaded;
         }
 
-        
+
+
+        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            // Получаем ViewModel из DataContext
+            if (DataContext is MainViewModel viewModel)
+            {
+                // Вызываем метод загрузки и проверки данных
+                viewModel.PathLoad();
+            }
+        }
+
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             // Загружаем настройки при запуске программы
-            appSettings = AppSettings.Load();
+            appSettings = AppSettings.GetSettingsApp();
 
             //Необходимо проверить есть ли файл базы данных по указанному пути
 
