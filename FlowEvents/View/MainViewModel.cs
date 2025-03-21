@@ -18,30 +18,12 @@ namespace FlowEvents
         // Коллекция для хранения данных (автоматически уведомляет об изменениях)
         public ObservableCollection<EventsModel> Events { get; set; } = new ObservableCollection<EventsModel>();
 
-        public RelayCommand SettingOpenWindow {  get; }
+        public RelayCommand SettingOpenWindow { get; }
 
 
         public MainViewModel()
         {
             SettingOpenWindow = new RelayCommand(SettingsMenuItem);
-            // загрузка настроек программы из файла конфигурации
-            //           appSettings = AppSettings.GetSettingsApp(); // Загружаем настройки программы из файла при запуске программы
-            //           string pathDB = appSettings.pathDB;     // получаем путь располажения файла БД
-
-            // Проверяем наличие файла БД по указанному пути 
-            //if (!File.Exists(pathDB))
-            //{
-            //    MessageBox.Show("Файл базы данных не найден. Пожалуйста, укажите новый путь к базе данных.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-            //    return;
-            //}
-
-            //PathLoad();
-
-            // Проверка наличия файла базы данных перед загрузкой данных
-            //if (CheckDatabaseFile())
-            //{
-            //    LoadEvents();   // Загрузка данных при создании ViewModel
-            //}
 
         }
 
@@ -54,20 +36,10 @@ namespace FlowEvents
                 // Получаем данные из дочернего окна
                 //string message = childWindow.ResultMessage;
                 IsCheckDB = settingsWindow.stateDB;
-                // Execute(); // Вызываем метод который обновляет данные 
             }
         }
 
-        private bool CheckDatabaseFile()
-        {
-            if (!File.Exists(Global_Var.pathDB))
-            {
-                MessageBox.Show("Файл базы данных не найден. Пожалуйста, укажите новый путь к базе данных.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-                return false;
-            }
-            return true;
-        }
-
+ 
 
         // Метод для загрузки данных из базы
         private void LoadEvents()
@@ -84,46 +56,39 @@ namespace FlowEvents
             }
         }
 
-        public void DBset()
+
+
+        public void StartUP()
         {
             appSettings = AppSettings.GetSettingsApp(); // Загружаем настройки программы из файла при запуске программы
-            string pathDB = appSettings.pathDB;
-            if (!CheckDB.CheckPathToFile(pathDB))
-                return;  // Проверяем путь к базе данных и выходим, если он неверен
-        }
 
-
-        public void PathLoad()
-        {
-            appSettings = AppSettings.GetSettingsApp(); // Загружаем настройки программы из файла при запуске программы
             string pathDB = appSettings.pathDB;
 
-            if (!CheckDB.CheckPathToFile(pathDB))
-            {
-                Global_Var.pathDB = pathDB; //Записываем в глобальную переменную
 
-                databaseHelper = new DatabaseHelper(Global_Var.pathDB);    // Инициализация копии класса работы с БД
-                return;  // Проверяем путь к базе данных и выходим, если он неверен
-            }
+            if (CheckDB.CheckDatabaseFileVer(pathDB, appSettings.VerDB)) return;
 
 
+            //if (!CheckDB.CheckPathToFile(pathDB))
+            //{
+            //    return;  // Проверяем путь к базе данных и выходим, если он неверен
+            //}
+
+            ////Рассмотреть возможно надо удалить.
+            //Global_Var.pathDB = pathDB; //Записываем в глобальную переменную
+            //databaseHelper = new DatabaseHelper(Global_Var.pathDB);    // Инициализация копии класса работы с БД
+
+            //_connectionString = $"Data Source={Global_Var.pathDB};Version=3;";
 
 
-            //НЕОБХОДИМО ПЕРЕДЕЛАТЬ ДЛЯ ВЫВОДА ПУТИ В ОКНО
-            //lblPath.Text = "Путь: " + Global_Var.pathDB; //Global_Var.pathDB;
+            //// Проверка версии базы данных
+            //if (!CheckDB.IsDatabaseVersionCorrect(appSettings.VerDB, _connectionString))  //проверка версии базы данных
+            //{
+            //    MessageBox.Show($"Версия БД не соответствует требуемой версии {appSettings.VerDB}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            //    return;
+            //}
 
-
-            // Проверка базы данных на исправность
-            if (CheckDB.ALLCheckDB(databaseHelper, Global_Var.pathDB, "Config", appSettings.VerDB))
-            {
-                // Создаем и показываем окно настроек
-                //SettingsWindow settingsWindow = new SettingsWindow( databaseHelper );
-                //settingsWindow.ShowDialog(); // Открываем окно как модальное
-                IsCheckDB = true;
-            }
-
-            //Execute();
-
+            LoadEvents();
+                 
         }
 
 

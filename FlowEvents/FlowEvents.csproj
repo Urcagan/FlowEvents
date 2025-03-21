@@ -65,7 +65,6 @@
     <Compile Include="EventView.xaml.cs">
       <DependentUpon>EventView.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Services\DatabaseService.cs" />
     <Compile Include="Global_Var.cs" />
     <Compile Include="View\MainViewModel.cs" />
     <Compile Include="Models\CategoryModel.cs" />

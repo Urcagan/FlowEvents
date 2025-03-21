@@ -17,7 +17,6 @@
                 <MenuItem Header="Категории" Click ="Category_Click"></MenuItem>
                 <MenuItem Header="Пользователи"></MenuItem>
                 <Separator />
-         <!--       <MenuItem Header="Настройка" Click="SettingsMenuItem_Click"></MenuItem>  -->
                 <MenuItem Header="Настройка" Command="{Binding SettingOpenWindow}"></MenuItem>
                 <MenuItem Header="О программе"></MenuItem>
                 <Separator />

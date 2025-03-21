@@ -13,6 +13,7 @@ checkDB()           - Основной цикл условий проверки 
 using Microsoft.Win32;
 using System.IO;
 using System.Windows;
+using System.Data.SQLite;
 
 namespace FlowEvents
 {
@@ -88,6 +89,69 @@ namespace FlowEvents
                 return true;
             }
         }
+
+
+        public static bool CheckDatabaseFileVer(string pathDB, string VerDB)
+        {
+
+            if (!CheckDB.CheckPathToFile(pathDB))
+            {
+                return false;   // Проверяем путь к базе данных и выходим, если он неверен
+            }
+
+            string _connectionString = $"Data Source={Global_Var.pathDB};Version=3;";
+
+
+            // Проверка версии базы данных
+            if (!CheckDB.IsDatabaseVersionCorrect(VerDB, _connectionString))  //проверка версии базы данных
+            {
+                MessageBox.Show($"Версия БД не соответствует требуемой версии {VerDB}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                return false;
+            }
+            return true;
+        }
+
+
+        /// <summary>
+        /// Проверка на соответствие версии базы данных, версии приложения 
+        /// </summary>
+        /// <param name="verDB"> Версия программы </param>
+        /// <returns> true/false </returns>
+        public static bool IsDatabaseVersionCorrect(string verDB, string connectionString)
+        {
+            // Формируем SQL-запрос для выбора строки, где Parameter = "Version"
+            string query = $"SELECT Value FROM Config WHERE Parameter = 'VersionDB'";
+
+            try
+            {
+                using (var connection = new SQLiteConnection(connectionString))
+                {
+                    connection.Open();
+                    var command = new SQLiteCommand(query, connection);
+                    // Получение результата запроса
+                    object result = command.ExecuteScalar();
+
+                    // Проверка, что результат не пустой
+                    if (result != null)
+                    {
+                        string dbVersion = result.ToString();
+                        // Сравнение полученного значения с переменной
+                        return (dbVersion == verDB);
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+            }
+            catch (System.Exception)
+            {
+
+                throw;
+            }
+            
+        }
+
 
         // Проверка наличия пути и файла базы данных
         public static bool CheckPathToFile(string pathDataBase) // Проверка файла БД

@@ -52,41 +52,10 @@ namespace FlowEvents
             if (DataContext is MainViewModel viewModel)
             {
                 // Вызываем метод загрузки и проверки данных
-                viewModel.PathLoad();
+                viewModel.StartUP();
             }
         }
 
-        //private void Window_Loaded(object sender, RoutedEventArgs e)
-        //{
-        //    // Загружаем настройки при запуске программы
-        //    appSettings = AppSettings.GetSettingsApp();
-
-        //    //Необходимо проверить есть ли файл базы данных по указанному пути
-
-        //    // Проверяем, существует ли база данных
-        //    if (!CheckDB.CheckDatabaseFile(appSettings))
-        //    {
-        //        Application.Current.Shutdown(); // Закрываем приложение, если файл не выбран
-        //    }
-        //    else
-        //    {
-        //        Global_Var.pathDB = appSettings.pathDB;
-
-        //        databaseHelper = new DatabaseHelper(Global_Var.pathDB);    // Инициализация копии класса работы с БД
-
-        //        lblPath.Text = "Путь: " + Global_Var.pathDB; //Global_Var.pathDB;
-
-        //        bool stateDB;   // переменная состояния проверки базы данных
-        //                        // Проверка базы данных на исправность
-        //        if (CheckDB.ALLCheckDB(databaseHelper, Global_Var.pathDB, "Config", appSettings.VerDB))
-        //        {
-        //            // Создаем и показываем окно настроек
-        //            //SettingsWindow settingsWindow = new SettingsWindow( databaseHelper );
-        //            //settingsWindow.ShowDialog(); // Открываем окно как модальное
-        //            IsCheckDB = true;
-        //        }
-        //    }
-        //}
 
         private BindingList<EventsModel> _eventsData;
 
@@ -99,20 +68,6 @@ namespace FlowEvents
             {
 
             }
-        }
-
-        private void SettingsMenuItem_Click(object sender, RoutedEventArgs e)
-        {
-            //// Создаем и показываем окно настроек
-            //SettingsWindow settingsWindow = new SettingsWindow(this);
-            //if (settingsWindow.ShowDialog() == true) // Открываем окно как модальное
-            //{
-            //    // Получаем данные из дочернего окна
-            //    //string message = childWindow.ResultMessage;
-            //    IsCheckDB = settingsWindow.stateDB;
-            //   // Execute(); // Вызываем метод который обновляет данные 
-            //}
-           
         }
 
 
