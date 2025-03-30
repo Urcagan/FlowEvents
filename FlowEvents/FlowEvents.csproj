@@ -62,14 +62,19 @@
       <DependentUpon>CategoryView.xaml</DependentUpon>
     </Compile>
     <Compile Include="Category\CategoryViewModel.cs" />
-    <Compile Include="EventView.xaml.cs">
-      <DependentUpon>EventView.xaml</DependentUpon>
+    <Compile Include="EventAdd\EventAddViewModel.cs" />
+    <Compile Include="EventAdd\EventAddWindow.xaml.cs">
+      <DependentUpon>EventAddWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="EventEditViewModel.cs" />
+    <Compile Include="EventEditWindow.xaml.cs">
+      <DependentUpon>EventEditWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Global_Var.cs" />
-    <Compile Include="View\MainViewModel.cs" />
-    <Compile Include="Models\CategoryModel.cs" />
-    <Compile Include="Models\EventsModel.cs" />
-    <Compile Include="Models\UnitModel.cs" />
+    <Compile Include="Main\MainViewModel.cs" />
+    <Compile Include="Category\CategoryModel.cs" />
+    <Compile Include="Main\EventsModel.cs" />
+    <Compile Include="Units\UnitModel.cs" />
     <Compile Include="RelayCommand.cs" />
     <Compile Include="SettingsWindow.xaml.cs">
       <DependentUpon>SettingsWindow.xaml</DependentUpon>
@@ -83,11 +88,15 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="EventView.xaml">
+    <Page Include="EventAdd\EventAddWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="MainWindow.xaml">
+    <Page Include="EventEditWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Main\MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
@@ -98,7 +107,7 @@
     <Compile Include="DataBase\CheckDB.cs" />
     <Compile Include="DataBase\DatabaseHelper.cs" />
     <Compile Include="SettingsManager.cs" />
-    <Compile Include="MainWindow.xaml.cs">
+    <Compile Include="Main\MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
@@ -156,6 +165,10 @@
     <PackageReference Include="System.Data.SQLite">
       <Version>1.0.118.0</Version>
     </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Models\" />
+    <Folder Include="View\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

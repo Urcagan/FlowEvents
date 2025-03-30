@@ -17,8 +17,28 @@ namespace FlowEvents
 {
     public class CategoryViewModel : INotifyPropertyChanged
     {
-        private string _connectionString = $"Data Source={Global_Var.pathDB};Version=3;";
-        //private string _connectionString = "Data Source=G:\\VS Dev\\FlowEvents\\FlowEvents.db;Version=3;";
+
+        private MainViewModel _mainViewModel;
+        public MainViewModel MainViewModel
+        {
+            get { return _mainViewModel; }
+            set
+            {
+                _mainViewModel = value;
+            }
+        }
+        private string _connectionString;
+        public string ConnectionString
+        {
+            get { return _connectionString; }
+            set 
+            {
+                _connectionString = value;
+                // Загрузка данных из базы
+                LoadCategories();
+            }
+        }
+        //private string _connectionString = "Data Source=G:\\VS Dev\\FlowEvents\\FlowEvents.db;Version=3;foreign keys=true;";
 
         // Коллекция для хранения категорий (источник данных (коллекцию))
         public ObservableCollection<CategoryModel> Categories { get; set; } = new ObservableCollection<CategoryModel>();
@@ -30,8 +50,9 @@ namespace FlowEvents
         public RelayCommand DeleteCommand { get; }
         public RelayCommand UpdateCommand { get; }
 
-        public CategoryViewModel()
+        public CategoryViewModel(MainViewModel mainViewModel)
         {
+            MainViewModel = mainViewModel; 
             // Инициализация команд
             AddCommand = new RelayCommand(AddCategory);
             CancelCommand = new RelayCommand(CancelEdit);
@@ -44,9 +65,8 @@ namespace FlowEvents
             //  Func<object, bool>(опционально) — метод, который проверяет, можно ли выполнить команду.
 
 
-
-            // Загрузка данных из базы
-            LoadCategories();
+            ConnectionString = _mainViewModel._connectionString; // $"Data Source={_mainViewModel.appSettings.pathDB};Version=3;foreign keys=true;";
+           
             IsAddButtonVisible = true; // Показать кнопку "Добавить"
             IsDeleteButtonVisible = false; // Скрыть кнопку "Удалить"
         }
@@ -194,20 +214,41 @@ namespace FlowEvents
         private void DeleteCategory(object parameter)
         {
             if (SelectedCategory == null) return;
+
+            var confirm = MessageBox.Show(
+                $"Вы уверены, что хотите удалить категорию {SelectedCategory.Name} ?",
+                "Подтверждение",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+            if (confirm != MessageBoxResult.Yes) return;
+
             try
             {
                 using (var connection = new SQLiteConnection(_connectionString))
                 {
                     connection.Open();
+
                     var command = new SQLiteCommand("DELETE FROM Category WHERE Id = @Id", connection);
                     command.Parameters.AddWithValue("@Id", SelectedCategory.Id);
                     command.ExecuteNonQuery();
                 }
                 Categories.Remove(SelectedCategory);
             }
+            catch(SQLiteException ex) when (ex.ResultCode == SQLiteErrorCode.Constraint)
+            {
+                // На случай, если FOREIGN_KEY сработал 
+                MessageBox.Show(
+                    "Невозможно удалить категорию: она используется в записях событий !",
+                    "Ошибка",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка данных: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show(
+                    $"Ошибка при удалении: {ex.Message}", "Ошибка", 
+                    MessageBoxButton.OK, 
+                    MessageBoxImage.Error);
             }
             CancelEdit(null); //Очищаем и закрываем поле редактирования
         }

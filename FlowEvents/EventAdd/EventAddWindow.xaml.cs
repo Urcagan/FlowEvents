@@ -17,11 +17,12 @@ namespace FlowEvents
     /// <summary>
     /// Логика взаимодействия для EventView.xaml
     /// </summary>
-    public partial class EventView : Window
+    public partial class EventAddWindow : Window
     {
-        public EventView()
+        public EventAddWindow( EventAddViewModel eventAddViewModel)
         {
             InitializeComponent();
+            DataContext = eventAddViewModel;
         }
     }
 }

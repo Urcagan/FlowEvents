@@ -19,12 +19,14 @@ namespace FlowEvents
     /// </summary>
     public partial class UnitsView : Window
     {
-        public UnitsView()
+        public UnitsView(UnitViewModel unitViewModel)
         {
             InitializeComponent();
 
             // настраивает окно для использованя UnitViewModel как DataContext.
-            DataContext = new UnitViewModel(); // Установите DataContext
+            //DataContext = new UnitViewModel(); // Установите DataContext
+            DataContext = unitViewModel;
         }
+
     }
 }

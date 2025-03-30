@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Windows;
 using System.IO;
+using System.Windows.Shapes;
 
 namespace FlowEvents
 {
@@ -13,23 +14,24 @@ namespace FlowEvents
     {
         private readonly MainViewModel _MainViewModel;
 
+        private string _pathDB;
+        private string newPathDB;
+
         public SettingsWindow(MainViewModel mainViewModel)
         {
             InitializeComponent();
             _MainViewModel = mainViewModel;
-
+            _pathDB = _MainViewModel.appSettings.pathDB;
             // Загружаем текущий путь к базе данных в текстовое поле
-           // FilePathTextBox.Text = -----------------
+           // FilePathTextBox.Text = _pathDB;
         }
 
         public bool stateDB { get; private set; }
-        
-        
+
+
         // Обработчик события для кнопки "Выбрать файл"
         private void BrowseButton_Click(object sender, RoutedEventArgs e)
         {
-            AppSettings appSettings = new AppSettings();
-
             // Открываем диалог выбора файла
             OpenFileDialog openFileDialog = new OpenFileDialog
             {
@@ -40,47 +42,47 @@ namespace FlowEvents
             if (openFileDialog.ShowDialog() == true)
             {
                 // Обновляем путь в настройках
-                appSettings.pathDB = openFileDialog.FileName;
-                Global_Var.pathDB = appSettings.pathDB;
+                newPathDB = openFileDialog.FileName;
 
-                // изменить путь к базе данных и обновить соединение с новым путем.
-                DatabaseHelper.ChangeDatabasePath(Global_Var.pathDB);
+                if (!CheckDB.CheckPathToFileDB(newPathDB)) return ;   // Проверяем путь к базе данных и выходим, если он неверен
+                                
+                string _connectionString = $"Data Source={newPathDB};Version=3;foreign keys=true;"; //Формируем сторку подключения к БД
 
-                if (CheckDB.ALLCheckDB(_MainViewModel.databaseHelper, Global_Var.pathDB, "Config", appSettings.VerDB))
+                // Проверка версии базы данных
+                if (!CheckDB.IsDatabaseVersionCorrect(_MainViewModel.appSettings.VerDB, _connectionString))  //проверка версии базы данных
                 {
-                    appSettings.SaveSettingsApp(); // Сохраняем обновленные настройки пути к БД
-                    FilePathTextBox.Text = Global_Var.pathDB; 
-                    MessageBox.Show("Новый путь к базе данных сохранен.", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
-                    stateDB =true;
-                }
-                else
-                {
-                    MessageBox.Show("База данных не соответствует необходимым требованиям. Выберите другой файл!", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
-                    stateDB = false; // Файл выбран и путь обновлен
+                    MessageBox.Show($"Версия БД не соответствует требуемой версии {_MainViewModel.appSettings.VerDB}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return ;
                 }
 
+                // if (!CheckDB.CheckDatabaseFileVer(_pathDB, _MainViewModel.appSettings.VerDB)) return; //Проверяем версию БД
+
+                _pathDB = newPathDB;
+                _MainViewModel.appSettings.pathDB = _pathDB;
+                FilePathTextBox.Text = _pathDB;
+                _MainViewModel.FilePath = _pathDB;
             }
             else
             {
                 MessageBox.Show("Программа не может продолжить без базы данных!", "Критическая ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
 
                 stateDB = false; // Файл не выбран
-                        // Application.Current.Shutdown(); // Закрываем приложение
+                                 // Application.Current.Shutdown(); // Закрываем приложение
             }
-
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            FilePathTextBox.Text = Global_Var.pathDB;
+            FilePathTextBox.Text = _pathDB;
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
+            _MainViewModel.appSettings.SaveSettingsApp();
             this.DialogResult = true;
 
-            // Вызываем метод родительского окна который обновляет данные 
-           // _MainWindow.Execute();
+            _MainViewModel.UpdateConnectionString(_pathDB);
+            _MainViewModel.LoadEvents();
         }
     }
 }

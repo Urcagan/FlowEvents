@@ -21,7 +21,7 @@ namespace FlowEvents
     public class CheckDB
     {
 
-        private string _connectionString = $"Data Source={Global_Var.pathDB};Version=3;";
+        //private string _connectionString = $"Data Source={Global_Var.pathDB};Version=3;";
 
         // Проверка наличия файла БД
         public static bool CheckDatabaseFile(AppSettings appSettings)
@@ -94,13 +94,12 @@ namespace FlowEvents
         public static bool CheckDatabaseFileVer(string pathDB, string VerDB)
         {
 
-            if (!CheckDB.CheckPathToFile(pathDB))
+            if (!CheckDB.CheckPathToFileDB(pathDB))
             {
                 return false;   // Проверяем путь к базе данных и выходим, если он неверен
             }
 
-            string _connectionString = $"Data Source={Global_Var.pathDB};Version=3;";
-
+            string _connectionString = $"Data Source={pathDB};Version=3;foreign keys=true;"; //Формируем сторку подключения к БД
 
             // Проверка версии базы данных
             if (!CheckDB.IsDatabaseVersionCorrect(VerDB, _connectionString))  //проверка версии базы данных
@@ -154,7 +153,7 @@ namespace FlowEvents
 
 
         // Проверка наличия пути и файла базы данных
-        public static bool CheckPathToFile(string pathDataBase) // Проверка файла БД
+        public static bool CheckPathToFileDB(string pathDataBase) // Проверка файла БД
         {
             if (IsPathValid(pathDataBase))
             {

@@ -17,7 +17,29 @@ namespace FlowEvents
 {
     public class UnitViewModel : INotifyPropertyChanged
     {
-        private string _connectionString = $"Data Source={Global_Var.pathDB};Version=3;";
+        #region
+        private string _connectionString;
+        public string ConnectionString
+        {
+            get { return _connectionString; }
+            set
+            {
+                _connectionString = value;
+               // OnPropertyChanged(nameof(ConnectionString));
+                GetUnits();
+            }
+        }
+
+        private MainViewModel _mainViewModel;
+        public MainViewModel MainViewModel
+        {
+            get { return _mainViewModel; }
+            set 
+            { 
+                _mainViewModel = value;
+                
+            }
+        }
 
         // Коллекция для хранения категорий (источник данных (коллекцию))
         public ObservableCollection<UnitModel> Units { get; set; } = new ObservableCollection<UnitModel>();
@@ -29,9 +51,11 @@ namespace FlowEvents
         public RelayCommand DeleteCommand { get; }
         public RelayCommand UpdateCommand { get; }
 
+        #endregion
 
-        public UnitViewModel()
+        public UnitViewModel(MainViewModel mainViewModel)
         {
+            _mainViewModel = mainViewModel;
             // Инициализация команд
             AddCommand = new RelayCommand(AddUnit);
             CancelCommand = new RelayCommand(CancelEdit);
@@ -40,13 +64,11 @@ namespace FlowEvents
             UpdateCommand = new RelayCommand(UpdateUnit, CanEditOrDelete);
 
             // Загрузка данных из базы
-            GetUnits();
+            ConnectionString = _mainViewModel._connectionString; //$"Data Source={_mainViewModel.appSettings.pathDB};Version=3;";
+            //GetUnits();
             IsAddButtonVisible = true; // Показать кнопку "Добавить"
             IsDeleteButtonVisible = false; // Скрыть кнопку "Удалить"
-
-
         }
-
 
 
         // Метод для загрузки данных из таблицы Units
@@ -162,7 +184,7 @@ namespace FlowEvents
                 ShowError("Название обязательно для заполнения!");
                 return;
             }
-            
+
             // Проверка на уникальность
             //if (!IsUnitUnique(Unit))
             //{
@@ -209,6 +231,13 @@ namespace FlowEvents
         {
             if (SelectedUnit == null) return;
 
+            var confirm = MessageBox.Show(
+                $"Вы уверены, что хотите удалить объект {SelectedUnit.Unit} ?",
+                "Подтверждение",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+            if (confirm != MessageBoxResult.Yes) return;
+
             try
             {
                 using (var connection = new SQLiteConnection(_connectionString))
@@ -221,15 +250,21 @@ namespace FlowEvents
 
                 Units.Remove(SelectedUnit);
             }
-            catch (SQLiteException ex)
+            catch (SQLiteException ex) when (ex.ResultCode == SQLiteErrorCode.Constraint)
             {
-                // Обработка ошибок, связанных с SQLite
-                MessageBox.Show($"Ошибка базы данных: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                // На случай, если FOREIGN_KEY сработал 
+                MessageBox.Show(
+                    "Невозможно удалить объект: он используется в записях событий !",
+                    "Ошибка",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
             }
             catch (Exception ex)
             {
-                // Обработка всех остальных ошибок
-                MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show(
+                    $"Ошибка при удалении: {ex.Message}", "Ошибка",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
             }
             CancelEdit(null); //Очищаем и закрываем поле редактирования
         }
@@ -478,5 +513,7 @@ namespace FlowEvents
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
+
+
     }
 }
