@@ -62,6 +62,8 @@
       <DependentUpon>CategoryView.xaml</DependentUpon>
     </Compile>
     <Compile Include="Category\CategoryViewModel.cs" />
+    <Compile Include="RoleService.cs" />
+    <Compile Include="Users\DomainHelper.cs" />
     <Compile Include="EventAdd\EventAddViewModel.cs" />
     <Compile Include="EventAdd\EventAddWindow.xaml.cs">
       <DependentUpon>EventAddWindow.xaml</DependentUpon>
@@ -71,9 +73,15 @@
       <DependentUpon>EventEditWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Global_Var.cs" />
+    <Compile Include="LoginWindow.xaml.cs">
+      <DependentUpon>LoginWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Main\MainViewModel.cs" />
     <Compile Include="Category\CategoryModel.cs" />
     <Compile Include="Main\EventsModel.cs" />
+    <Compile Include="Users\FindUserWindow.xaml.cs">
+      <DependentUpon>FindUserWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Units\UnitModel.cs" />
     <Compile Include="RelayCommand.cs" />
     <Compile Include="SettingsWindow.xaml.cs">
@@ -84,6 +92,10 @@
       <DependentUpon>UnitsView.xaml</DependentUpon>
     </Compile>
     <Compile Include="Units\UnitViewModel.cs" />
+    <Compile Include="Users\UserManager.xaml.cs">
+      <DependentUpon>UserManager.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Users\UserManagerModel.cs" />
     <Page Include="Category\CategoryView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -93,6 +105,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="EventEditWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="LoginWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -111,11 +127,19 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="Users\FindUserWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="SettingsWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Units\UnitsView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Users\UserManager.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -148,7 +172,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection">
-      <Version>9.0.3</Version>
+      <Version>9.0.5</Version>
     </PackageReference>
     <PackageReference Include="MvvmLightLibs">
       <Version>5.4.1.1</Version>
@@ -163,7 +187,10 @@
       <Version>2.0.1</Version>
     </PackageReference>
     <PackageReference Include="System.Data.SQLite">
-      <Version>1.0.118.0</Version>
+      <Version>1.0.119</Version>
+    </PackageReference>
+    <PackageReference Include="System.DirectoryServices.AccountManagement">
+      <Version>9.0.5</Version>
     </PackageReference>
   </ItemGroup>
   <ItemGroup>

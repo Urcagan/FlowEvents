@@ -32,7 +32,9 @@
                           
                           IsEnabled="{Binding IsCategoryButtonVisible}"/>
                 <Separator/>
-                <MenuItem Header="Пользователи"></MenuItem>
+                <MenuItem Header="Пользователи" Command="{Binding UserManagerWindow}">
+                    
+                </MenuItem>
                 <Separator />
                 <MenuItem Header="Настройка" Command="{Binding SettingOpenWindow}"/>
                 <MenuItem Header="О программе"></MenuItem>

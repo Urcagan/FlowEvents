@@ -1,0 +1,18 @@
+﻿<Window x:Class="FlowEvents.LoginWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:FlowEvents"
+        mc:Ignorable="d"
+        Title="Авторизация" Height="200" Width="400"
+        WindowStartupLocation="CenterScreen">
+    <Grid>
+        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+            <TextBlock Text="Вы вошли как:" Margin="0,0,0,10"/>
+            <TextBlock x:Name="tbCurrentUser" FontWeight="Bold" Margin="0,0,0,20"/>
+            <Button x:Name="btnLogin" Content="Продолжить" Width="100" />
+            <TextBlock x:Name="tbError" Foreground="Red" Margin="0,10,0,0" Visibility="Collapsed"/>
+        </StackPanel>
+    </Grid>
+</Window>

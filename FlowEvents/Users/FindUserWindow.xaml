@@ -1,0 +1,50 @@
+﻿<Window x:Class="FlowEvents.Properties.FindUserWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:FlowEvents.Properties"
+        mc:Ignorable="d"
+        Title="Поиск пользователя в домене" Height="450" Width="600"
+        WindowStartupLocation="CenterScreen">
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Поисковая строка -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
+            <TextBox x:Name="txtSearch" Width="200" Margin="0,0,10,0"/>
+            <Button Content="Найти"  Width="80"/>
+        </StackPanel>
+
+        <!-- Фильтры поиска -->
+        <GroupBox Grid.Row="1" Header="Фильтры поиска" Margin="0,0,0,10">
+            <StackPanel Orientation="Horizontal">
+                <CheckBox x:Name="chkByName" Content="По имени" IsChecked="True" Margin="5"/>
+                <CheckBox x:Name="chkByLogin" Content="По логину" IsChecked="True" Margin="5"/>
+                <CheckBox x:Name="chkByEmail" Content="По email" IsChecked="True" Margin="5"/>
+            </StackPanel>
+        </GroupBox>
+
+        <!-- Результаты поиска -->
+        <DataGrid x:Name="dgResults" Grid.Row="2" AutoGenerateColumns="False" 
+                  CanUserAddRows="False" SelectionMode="Single">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Логин" Binding="{Binding Username}" Width="120"/>
+                <DataGridTextColumn Header="Имя" Binding="{Binding DisplayName}" Width="200"/>
+                <DataGridTextColumn Header="Email" Binding="{Binding Email}" Width="200"/>
+                <DataGridTextColumn Header="Домен" Binding="{Binding DomainName}" Width="100"/>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <!-- Кнопки управления -->
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+            <Button x:Name="btnAdd" Content="Добавить выбранного" Width="150" Margin="0,0,10,0" />
+            <Button Content="Закрыть" Width="80" Click="BtnClose_Click" />
+        </StackPanel>
+    </Grid>
+</Window>

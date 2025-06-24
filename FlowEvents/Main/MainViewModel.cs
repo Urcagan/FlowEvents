@@ -35,7 +35,7 @@ namespace FlowEvents
         public RelayCommand EventAddWindow { get; }
         public RelayCommand EditEventCommand { get; } // команда для редактирования
         public RelayCommand DeleteEventCommand { get; }
-
+        public RelayCommand UserManagerWindow { get; }
 
         //===============================================================================================================================================
 
@@ -47,6 +47,7 @@ namespace FlowEvents
             EventAddWindow = new RelayCommand(EventAddBtb);
             EditEventCommand = new RelayCommand(EditEvent);
             DeleteEventCommand = new RelayCommand(Delete);
+            UserManagerWindow = new RelayCommand(UserManagerMenuItem);
 
             appSettings = AppSettings.GetSettingsApp(); // Загружаем настройки программы из файла при запуске программы
 
@@ -182,6 +183,14 @@ namespace FlowEvents
             // Создаем и показываем окно настроек
             SettingsWindow settingsWindow = new SettingsWindow(this);
             if (settingsWindow.ShowDialog() == true) { }
+        }
+
+        private void UserManagerMenuItem(object parameter)
+        {
+            var userManagerModel = new UserManagerModel(this);
+            // Создаем и показываем окно пользователей
+            UserManager userManager = new UserManager( userManagerModel);
+            if (userManager.ShowDialog() == true) { }
         }
 
 
