@@ -118,13 +118,14 @@ namespace FlowEvents
             using (var connection = new SQLiteConnection(_connectionString))
             {
                 connection.Open();
-                string query = "SELECT id, DateEvent, Unit, Category, Description, Action, DateCreate, Creator  FROM vwEvents";
+                string query = "SELECT id, DateEvent, Unit, OilRefining, Category, Description, Action, DateCreate, Creator  FROM vwEvents";
                 var command = new SQLiteCommand(query, connection);
                 using (var reader = command.ExecuteReader())
                 {
                     int idIndex = reader.GetOrdinal("id");
                     int dateIndex = reader.GetOrdinal("DateEvent");
                     int unitIndex = reader.GetOrdinal("Unit");
+                    int refiningIndex = reader.GetOrdinal("OilRefining");
                     int categotyIndex = reader.GetOrdinal("Category");
                     int descriptionIndex = reader.GetOrdinal("Description");
                     int actionIndex = reader.GetOrdinal("Action");
@@ -138,6 +139,7 @@ namespace FlowEvents
                             Id = reader.GetInt32(idIndex),
                             DateEventString = reader.GetString(dateIndex),
                             Unit = reader.GetString(unitIndex),
+                            OilRefining = reader.GetString(refiningIndex),
                             Category = reader.GetString(categotyIndex),
                             Description = reader.IsDBNull(descriptionIndex) ? null : reader.GetString(descriptionIndex),
                             Action = reader.IsDBNull(actionIndex) ? null : reader.GetString(actionIndex),

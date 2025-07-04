@@ -28,6 +28,11 @@
                 SelectedDate="{Binding SelectedDateEvent, Mode =TwoWay, StringFormat={}{0:dd.MM.yyyy}}"
                 Width ="120"
                 Margin="10"/>
+            <TextBox x:Name="TextOilRefining"
+                Text="{Binding Refining, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"    
+                Height="22"
+                Width="80"/>
+            
             <ComboBox 
                 x:Name="UnitComboBox"
                 Style="{StaticResource RequiredComboBox}"
@@ -63,13 +68,13 @@
                 Grid.Column="0"
                 Grid.Row="0"
                 HorizontalAlignment="Center"
-                Text="Описание событи"/>
+                Text="Событие"/>
 
              <TextBlock 
                 Grid.Column="2"
                 Grid.Row="0"
                 HorizontalAlignment="Center"
-                Text="Компенсирующие мероприятия"/>
+                Text="Мероприятие, пояснение"/>
             
             <TextBox Grid.Column="0"
                      Grid.Row="1"

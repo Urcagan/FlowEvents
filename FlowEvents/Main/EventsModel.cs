@@ -34,7 +34,7 @@ namespace FlowEvents
                 }
             }
         }
-
+        public string OilRefining {  get; set; }   
         public string Unit {  get; set; }
         public string Category { get; set; }
         public string Description { get; set; }

@@ -104,39 +104,55 @@
                 </DataGrid.ContextMenu>
 
                 <DataGrid.Columns >
-                    <DataGridTextColumn Header="Дата события" Binding="{Binding DateEvent, StringFormat={}{0:dd.MM.yyyy} }" Width="100">
+                    <DataGridTextColumn Header="Дата" Binding="{Binding DateEvent, StringFormat={}{0:dd.MM.yyyy} }" Width="100">
                         <DataGridTextColumn.ElementStyle>
                             <Style BasedOn="{StaticResource TextBlockStyle}" TargetType="TextBlock"/>
                         </DataGridTextColumn.ElementStyle>
                     </DataGridTextColumn>
                     
-                    <DataGridTextColumn Header="Объект" Binding="{Binding Unit}" Width="150">
+                    <DataGridTextColumn Header="Установка" Binding="{Binding Unit}" Width="150">
                     <DataGridTextColumn.ElementStyle>
                         <Style BasedOn="{StaticResource TextBlockStyle}" TargetType="TextBlock"/>
                     </DataGridTextColumn.ElementStyle>
                     </DataGridTextColumn>
-                    
-                    <DataGridTextColumn Header="Событие" Binding="{Binding Category}" Width="150" >
+
+                    <DataGridTextColumn Header="Переработка" Binding="{Binding OilRefining}" Width="150">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style BasedOn="{StaticResource TextBlockStyle}" TargetType="TextBlock"/>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
+
+                    <DataGridTextColumn Header="Вид" Binding="{Binding Category}" Width="100" >
                     <DataGridTextColumn.ElementStyle>
                         <Style BasedOn="{StaticResource TextBlockStyle}" TargetType="TextBlock"/>
                     </DataGridTextColumn.ElementStyle>
                     </DataGridTextColumn>
 
 
-                    <DataGridTextColumn Header="Описание" Binding="{Binding Description}" Width="*">
+                    <DataGridTextColumn Header="Событие" Binding="{Binding Description}" Width="*">
                         <DataGridTextColumn.ElementStyle>
                             <Style BasedOn="{StaticResource WrappedTextBlockStyle}" TargetType="TextBlock"/>
                         </DataGridTextColumn.ElementStyle>
                     </DataGridTextColumn>
                     
-                    <DataGridTextColumn Header="Мероприятия" Binding="{Binding Action}" Width="*">
+                    <DataGridTextColumn Header="Примечание, пояснение" Binding="{Binding Action}" Width="*">
                         <DataGridTextColumn.ElementStyle>
                             <Style BasedOn="{StaticResource WrappedTextBlockStyle}" TargetType="TextBlock"/>
                         </DataGridTextColumn.ElementStyle>
                     </DataGridTextColumn>
-                    
-                    <DataGridTextColumn Header="Дата записи" Binding="{Binding DateCreate}" Width="120"/>
-                    
+
+                    <DataGridTextColumn Header="Документ"  Width="*">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style BasedOn="{StaticResource WrappedTextBlockStyle}" TargetType="TextBlock"/>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
+
+                    <DataGridTextColumn Header="Мониторинг + Диспетчерский отчет"  Width="150" >
+                        <DataGridTextColumn.ElementStyle>
+                            <Style BasedOn="{StaticResource WrappedTextBlockStyle}" TargetType="TextBlock"/>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
+
                     <DataGridTextColumn Header="Автор" Binding="{Binding Creator}" Width="130">
                     <DataGridTextColumn.ElementStyle>
                         <Style BasedOn="{StaticResource TextBlockStyle}" TargetType="TextBlock"/>

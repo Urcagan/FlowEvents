@@ -116,12 +116,12 @@ namespace FlowEvents
             Action = eventToEdit.Action;
 
             // Добавляем первый элемент в коллекцию для отображения первым в ComboВox
-            Units.Insert(0, new UnitModel { Id = -1, Unit = "Выбрать объект" });
+            Units.Insert(0, new UnitModel { Id = -1, Unit = "Выбр объекта" });
             GetUnitFromDatabase(); //Получаем элементы УСТАНОВКА из БД
             SelectedUnit = Units.FirstOrDefault(u => u.Unit == eventToEdit.Unit); //Units.FirstOrDefault();
             
 
-            Categories.Insert(0, new CategoryModel { Id = -1, Name = "Категория события" });
+            Categories.Insert(0, new CategoryModel { Id = -1, Name = "Выбор события" });
             GetCategoryFromDatabase();
             SelectedCategory = Categories.FirstOrDefault(c => c.Name == eventToEdit.Category);  //Categories.FirstOrDefault();
             

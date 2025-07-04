@@ -152,11 +152,11 @@ namespace FlowEvents
             CancelCommand = new RelayCommand(Cancel);
 
             // Добавляем первый элемент в коллекцию для отображения первым в ComboВox
-            Units.Insert(0, new UnitModel { Id = -1, Unit = "Выбрать объект" });
+            Units.Insert(0, new UnitModel { Id = -1, Unit = "Выбр объекта" });
             SelectedUnit = Units.FirstOrDefault();
             GetUnitFromDatabase(); //Получаем элементы УСТАНОВКА из БД
 
-            Categories.Insert(0, new CategoryModel { Id = -1, Name = "Категория события" });
+            Categories.Insert(0, new CategoryModel { Id = -1, Name = "Выбор события" });
             SelectedCategory = Categories.FirstOrDefault();
             GetCategoryFromDatabase();
 

@@ -30,21 +30,9 @@ namespace FlowEvents
             _model = userManagerModel;
             DataContext = _model;
 
-            // Инициализация списка ролей
-            var roles = new List<string> { "user", "admin", "manager" };
-            Resources.Add("RolesList", roles);
         }
 
-        private void BtnFindInDomain_Click(object sender, RoutedEventArgs e)
-        {
-            var findWindow = new FindUserWindow(_model.RolesTable);
-            findWindow.Owner = this;
-            findWindow.ShowDialog();
-
-            // Обновляем список после добавления пользователя
-           // LoadUsers();
-        }
-
+        
 
         //Обработка событий при работе со строкой в таблице пользователей 
         private void DgUsers_CellEditEnding(object sender, DataGridCellEditEndingEventArgs e)
@@ -69,5 +57,6 @@ namespace FlowEvents
                 }
             }
         }
+
     }
 }

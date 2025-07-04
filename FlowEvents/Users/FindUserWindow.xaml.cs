@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Runtime.Remoting.Contexts;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -13,43 +14,36 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 
-namespace FlowEvents.Properties
+namespace FlowEvents
 {
     /// <summary>
     /// Логика взаимодействия для FindUserWindow.xaml
     /// </summary>
     public partial class FindUserWindow : Window
     {
-        public DomainUser SelectedUser { get; private set; }
+        public DomainUserModel SelectedUser { get; private set; }
+        public UserManagerModel _userManagerModel { get; }
         public int SelectedRoleId { get; private set; }
 
-        private DataTable _rolesTable;
 
-        public FindUserWindow(DataTable rolesTable)
+            //public FindUserWindow(MainViewModel mainViewModel)
+        public FindUserWindow(UserManagerModel userManagerModel)
         {
             InitializeComponent();
-
-         //   _rolesTable = rolesTable;
-         //   RoleComboBox.ItemsSource = _rolesTable.DefaultView;
-          //  RoleComboBox.DisplayMemberPath = "RoleName";
-          //  RoleComboBox.SelectedValuePath = "RoleId";
+            //DataContext = new FindUserModel(mainViewModel);
+            _userManagerModel = userManagerModel;
+            DataContext = new FindUserModel(_userManagerModel.MainViewModel, userManagerModel);
         }
-        /*
-        private void SelectButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (UsersListBox.SelectedItem is DomainUser user &&
-                RoleComboBox.SelectedValue is int roleId)
-            {
-                SelectedUser = user;
-                SelectedRoleId = roleId;
-                DialogResult = true;
-                Close();
-            }
-        }
-        */
+        
         private void BtnClose_Click(object sender, RoutedEventArgs e)
         {
             this.Close();
+        }
+
+        
+        private void dgResults_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+
         }
     }
 }

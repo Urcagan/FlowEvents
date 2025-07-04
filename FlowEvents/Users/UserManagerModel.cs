@@ -1,21 +1,28 @@
 ﻿using FlowEvents.Models;
+using FlowEvents.Properties;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
 using System.Data.SQLite;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 
 namespace FlowEvents
 {
     public class UserManagerModel : INotifyPropertyChanged
     {
+
+        public RelayCommand OpenFindUserWindowsCommand { get; set; }
+        public RelayCommand DeletUserCommand { get; set; }
         #region
-        public event PropertyChangedEventHandler PropertyChanged;
+        //public event PropertyChangedEventHandler PropertyChanged;
 
         private string _connectionString;
         public string ConnectionString
@@ -30,6 +37,7 @@ namespace FlowEvents
 
         //Таблица пользователей
         private DataTable _usersTable;
+
         public DataTable UsersTable
         {
             get => _usersTable;
@@ -39,6 +47,10 @@ namespace FlowEvents
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(UsersTable)));
             }
         }
+
+
+        // Коллекция для хранения категорий (источник данных (коллекцию))
+        //public ObservableCollection<UnitModel> UsersTable { get; set; } = new ObservableCollection<UnitModel>();
 
         //Таблица ролей пользователей
         private DataTable _rolesTable;
@@ -69,12 +81,94 @@ namespace FlowEvents
         {
             _mainViewModel = mainViewModel;
 
+            OpenFindUserWindowsCommand = new RelayCommand(OpenFindUserWindows);
+            DeletUserCommand = new RelayCommand(DeletUser);
+
             // Загрузка данных из базы
             ConnectionString = _mainViewModel._connectionString;
             LoadRoles(); // Загружаем роли при создании модели
             GetUsers();  // Загружаем пользователей
         }
 
+        private void TestMes()
+        {
+            //MessageBox.Show($"TestMes {SelectedUser.UserName}");
+            MessageBox.Show($" {_selectedUser.Row}");
+        }
+        private void OpenFindUserWindows(object parameters)
+        {
+
+            //var findUserModel = new FindUserModel(_mainViewModel);
+            FindUserWindow findUserWindow = new FindUserWindow(this); // Создаем дочернее окно, передавая текущую модель (this)
+            findUserWindow.Closed += FindUserWindow_Closed; // Подписываемся на событие закрытия окна
+            if (findUserWindow.ShowDialog() == true) { }
+        }
+
+        // Объект для размещения данных выделенной строки. При выборе строки таблицы в переменную поместятся все значения выделенной строки
+        /**   private UserModel _selectedUser;
+           public UserModel SelectedUser
+           {
+               get => _selectedUser;
+               set
+               {
+                   _selectedUser = value;
+                   OnPropertyChanged();
+               }
+           }**/
+
+        private DataRowView _selectedUser;
+        public DataRowView SelectedUser
+        {
+            get => _selectedUser;
+            set
+            {
+                _selectedUser = value;
+                OnPropertyChanged();
+            }
+        }
+
+
+        // Удаление категории
+        private void DeletUser(object parameter)
+        {
+            if (SelectedUser == null) return;
+            int selectRowID = Convert.ToInt32(SelectedUser.Row["id"]);
+
+            var confirm = MessageBox.Show(
+                $"Вы уверены, что хотите удалить пользователя {SelectedUser.Row["DisplayName"]} ?",
+                "Подтверждение",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+            if (confirm != MessageBoxResult.Yes) { SelectedUser = null; return; }
+
+            try
+            {
+                using (var connection = new SQLiteConnection(_connectionString))
+                {
+                    connection.Open();
+                    var command = new SQLiteCommand("DELETE FROM Users WHERE Id = @Id", connection);
+                    command.Parameters.AddWithValue("@Id", selectRowID);
+                    command.ExecuteNonQuery();
+                }
+
+                // Units.Remove(SelectedUser);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Ошибка при удалении: {ex.Message}", "Ошибка",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+
+            SelectedUser = null;
+            GetUsers();
+        }
+
+        private void FindUserWindow_Closed(object sender, EventArgs e)
+        {
+            GetUsers();
+        }
 
         public void LoadRoles()
         {
@@ -99,8 +193,8 @@ namespace FlowEvents
             }
         }
 
-        // Метод для загрузки данных из таблицы Units
-        private void GetUsers()
+        // Метод для загрузки данных из таблицы Users
+        public void GetUsers()
         {
             try
             {
@@ -111,10 +205,11 @@ namespace FlowEvents
 
                     using (var adapter = new SQLiteDataAdapter(command))
                     {
+                        //var dataTable = new DataTable();
                         var dataTable = new DataTable();
                         adapter.Fill(dataTable);
                         UsersTable = dataTable;
-                    }                    
+                    }
                 }
             }
             catch (Exception ex)
@@ -123,7 +218,8 @@ namespace FlowEvents
             }
         }
 
-        public void AddDomainUser(DomainUser domainUser, int roleId)
+        /**
+        public void AddDomainUser(DomainUserModel domainUser, int roleId)
         {
             try
             {
@@ -151,6 +247,7 @@ namespace FlowEvents
                 MessageBox.Show($"Ошибка добавления пользователя: {ex.Message}");
             }
         }
+        **/
 
         public void UpdateUserAccess(string username, bool isAllowed)
         {
@@ -194,5 +291,123 @@ namespace FlowEvents
             }
         }
 
+        // Реализация INotifyPropertyChanged
+        // Событие, которое уведомляет об изменении свойства
+        public event PropertyChangedEventHandler PropertyChanged;
+        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
     }
+
+    public class UserModel : INotifyPropertyChanged
+    {
+
+        private int _id;
+        public int Id
+        {
+            get => _id;
+            set
+            {
+                _id = value;
+                OnPropertyChanged(nameof(Id));
+            }
+        }
+
+        private string _userName;
+        public string UserName
+        {
+            get => _userName;
+            set
+            {
+                _userName = value;
+                OnPropertyChanged(nameof(UserName));
+            }
+        }
+
+        private string _domainName;
+        public string DomainName
+        {
+            get => _domainName;
+            set
+            {
+                _domainName = value;
+                OnPropertyChanged(nameof(DomainName));
+            }
+        }
+
+        private string _displayName;
+        public string DisplayName
+        {
+            get => _displayName;
+            set
+            {
+                _displayName = value;
+                OnPropertyChanged(nameof(DisplayName));
+            }
+        }
+
+        private string _email;
+        public string Email
+        {
+            get => _email;
+            set
+            {
+                _email = value;
+                OnPropertyChanged(nameof(Email));
+            }
+        }
+
+        private int _roleId;
+        public int RoleId
+        {
+            get => _roleId;
+            set
+            {
+                _roleId = value;
+                OnPropertyChanged(nameof(RoleId));
+            }
+        }
+
+        private int _IsAllowed;
+        public int IsAllowed
+        {
+            get => _IsAllowed;
+            set
+            {
+                _IsAllowed = value;
+                OnPropertyChanged(nameof(IsAllowed));
+            }
+        }
+
+        private string _password;
+        public string Password
+        {
+            get => _password;
+            set
+            {
+                _password = value;
+                OnPropertyChanged(nameof(Password));
+            }
+        }
+        private string _Salt;
+        public string Salt
+        {
+            get => _Salt;
+            set
+            {
+                _Salt = value;
+                OnPropertyChanged(nameof(Salt));
+            }
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = "")
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+    }
+
 }

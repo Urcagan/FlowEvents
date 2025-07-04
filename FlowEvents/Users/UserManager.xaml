@@ -8,10 +8,18 @@
          Title="Управление пользователями" Height="450" Width="820">
     <DockPanel>
         <ToolBar DockPanel.Dock="Top">
-            <Button Content="Найти пользователя в домене"  Margin="10" HorizontalAlignment="Left" Click="BtnFindInDomain_Click" BorderBrush="Black"/>
+            <Button Content="Найти пользователя в домене"  
+                    Command="{Binding OpenFindUserWindowsCommand}"
+                    Margin="10" HorizontalAlignment="Left" 
+                    BorderBrush="Black"/>
+            <Button Content="Удалить пользователя" 
+                     Command="{Binding DeletUserCommand}"
+                     Margin="10" HorizontalAlignment="Left" 
+                     BorderBrush="Black"/>
         </ToolBar>
         <DataGrid x:Name="dgUsers" 
                   ItemsSource="{Binding UsersTable}"
+                  SelectedItem="{Binding SelectedUser, Mode=TwoWay}"
                   AutoGenerateColumns="False"
                   CanUserAddRows="False"
                   CellEditEnding="DgUsers_CellEditEnding">
@@ -19,10 +27,10 @@
                 <CollectionViewSource x:Key="RolesViewSource" Source="{Binding RolesTable}"/>
             </DataGrid.Resources>
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Домен" Binding="{Binding DomainName}" Width="100"/>
-                <DataGridTextColumn Header="Логин" Binding="{Binding UserName}" Width="150"/>
                 <DataGridTextColumn Header="Имя" Binding="{Binding DisplayName}" Width="200"/>
+                <DataGridTextColumn Header="Логин" Binding="{Binding UserName}" Width="150"/>
                 <DataGridTextColumn Header="Email" Binding="{Binding Email}" Width="200"/>
+                <DataGridTextColumn Header="Домен" Binding="{Binding DomainName}" Width="100"/>               
                 <DataGridComboBoxColumn Header="Роль"
                               SelectedValueBinding="{Binding RoleId}"
                               SelectedValuePath="RoleId"
