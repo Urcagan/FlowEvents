@@ -40,23 +40,24 @@ namespace FlowEvents
         }
 
         public ObservableCollection<UnitModel> Units { get; set; } = new ObservableCollection<UnitModel>();
+        
 
         public ObservableCollection<CategoryModel> Categories { get; set; } = new ObservableCollection<CategoryModel>();
 
 
         //----------------------------------------
         // свойства для привязки к полям ввода и редактирования данных...
-        private UnitModel _selectedUnit;
-        public UnitModel SelectedUnit
-        {
-            get => _selectedUnit;
-            set
-            {
-                _selectedUnit = value;
-                OnPropertyChanged();
-                OnPropertyChanged(nameof(CanSave));
-            }
-        }
+        //private UnitModel _selectedUnit;
+        //public UnitModel SelectedUnit
+        //{
+        //    get => _selectedUnit;
+        //    set
+        //    {
+        //        _selectedUnit = value;
+        //        OnPropertyChanged();
+        //        OnPropertyChanged(nameof(CanSave));
+        //    }
+        //}
 
         private CategoryModel _selectedCategory;
         public CategoryModel SelectedCategory
@@ -77,6 +78,17 @@ namespace FlowEvents
             set
             {
                 _selectedDateEvent = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private string _refining;
+        public string Refining
+        {
+            get { return _refining; }
+            set
+            {
+                _refining = value;
                 OnPropertyChanged();
             }
         }
@@ -133,6 +145,25 @@ namespace FlowEvents
             set { creator = value; }
         }
 
+        private string _selectedUnitsText = "";
+        public string SelectedUnitsText
+        {
+            get => _selectedUnitsText;
+            set
+            {
+                _selectedUnitsText = value;
+                OnPropertyChanged(nameof(SelectedUnitsText));
+                OnPropertyChanged(nameof(CanSave));
+            }
+        }
+
+        // Коллекция выбранных объектов (можно привязать к UI или использовать в коде)
+        //public ObservableCollection<UnitModel> SelectedUnits =>
+        //    new ObservableCollection<UnitModel>(Units.Where(u => u.IsSelected));
+
+        // Свойство с Id выбранных элементов
+        public List<int> SelectedIds => Units.Where(u => u.IsSelected).Select(u => u.Id).ToList();
+
         //----------------------------------------
 
         private readonly CultureInfo culture = AppBaseConfig.culture;   // Культура русского языка
@@ -151,9 +182,7 @@ namespace FlowEvents
             SaveCommand = new RelayCommand(SaveNewEvent);
             CancelCommand = new RelayCommand(Cancel);
 
-            // Добавляем первый элемент в коллекцию для отображения первым в ComboВox
-            Units.Insert(0, new UnitModel { Id = -1, Unit = "Выбр объекта" });
-            SelectedUnit = Units.FirstOrDefault();
+           
             GetUnitFromDatabase(); //Получаем элементы УСТАНОВКА из БД
 
             Categories.Insert(0, new CategoryModel { Id = -1, Name = "Выбор события" });
@@ -162,8 +191,33 @@ namespace FlowEvents
 
             // Установка текущей даты по умолчанию
             SelectedDateEvent = DateTime.Now;
+
+
+            // Подписка на изменение IsSelected (чтобы Label обновлялся автоматически)
+            foreach (var unit in Units)
+            {
+                unit.PropertyChanged += (s, e) =>
+                {
+                    if (e.PropertyName == nameof(UnitModel.IsSelected))
+                    {
+                        UpdateSelectedUnitsText();
+                        OnPropertyChanged(nameof(SelectedIds)); // Уведомляем об изменении SelectedI
+                    }
+                };
+            }
+
+            // Первоначальное обновление
+            UpdateSelectedUnitsText();
         }
 
+
+        private void UpdateSelectedUnitsText()
+        {
+            var selectedUnits = Units.Where(u => u.IsSelected).Select(u => u.Unit);
+            SelectedUnitsText = selectedUnits.Any()
+                ? $"Выбрано: {string.Join(", ", selectedUnits)}"
+                : "Ничего не выбрано";
+        }
 
         //Сохранение новой записи 
         private void SaveNewEvent(object parameters)
@@ -198,6 +252,7 @@ namespace FlowEvents
             {
                 //DateEvent = DatePicker.SelectedDate?.ToString(formatDate) ?? DateTime.Now.ToString(formatDate),
                 DateEvent = SelectedDateEvent.ToString(formatDate),
+                OilRefining = Refining,
                 Id_Category = _selectedCategory.Id,
                 Description = Description,
                 Action = Action,
@@ -209,22 +264,14 @@ namespace FlowEvents
 
             CloseWindow();
 
-                /**
-               if (AddEvent(newEvent))
-            {
-                MessageBox.Show("Событие успешно сохранено!", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
-                // Сброс значений после сохранения
-                Description = string.Empty;
-                Action = string.Empty;
-            }
-                 **/
+     
         }
 
         //Валидация перед сохранением:
         private bool ValidateEvent()
         {
             // Проверка выбранной установки
-            if (SelectedUnit == null || SelectedUnit.Id == -1)
+            if (SelectedIds == null || SelectedIds.Count == 0 )
             {
                 MessageBox.Show("Не выбрана установка");
                 return false;
@@ -333,12 +380,10 @@ namespace FlowEvents
                             long eventId = InsertEvent(connection, newEvent);
 
                             // Добавление записей в таблицу TaskUnits для связывания с элементами ListView
-                            //foreach (long unitId in unitIds)
-                            //{
-                            //    InsertTaskUnit(connection, eventId, unitId);
-                            //}
-                            InsertEventUnit(connection, eventId, _selectedUnit.Id);
-
+                            foreach (long unitId in SelectedIds)
+                            {
+                                InsertEventUnit(connection, eventId, unitId);
+                            }
 
                             // Подтвердить транзакцию
                             transaction.Commit();
@@ -370,13 +415,14 @@ namespace FlowEvents
         {
             // SQL-запрос для вставки данных
             var query = @"
-                INSERT INTO Events (DateEvent, id_category, Description, Action, DateCreate, Creator)
-                VALUES (@DateEvent, @id_category, @Description, @Action, @DateCreate, @Creator);";
+                INSERT INTO Events (DateEvent, OilRefining, id_category, Description, Action, DateCreate, Creator)
+                VALUES (@DateEvent, @OilRefining, @id_category, @Description, @Action, @DateCreate, @Creator);";
 
             using (var command = new SQLiteCommand(query, connection))
             {
                 // Добавление параметров
                 command.Parameters.AddWithValue("@DateEvent", newEvent.DateEvent);
+                command.Parameters.AddWithValue("@OilRefining", newEvent.OilRefining ?? (object)DBNull.Value);
                 command.Parameters.AddWithValue("@id_category", newEvent.Id_Category);
                 command.Parameters.AddWithValue("@Description", newEvent.Description ?? (object)DBNull.Value); // Если Description == null, вставляем NULL
                 command.Parameters.AddWithValue("@Action", newEvent.Action ?? (object)DBNull.Value); // Если Action == null, вставляем NULL
@@ -396,7 +442,7 @@ namespace FlowEvents
         /// </summary>
         /// <param name="eventId"></param>
         /// <param name="unitId"></param>
-        private void InsertEventUnit(SQLiteConnection connection, long eventId, int unitId)
+        private void InsertEventUnit(SQLiteConnection connection, long eventId, long unitId)
         {
             string insertTaskUnitsQuery = "INSERT INTO EventUnits (EventID, UnitID) VALUES (@EventID, @UnitID);";
             using (SQLiteCommand command = new SQLiteCommand(insertTaskUnitsQuery, connection))
@@ -410,9 +456,11 @@ namespace FlowEvents
         //свойство, которое проверяет все обязательные поля:
         public bool CanSave
         {
+            
             get
             {
-                return SelectedUnit != null && SelectedUnit.Id != -1 &&
+                //MessageBox.Show("CanSave");
+                return SelectedIds != null &&  SelectedIds.Count > 0 &&
                        SelectedCategory != null && SelectedCategory.Id != -1 &&
                        !string.IsNullOrWhiteSpace(Description);
             }

@@ -47,6 +47,7 @@ namespace FlowEvents
     {
         public int Id { get; set; }
         public string DateEvent { get; set; }
+        public string OilRefining { get; set; }
         public int Id_Category { get; set; }
         public string Description { get; set; }
         public string Action { get; set; }

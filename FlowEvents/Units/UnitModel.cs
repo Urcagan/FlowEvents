@@ -43,6 +43,17 @@ namespace FlowEvents.Models
             }
         }
 
+        private bool _isSelected; // Чтобы можно было отслеживать выбор
+        public bool IsSelected
+        {
+            get => _isSelected;
+            set
+            {
+                _isSelected = value;
+                OnPropertyChanged(nameof(IsSelected));
+            }
+        }
+
         public event PropertyChangedEventHandler PropertyChanged;
 
         protected virtual void OnPropertyChanged(string propertyName)

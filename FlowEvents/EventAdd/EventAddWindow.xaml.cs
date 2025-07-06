@@ -23,6 +23,9 @@ namespace FlowEvents
         {
             InitializeComponent();
             DataContext = eventAddViewModel;
+
         }
+
+
     }
 }

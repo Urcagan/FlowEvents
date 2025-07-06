@@ -134,12 +134,12 @@ namespace FlowEvents
 
                     while (reader.Read())
                     {
-                        events.Add(new EventsModelForView
+                        events.Add(new EventsModelForView  
                         {
                             Id = reader.GetInt32(idIndex),
                             DateEventString = reader.GetString(dateIndex),
                             Unit = reader.GetString(unitIndex),
-                            OilRefining = reader.GetString(refiningIndex),
+                            OilRefining = reader.IsDBNull(refiningIndex) ? null : reader.GetString(refiningIndex),
                             Category = reader.GetString(categotyIndex),
                             Description = reader.IsDBNull(descriptionIndex) ? null : reader.GetString(descriptionIndex),
                             Action = reader.IsDBNull(actionIndex) ? null : reader.GetString(actionIndex),
