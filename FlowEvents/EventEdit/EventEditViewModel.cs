@@ -35,18 +35,8 @@ namespace FlowEvents
         public ObservableCollection<UnitModel> Units { get; } = new ObservableCollection<UnitModel>();
         public ObservableCollection<CategoryModel> Categories { get; } = new ObservableCollection<CategoryModel>();
 
-
-        private UnitModel _selectedUnit;
-        public UnitModel SelectedUnit
-        {
-            get => _selectedUnit;
-            set
-            {
-                _selectedUnit = value;
-                OnPropertyChanged();
-                OnPropertyChanged(nameof(CanSave));
-            }
-        }
+        // Свойство с Id выбранных элементов
+        public List<int> SelectedIds => Units.Where(u => u.IsSelected).Select(u => u.Id).ToList();
 
         private CategoryModel _selectedCategory;
         public CategoryModel SelectedCategory
@@ -67,6 +57,17 @@ namespace FlowEvents
             set
             {
                 _selectedDateEvent = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private string _refining;
+        public string Refining
+        {
+            get { return _refining; }
+            set
+            {
+                _refining = value;
                 OnPropertyChanged();
             }
         }
@@ -94,6 +95,17 @@ namespace FlowEvents
             }
         }
 
+        private string _selectedUnitsText = "";
+        public string SelectedUnitsText
+        {
+            get => _selectedUnitsText;
+            set
+            {
+                _selectedUnitsText = value;
+                OnPropertyChanged(nameof(SelectedUnitsText));
+                OnPropertyChanged(nameof(CanSave));
+            }
+        }
 
         public RelayCommand SaveUpdateCommand { get;}
         public RelayCommand CancelCommand { get;}
@@ -112,26 +124,80 @@ namespace FlowEvents
 
             Id = eventToEdit.Id;
             SelectedDateEvent = eventToEdit.DateEvent;
+            Refining = eventToEdit.OilRefining;
             Description = eventToEdit.Description;
             Action = eventToEdit.Action;
 
-            // Добавляем первый элемент в коллекцию для отображения первым в ComboВox
-            Units.Insert(0, new UnitModel { Id = -1, Unit = "Выбр объекта" });
             GetUnitFromDatabase(); //Получаем элементы УСТАНОВКА из БД
-            SelectedUnit = Units.FirstOrDefault(u => u.Unit == eventToEdit.Unit); //Units.FirstOrDefault();
             
+            LoadSelectedUnitsForEvent(Id);
+
 
             Categories.Insert(0, new CategoryModel { Id = -1, Name = "Выбор события" });
             GetCategoryFromDatabase();
             SelectedCategory = Categories.FirstOrDefault(c => c.Name == eventToEdit.Category);  //Categories.FirstOrDefault();
-            
 
 
+            // Подписка на изменение IsSelected (чтобы Label обновлялся автоматически)
+            foreach (var unit in Units)
+            {
+                unit.PropertyChanged += (s, e) =>
+                {
+                    if (e.PropertyName == nameof(UnitModel.IsSelected))
+                    {
+                        UpdateSelectedUnitsText();
+                        OnPropertyChanged(nameof(SelectedIds)); // Уведомляем об изменении SelectedI
+                    }
+                };
+            }
+
+            // Первоначальное обновление
+            UpdateSelectedUnitsText();
 
             //SaveCommand = new RelayCommand(SaveChanges);
             //CancelCommand = new RelayCommand(Cancel);
 
 
+        }
+
+        // Востанавливаем выбор на элементах в окне установок
+        public async Task LoadSelectedUnitsForEvent(int eventId)
+        {
+            // 1. Получаем список UnitID, связанных с этим EventID из базы
+            List<int>  selectedUnitIds = await GetUnitIdsForEvent(eventId);
+
+            // 2. Обновляем флаги IsSelected в коллекции Units
+            foreach (var unit in Units)
+            {
+                unit.IsSelected = selectedUnitIds.Contains(unit.Id);
+            }            
+        }
+
+        // метод полусения из базы, установок связанных с событием 
+        private async Task<List<int>> GetUnitIdsForEvent(int eventId)
+        {
+            var unitIds = new List<int>();
+
+            using (var connection = new SQLiteConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+                using (var command = new SQLiteCommand(
+                    "SELECT UnitID FROM EventUnits WHERE EventID = @eventId",
+                    connection))
+                {
+                    command.Parameters.AddWithValue("@eventId", eventId);
+
+                    using (var reader = await command.ExecuteReaderAsync())
+                    {
+                        while (await reader.ReadAsync())
+                        {
+                            unitIds.Add(reader.GetInt32(0));
+                        }
+                    }
+                }
+            }
+
+            return unitIds;
         }
 
         private void SaveUpdatedEvents(object parameters)
@@ -230,7 +296,8 @@ namespace FlowEvents
                         {
                             UpdateEvent(connection, updateEvent);
 
-                            UpdateEventUnit(connection, Id, _selectedUnit.Id);
+                            // надо переписать для записи нескольких ID
+                            //UpdateEventUnit(connection, Id, _selectedUnit.Id);
 
                            transaction.Commit();
                         }
@@ -292,10 +359,18 @@ namespace FlowEvents
         {
             get
             {
-                return SelectedUnit != null && SelectedUnit.Id != -1 &&
+                return SelectedIds != null && SelectedIds.Count > 0 &&
                        SelectedCategory != null && SelectedCategory.Id != -1 &&
                        !string.IsNullOrWhiteSpace(Description);
             }
+        }
+
+        private void UpdateSelectedUnitsText()
+        {
+            var selectedUnits = Units.Where(u => u.IsSelected).Select(u => u.Unit);
+            SelectedUnitsText = selectedUnits.Any()
+                ? $"Выбрано: {string.Join(", ", selectedUnits)}"
+                : "Ничего не выбрано";
         }
 
 

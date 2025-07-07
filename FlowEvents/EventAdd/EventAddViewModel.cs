@@ -45,20 +45,6 @@ namespace FlowEvents
         public ObservableCollection<CategoryModel> Categories { get; set; } = new ObservableCollection<CategoryModel>();
 
 
-        //----------------------------------------
-        // свойства для привязки к полям ввода и редактирования данных...
-        //private UnitModel _selectedUnit;
-        //public UnitModel SelectedUnit
-        //{
-        //    get => _selectedUnit;
-        //    set
-        //    {
-        //        _selectedUnit = value;
-        //        OnPropertyChanged();
-        //        OnPropertyChanged(nameof(CanSave));
-        //    }
-        //}
-
         private CategoryModel _selectedCategory;
         public CategoryModel SelectedCategory
         {
@@ -156,10 +142,6 @@ namespace FlowEvents
                 OnPropertyChanged(nameof(CanSave));
             }
         }
-
-        // Коллекция выбранных объектов (можно привязать к UI или использовать в коде)
-        //public ObservableCollection<UnitModel> SelectedUnits =>
-        //    new ObservableCollection<UnitModel>(Units.Where(u => u.IsSelected));
 
         // Свойство с Id выбранных элементов
         public List<int> SelectedIds => Units.Where(u => u.IsSelected).Select(u => u.Id).ToList();
