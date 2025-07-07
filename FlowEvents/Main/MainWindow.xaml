@@ -19,6 +19,14 @@
             <Setter Property="Padding" Value="5"/>
         </Style>
 
+        <Style x:Key="StandardButtonStyle" TargetType="Button">
+            <Setter Property="Width" Value="80" />
+            <Setter Property="Height" Value="30" />
+            <Setter Property="Margin" Value="10" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="BorderBrush" Value="#FF617584" />
+        </Style>
     </Window.Resources>
 
     <DockPanel>
@@ -104,7 +112,7 @@
                 </DataGrid.ContextMenu>
 
                 <DataGrid.Columns >
-                    <DataGridTextColumn Header="Дата" Binding="{Binding DateEvent, StringFormat={}{0:dd.MM.yyyy} }" Width="100">
+                    <DataGridTextColumn Header="Дата" Binding="{Binding DateEvent, StringFormat={}{0:dd.MM.yyyy} }" Width="auto">
                         <DataGridTextColumn.ElementStyle>
                             <Style BasedOn="{StaticResource TextBlockStyle}" TargetType="TextBlock"/>
                         </DataGridTextColumn.ElementStyle>
@@ -112,19 +120,19 @@
                     
                     <DataGridTextColumn Header="Установка" Binding="{Binding Unit}" Width="150">
                     <DataGridTextColumn.ElementStyle>
-                        <Style BasedOn="{StaticResource TextBlockStyle}" TargetType="TextBlock"/>
+                            <Style BasedOn="{StaticResource WrappedTextBlockStyle}" TargetType="TextBlock"/>
                     </DataGridTextColumn.ElementStyle>
                     </DataGridTextColumn>
 
                     <DataGridTextColumn Header="Переработка" Binding="{Binding OilRefining}" Width="150">
                         <DataGridTextColumn.ElementStyle>
-                            <Style BasedOn="{StaticResource TextBlockStyle}" TargetType="TextBlock"/>
+                            <Style BasedOn="{StaticResource WrappedTextBlockStyle}" TargetType="TextBlock"/>
                         </DataGridTextColumn.ElementStyle>
                     </DataGridTextColumn>
 
                     <DataGridTextColumn Header="Вид" Binding="{Binding Category}" Width="100" >
                     <DataGridTextColumn.ElementStyle>
-                        <Style BasedOn="{StaticResource TextBlockStyle}" TargetType="TextBlock"/>
+                            <Style BasedOn="{StaticResource WrappedTextBlockStyle}" TargetType="TextBlock"/>
                     </DataGridTextColumn.ElementStyle>
                     </DataGridTextColumn>
 
@@ -153,7 +161,7 @@
                         </DataGridTextColumn.ElementStyle>
                     </DataGridTextColumn>
 
-                    <DataGridTextColumn Header="Автор" Binding="{Binding Creator}" Width="130">
+                    <DataGridTextColumn Header="Автор" Binding="{Binding Creator}" Width="auto">
                     <DataGridTextColumn.ElementStyle>
                         <Style BasedOn="{StaticResource TextBlockStyle}" TargetType="TextBlock"/>
                     </DataGridTextColumn.ElementStyle>

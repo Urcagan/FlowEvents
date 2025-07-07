@@ -107,8 +107,8 @@ namespace FlowEvents
             }
         }
 
-        public RelayCommand SaveUpdateCommand { get;}
-        public RelayCommand CancelCommand { get;}
+        public RelayCommand SaveUpdateCommand { get; }
+        public RelayCommand CancelCommand { get; }
 
 
         public EventEditViewModel(MainViewModel mainViewModel, EventsModelForView eventToEdit)
@@ -116,10 +116,6 @@ namespace FlowEvents
             _mainViewModel = mainViewModel;
             _originalEvent = eventToEdit;
 
-            SaveUpdateCommand = new RelayCommand(SaveUpdatedEvents);
-            CancelCommand = new RelayCommand(Cancel);
-            
-            
             ConnectionString = $"Data Source={_mainViewModel.appSettings.pathDB};Version=3;";
 
             Id = eventToEdit.Id;
@@ -129,14 +125,12 @@ namespace FlowEvents
             Action = eventToEdit.Action;
 
             GetUnitFromDatabase(); //Получаем элементы УСТАНОВКА из БД
-            
-            LoadSelectedUnitsForEvent(Id);
 
+            LoadSelectedUnitsForEvent(Id);
 
             Categories.Insert(0, new CategoryModel { Id = -1, Name = "Выбор события" });
             GetCategoryFromDatabase();
             SelectedCategory = Categories.FirstOrDefault(c => c.Name == eventToEdit.Category);  //Categories.FirstOrDefault();
-
 
             // Подписка на изменение IsSelected (чтобы Label обновлялся автоматически)
             foreach (var unit in Units)
@@ -154,23 +148,21 @@ namespace FlowEvents
             // Первоначальное обновление
             UpdateSelectedUnitsText();
 
-            //SaveCommand = new RelayCommand(SaveChanges);
-            //CancelCommand = new RelayCommand(Cancel);
-
-
+            SaveUpdateCommand = new RelayCommand(SaveUpdatedEvents);
+            CancelCommand = new RelayCommand(Cancel);
         }
 
         // Востанавливаем выбор на элементах в окне установок
         public async Task LoadSelectedUnitsForEvent(int eventId)
         {
             // 1. Получаем список UnitID, связанных с этим EventID из базы
-            List<int>  selectedUnitIds = await GetUnitIdsForEvent(eventId);
+            List<int> selectedUnitIds = await GetUnitIdsForEvent(eventId);
 
             // 2. Обновляем флаги IsSelected в коллекции Units
             foreach (var unit in Units)
             {
                 unit.IsSelected = selectedUnitIds.Contains(unit.Id);
-            }            
+            }
         }
 
         // метод полусения из базы, установок связанных с событием 
@@ -196,7 +188,6 @@ namespace FlowEvents
                     }
                 }
             }
-
             return unitIds;
         }
 
@@ -210,11 +201,13 @@ namespace FlowEvents
                 //DateEvent = DatePicker.SelectedDate?.ToString(formatDate) ?? DateTime.Now.ToString(formatDate),
                 Id = this.Id,
                 DateEvent = SelectedDateEvent.ToString(AppBaseConfig.formatDate),
+                OilRefining = Refining,
                 Id_Category = _selectedCategory.Id,
                 Description = Description,
                 Action = Action
+
             };
-            EditEvent(_updateEvent);
+            EditEvent(_updateEvent, SelectedIds);
             CloseWindow();
         }
 
@@ -282,7 +275,7 @@ namespace FlowEvents
         }
 
 
-        public void EditEvent(EventsModel updateEvent)
+        public void EditEvent(EventsModel updateEvent, List<int> selectedIds)
         {
             try
             {
@@ -297,9 +290,9 @@ namespace FlowEvents
                             UpdateEvent(connection, updateEvent);
 
                             // надо переписать для записи нескольких ID
-                            //UpdateEventUnit(connection, Id, _selectedUnit.Id);
+                            UpdateEventUnit(connection, Id, selectedIds);
 
-                           transaction.Commit();
+                            transaction.Commit();
                         }
                         catch (Exception ex)
                         {
@@ -320,12 +313,13 @@ namespace FlowEvents
         private void UpdateEvent(SQLiteConnection connection, EventsModel updateEvent)
         {
             // SQL-запрос для вставки данных
-            var query = "UPDATE Events SET DateEvent = @DateEvent, id_category = @id_category, Description = @Description, Action = @Action WHERE id = @SelectedRowId ";
+            var query = "UPDATE Events SET DateEvent = @DateEvent, OilRefining = @OilRefining , id_category = @id_category, Description = @Description, Action = @Action WHERE id = @SelectedRowId ";
 
             using (var command = new SQLiteCommand(query, connection))
             {
                 // Добавление параметров
                 command.Parameters.AddWithValue("@DateEvent", updateEvent.DateEvent);
+                command.Parameters.AddWithValue("@OilRefining", updateEvent.OilRefining ?? (object)DBNull.Value); // Если OilRefining == null, вставляем NULL
                 command.Parameters.AddWithValue("@id_category", updateEvent.Id_Category);
                 command.Parameters.AddWithValue("@Description", updateEvent.Description ?? (object)DBNull.Value); // Если Description == null, вставляем NULL
                 command.Parameters.AddWithValue("@Action", updateEvent.Action ?? (object)DBNull.Value); // Если Action == null, вставляем NULL
@@ -335,22 +329,25 @@ namespace FlowEvents
         }
 
 
-        private void UpdateEventUnit(SQLiteConnection connection, long eventId, int unitId)
+        private void UpdateEventUnit(SQLiteConnection connection, long eventId, List<int> unitIds)
         {
-            var delQuery = "DELETE FROM EventUnits WHERE EventID = @EventId;";
-            using(var command = new SQLiteCommand(delQuery, connection))
+            // Удаляем все существующие связи для данной задачи
+            var deleteQuery = "DELETE FROM EventUnits WHERE EventID = @EventId;";
+            using (var command = new SQLiteCommand(deleteQuery, connection))
             {
                 command.Parameters.AddWithValue("@EventId", eventId);
                 command.ExecuteNonQuery();
             }
-            
-
+            // Вставляем новые связи
             string insertTaskUnitsQuery = "INSERT INTO EventUnits (EventID, UnitID) VALUES (@EventID, @UnitID);";
-            using (SQLiteCommand command = new SQLiteCommand(insertTaskUnitsQuery, connection))
+            foreach (long unitId in unitIds)
             {
-                command.Parameters.AddWithValue("@EventID", eventId);
-                command.Parameters.AddWithValue("@UnitID", unitId);
-                command.ExecuteNonQuery();
+                using (SQLiteCommand command = new SQLiteCommand(insertTaskUnitsQuery, connection))
+                {
+                    command.Parameters.AddWithValue("@EventID", eventId);
+                    command.Parameters.AddWithValue("@UnitID", unitId);
+                    command.ExecuteNonQuery();
+                }
             }
         }
 

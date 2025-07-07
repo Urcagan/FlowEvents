@@ -17,41 +17,63 @@
             </Style.Triggers>
         </Style>
     </Window.Resources>
-    <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height ="*"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
+    <DockPanel>
+        <ToolBar x:Name="toolBar" DockPanel.Dock="Top">
+            <DatePicker x:Name="DatePicker"
+                    SelectedDate="{Binding SelectedDateEvent, Mode =TwoWay, StringFormat={}{0:dd.MM.yyyy}}"
+                    Width ="120"
+                    Margin="10"/>
+                        <Label Content="Загрузка:" Margin="20,0,0,0" VerticalAlignment="Center"/>
+                        <TextBox x:Name="TextOilRefining"
+                    Text="{Binding Refining, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"    
+                    Height="22"
+                    Width="200"/>
 
-        <StackPanel Grid.Row="0" Orientation="Horizontal" Grid.ColumnSpan="5">
-            <DatePicker 
-                x:Name="DatePicker"
-                SelectedDate="{Binding SelectedDateEvent, Mode =TwoWay, StringFormat={}{0:dd.MM.yyyy}}"
-                Width ="120"
-                Margin="10"/>
-            <Label Content="Загрузка:" Margin="20,0,0,0" VerticalAlignment="Center"/>
-            <TextBox x:Name="TextOilRefining"
-                Text="{Binding Refining, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"    
-                Height="22"
-                Width="200"/>
+                        <Label Content="Вид события:" Margin="20,0,0,0" VerticalAlignment="Center"/>
+                        <ComboBox 
+                    x:Name="Category"
+                    ItemsSource="{Binding Categories}"
+                    DisplayMemberPath="Name"
+                    SelectedValuePath="Id"
+                    SelectedItem="{Binding SelectedCategory}"
+                    Width="300"
+                    Margin="10"
+                    Style="{StaticResource RequiredComboBox}"/>
+        </ToolBar>
 
-            <Label Content="Вид события:" Margin="20,0,0,0" VerticalAlignment="Center"/> 
-            <ComboBox 
-                x:Name="Category"
-                ItemsSource="{Binding Categories}"
-                DisplayMemberPath="Name"
-                SelectedValuePath="Id"
-                SelectedItem="{Binding SelectedCategory}"
-                Width="300"
-                Margin="10"
-                Style="{StaticResource RequiredComboBox}"/>
-        </StackPanel>
+        <StatusBar x:Name="statusBar" DockPanel.Dock="Bottom">
+            <StatusBar.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                    </Grid>
+                </ItemsPanelTemplate>
+            </StatusBar.ItemsPanel>
+            <StatusBarItem>
+                <Border BorderBrush="Black" BorderThickness="1" Width="400" Margin="50,0,0,0">
+                <Label Content="{Binding SelectedUnitsText}"  Height="20" Padding="0" Background="#F0F0F0"/>
+            </Border>
+            </StatusBarItem>
+            
+            <StatusBarItem Grid.Column="2">
+                <Button Content="Сохранить" 
+                Command="{Binding SaveCommand}"
+                Width="80" Height="30" Margin ="10" 
+                IsEnabled="{Binding CanSave}" />
+            </StatusBarItem>
+            <StatusBarItem Grid.Column="3">    
+                <Button Content="Отмена" 
+                Command="{Binding CancelCommand}"
+                Width="80" Height="30" Margin ="10" />
+            </StatusBarItem>            
+        </StatusBar>
 
-        <Grid Grid.Row="1" Grid.ColumnSpan="5" >
+        <Grid >
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*"/>
@@ -62,88 +84,50 @@
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
-
-            <!--
-            <GroupBox Header="Обьект"
-                      Grid.Column="0"
-                     Grid.Row="1">
-                <StackPanel x:Name="_ConteinObject">
-                    
-                    <ListBox ItemsSource="{Binding Units}" >
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <CheckBox Content="{Binding Unit}"
-                                          IsChecked="{Binding IsSelected, Mode=TwoWay}" />
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-                </StackPanel>
-            </GroupBox>
--->
             <GroupBox Header="Обьект" Grid.Column="0" Grid.Row="1" >
                 <ListBox ItemsSource="{Binding Units}" 
-                         ScrollViewer.VerticalScrollBarVisibility="Auto"
-                         ScrollViewer.HorizontalScrollBarVisibility="Disabled" BorderBrush="{x:Null}">
+                 ScrollViewer.VerticalScrollBarVisibility="Auto"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled" BorderBrush="{x:Null}">
                     <ListBox.ItemsPanel>
                         <ItemsPanelTemplate>
                             <WrapPanel Orientation="Horizontal" />
-                            <!-- <UniformGrid Columns="2" /> -->
                         </ItemsPanelTemplate>
                     </ListBox.ItemsPanel>
 
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <CheckBox Content="{Binding Unit}" 
-                                      IsChecked="{Binding IsSelected, Mode=TwoWay}"
-                                      Margin="5" />
+                              IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                              Margin="5" />
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>
             </GroupBox>
 
             <GroupBox Header="Событие" Grid.Column="1" Grid.Row="1">
-                <TextBox 
-                 x:Name="TextEvent"
-                 Text="{Binding Description, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"    
-                 AcceptsReturn="True"
-                 AcceptsTab="True"
-                 TextWrapping="Wrap"
-                 VerticalScrollBarVisibility="Auto"
-                 HorizontalScrollBarVisibility="Disabled"
-                 Margin="5" BorderBrush="{x:Null}"/>
+                <TextBox x:Name="TextEvent"
+                         Text="{Binding Description, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"    
+                         AcceptsReturn="True"
+                         AcceptsTab="True"
+                         TextWrapping="Wrap"
+                         VerticalScrollBarVisibility="Auto"
+                         HorizontalScrollBarVisibility="Disabled"
+                         Margin="5" BorderBrush="{x:Null}"/>
             </GroupBox>
 
-
             <GroupBox Header="Мероприятие, пояснение" Grid.Column="2" Grid.Row="1">
-                <TextBox 
-                x:Name="TextAction"
-                Text="{Binding Action, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                AcceptsReturn="True"
-                AcceptsTab="True"
-                TextWrapping="Wrap"
-                VerticalScrollBarVisibility="Auto"
-                HorizontalScrollBarVisibility="Disabled"
-                Margin="5" BorderBrush="{x:Null}"/>
+                <TextBox x:Name="TextAction"
+                        Text="{Binding Action, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                        AcceptsReturn="True"
+                        AcceptsTab="True"
+                        TextWrapping="Wrap"
+                        VerticalScrollBarVisibility="Auto"
+                        HorizontalScrollBarVisibility="Disabled"
+                        Margin="5" BorderBrush="{x:Null}"/>
             </GroupBox>
 
         </Grid>
 
-        <StackPanel Grid.Row="4"
-            Orientation="Horizontal" FlowDirection="RightToLeft"  Margin="0,0,0,0">
-
-            <Button Content="Сохранить" 
-                    Command="{Binding SaveCommand}"
-                    Width="80" Height="30" Margin ="10" 
-                    IsEnabled="{Binding CanSave}" />
-
-            <Button Content="Отмена" 
-                    Command="{Binding CancelCommand}"
-                    Width="80" Height="30" Margin ="10" />
-            <Label Content="{Binding SelectedUnitsText}"  Width="500" Height="20" Margin="50,0,0,0"
-                   Padding="0" Background="#F0F0F0"/>
-
-        </StackPanel>
-
-
-    </Grid>
+    </DockPanel>
+   
 </Window>

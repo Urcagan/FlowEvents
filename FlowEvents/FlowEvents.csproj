@@ -78,14 +78,14 @@
       <DependentUpon>LoginWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Main\MainViewModel.cs" />
-    <Compile Include="Category\CategoryModel.cs" />
-    <Compile Include="Main\EventsModel.cs" />
+    <Compile Include="Models\CategoryModel.cs" />
+    <Compile Include="Models\EventsModel.cs" />
     <Compile Include="Users\DomainUserModel.cs" />
-    <Compile Include="Users\FindUserModel.cs" />
+    <Compile Include="Models\FindUserModel.cs" />
     <Compile Include="Users\FindUserWindow.xaml.cs">
       <DependentUpon>FindUserWindow.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Units\UnitModel.cs" />
+    <Compile Include="Models\UnitModel.cs" />
     <Compile Include="RelayCommand.cs" />
     <Compile Include="SettingsWindow.xaml.cs">
       <DependentUpon>SettingsWindow.xaml</DependentUpon>
@@ -94,7 +94,7 @@
     <Compile Include="Units\UnitsView.xaml.cs">
       <DependentUpon>UnitsView.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Units\UnitViewModel.cs" />
+    <Compile Include="Models\UnitViewModel.cs" />
     <Compile Include="Users\UserManager.xaml.cs">
       <DependentUpon>UserManager.xaml</DependentUpon>
     </Compile>
@@ -197,7 +197,6 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Models\" />
     <Folder Include="View\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
