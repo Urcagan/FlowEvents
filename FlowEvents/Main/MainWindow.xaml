@@ -54,19 +54,36 @@
 
         <ToolBar x:Name="toolBar" DockPanel.Dock="Top"
                  IsEnabled="{Binding IsToolBarVisible}">
-            <Button x:Name="btnBack" Content="Back" HorizontalAlignment="Left" VerticalAlignment="Center"/>
-            <DatePicker VerticalAlignment="Center"/>
-            <Button x:Name="btnForvard" Content="Forvard" HorizontalAlignment="Left" VerticalAlignment="Center"/>
 
-            <ComboBox x:Name="comboBox"
-                      HorizontalAlignment="Left" VerticalAlignment="Top" Width="200" Margin="10"
-                      IsEditable="False" StaysOpenOnEdit="True" IsDropDownOpen="False">
+            <Label Content="Установка:" VerticalAlignment="Center"/>
+            <ComboBox x:Name="CB_Units"
+          HorizontalAlignment="Left" VerticalAlignment="Center" Width="200" Margin="10"
+          IsEditable="False" StaysOpenOnEdit="True" IsDropDownOpen="False">
                 <ComboBox.ItemTemplate>
                     <DataTemplate>
 
                     </DataTemplate>
                 </ComboBox.ItemTemplate>
             </ComboBox>
+
+            <Separator Margin="10"/>
+           <!-- <Button x:Name="btnBack" Content="Back" HorizontalAlignment="Left" VerticalAlignment="Center" BorderBrush="Gray"/> -->
+            <Label Content="Период" VerticalAlignment="Center"/>            
+            <DatePicker x:Name="datePickerStart"
+                        SelectedDate="{Binding StartDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                        VerticalAlignment="Center"
+                        FirstDayOfWeek="Monday"
+                        SelectedDateFormat="Short"/>
+            
+            <Label Content=" - " VerticalAlignment="Center"/>
+            <DatePicker x:Name="datePickerEnd"
+            SelectedDate="{Binding EndDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+            VerticalAlignment="Center"
+            FirstDayOfWeek="Monday"
+            SelectedDateFormat="Short"/>
+           <!-- <Button x:Name="btnForvard" Content="Forvard" HorizontalAlignment="Left" VerticalAlignment="Center" BorderBrush="Gray" Margin="5"/> -->
+
+            
             <Border BorderBrush="Black" Margin="20 0 1 0" />
             
             <Button x:Name="AddEvent" 

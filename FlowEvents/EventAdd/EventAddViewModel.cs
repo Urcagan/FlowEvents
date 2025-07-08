@@ -204,28 +204,6 @@ namespace FlowEvents
         //Сохранение новой записи 
         private void SaveNewEvent(object parameters)
         {
-            /**
-            // Проверка выбранной установки
-            if (SelectedUnit == null || SelectedUnit.Id == -1)
-            {
-                MessageBox.Show("Пожалуйста, выберите установку из списка");
-                return;
-            }
-
-            // Проверка выбранной категории
-            if (SelectedCategory == null || SelectedCategory.Id == -1)
-            {
-                MessageBox.Show("Пожалуйста, выберите категорию события");
-                return;
-            }
-
-            // Проверка описания события
-            if (string.IsNullOrWhiteSpace(Description))
-            {
-                MessageBox.Show("Описание события не может быть пустым");
-                return;
-            }
-            **/
 
             if (!ValidateEvent()) return;
 

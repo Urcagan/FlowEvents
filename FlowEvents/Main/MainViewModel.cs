@@ -1,10 +1,13 @@
-﻿using System;
+﻿using FlowEvents.Models;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Data.SQLite;
 using System.Runtime.CompilerServices;
 using System.Windows;
-using System.Data.SQLite;
+using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Documents;
 
 namespace FlowEvents
@@ -25,8 +28,52 @@ namespace FlowEvents
             }
         }
 
+        private DateTime _sartDate = DateTime.Now; // Значение по умолчанию
+        public DateTime StartDate
+        {
+            get => _sartDate;
+            set
+            {
+                //if (_sartDate != value)
+                if (value.Date <= EndDate.Date)
+                {
+                    _sartDate = value;
+                    OnPropertyChanged(nameof(StartDate));
+                    LoadEvents();
+                }
+            }
+        }
 
-        // Коллекция для хранения данных (автоматически уведомляет об изменениях)
+        private DateTime _endDate = DateTime.Now; // Значение по умолчанию
+        public DateTime EndDate
+        {
+            get => _endDate;
+            set
+            {
+                if (value.Date >= StartDate.Date)
+                {
+                    _endDate = value;
+                    OnPropertyChanged(nameof(EndDate));
+                    LoadEvents();
+                }
+            }
+        }
+
+        public ObservableCollection<UnitModel> Units { get; set; } = new ObservableCollection<UnitModel>();
+
+        private UnitModel _selectedUnit;
+        public UnitModel SelectedUnit
+        {
+            get => _selectedUnit;
+            set
+            {
+                _selectedUnit = value;
+                OnPropertyChanged();
+            }
+        }
+
+
+        // Коллекция для записей журнала (автоматически уведомляет об изменениях)
         public ObservableCollection<EventsModelForView> Events { get; set; } = new ObservableCollection<EventsModelForView>();
 
         public RelayCommand SettingOpenWindow { get; }
@@ -50,11 +97,8 @@ namespace FlowEvents
             UserManagerWindow = new RelayCommand(UserManagerMenuItem);
 
             appSettings = AppSettings.GetSettingsApp(); // Загружаем настройки программы из файла при запуске программы
-
             //IsCategoryButtonVisible = false;
         }
-
-
 
         public void StartUP()
         {
@@ -64,22 +108,18 @@ namespace FlowEvents
             string verDB = appSettings.VerDB;
 
             if (!CheckDB.CheckPathToFileDB(pathDB)) return;   // Проверяем путь к базе данных и выходим, если он неверен
-            
+
             _connectionString = $"Data Source={pathDB};Version=3;foreign keys=true;"; //Формируем строку подключения к БД
 
             // Проверка версии базы данных
             if (!CheckDB.IsDatabaseVersionCorrect(verDB, _connectionString))  //проверка версии базы данных
             {
-                MessageBox.Show(
-                    $"Версия БД не соответствует требуемой версии {verDB}", 
-                    "Ошибка", 
-                    MessageBoxButton.OK, 
-                    MessageBoxImage.Error);
+                MessageBox.Show($"Версия БД не соответствует требуемой версии {verDB}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
 
             //if (!CheckDB.CheckDatabaseFileVer(pathDB, appSettings.VerDB)) return; //Проверяем версию БД
-               
+
             LoadEvents();// Загрузка данных из БД
 
             FilePath = pathDB; //Выводим путь к файлу в нижную часть главного окна
@@ -92,6 +132,8 @@ namespace FlowEvents
             IsCategoryButtonVisible = true;
             IsUnitButtonVisible = true;
             IsToolBarVisible = true;
+
+            
 
             Events.Clear();
 
@@ -110,46 +152,14 @@ namespace FlowEvents
             _connectionString = $"Data Source={newPathDB};Version=3;foreign keys=true;";
         }
 
-        // Загрузка категорий из базы данных
-        public List<EventsModelForView> GetEvents()
+        /// Формирует строку SQL запроса для вывода данных в таблицу gv_Task
+        /// 
+        public string buildSQLQuery()
         {
-            var events = new List<EventsModelForView>();
+            string SQLrow = " SELECT id, DateEvent, Unit, OilRefining, Category, Description, Action, DateCreate, Creator FROM vwEvents Where DateEvent BETWEEN '2025-07-01' AND '2025-07-06' ";
 
-            using (var connection = new SQLiteConnection(_connectionString))
-            {
-                connection.Open();
-                string query = "SELECT id, DateEvent, Unit, OilRefining, Category, Description, Action, DateCreate, Creator  FROM vwEvents";
-                var command = new SQLiteCommand(query, connection);
-                using (var reader = command.ExecuteReader())
-                {
-                    int idIndex = reader.GetOrdinal("id");
-                    int dateIndex = reader.GetOrdinal("DateEvent");
-                    int unitIndex = reader.GetOrdinal("Unit");
-                    int refiningIndex = reader.GetOrdinal("OilRefining");
-                    int categotyIndex = reader.GetOrdinal("Category");
-                    int descriptionIndex = reader.GetOrdinal("Description");
-                    int actionIndex = reader.GetOrdinal("Action");
-                    int createIndex = reader.GetOrdinal("DateCreate");
-                    int creatorIndex = reader.GetOrdinal("Creator");
 
-                    while (reader.Read())
-                    {
-                        events.Add(new EventsModelForView  
-                        {
-                            Id = reader.GetInt32(idIndex),
-                            DateEventString = reader.GetString(dateIndex),
-                            Unit = reader.GetString(unitIndex),
-                            OilRefining = reader.IsDBNull(refiningIndex) ? null : reader.GetString(refiningIndex),
-                            Category = reader.GetString(categotyIndex),
-                            Description = reader.IsDBNull(descriptionIndex) ? null : reader.GetString(descriptionIndex),
-                            Action = reader.IsDBNull(actionIndex) ? null : reader.GetString(actionIndex),
-                            DateCreate = reader.GetString(createIndex),
-                            Creator = reader.GetString(creatorIndex)
-                        });
-                    }
-                }
-                return events;
-            }
+            return SQLrow;
         }
 
 
@@ -191,7 +201,7 @@ namespace FlowEvents
         {
             var userManagerModel = new UserManagerModel(this);
             // Создаем и показываем окно пользователей
-            UserManager userManager = new UserManager( userManagerModel);
+            UserManager userManager = new UserManager(userManagerModel);
             if (userManager.ShowDialog() == true) { }
         }
 
@@ -224,6 +234,117 @@ namespace FlowEvents
             }
         }
 
+
+        private void ExecuteDeleteCommand(SQLiteConnection connection, string query, int eventId)
+        {
+            using (var command = new SQLiteCommand(query, connection))
+            {
+                command.Parameters.AddWithValue("@EventId", eventId);
+                command.ExecuteNonQuery();
+            }
+        }
+
+
+        private void RemoveEventById(int id) // Удаление события из коллекции по ID
+        {
+            if (Events == null || Events.Count == 0) return;
+
+            for (int i = 0; i < Events.Count; i++)
+            {
+                if (Events[i].Id == id)
+                {
+                    Events.RemoveAt(i);
+                    return; // Выходим после удаления
+                }
+            }
+        }
+
+
+        private void datePicker_SelectedDatesChanged(object sender, SelectionChangedEventArgs e)
+        {
+            //DateTime? selectedDate = calendar;
+            MessageBox.Show("DatePicker");
+        }
+
+        //------------------------------------------------------------------------------------------------------
+        //Запросы к базе данных
+        //------------------------------------------------------------------------------------------------------
+
+        private void GetUnitFromDatabase() //Загрузка перечня установок из ДБ
+        {
+            try
+            {
+                using (var connection = new SQLiteConnection(_connectionString))
+                {
+                    connection.Open();
+
+                    string query = @" Select id, Unit, Description From Units ";
+
+                    using (var command = new SQLiteCommand(query, connection))
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            Units.Add(new UnitModel
+                            {
+                                Id = reader.GetInt32(0),
+                                Unit = reader.GetString(1),
+                                Description = reader.IsDBNull(2) ? null : reader.GetString(2)
+                            });
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка загрузки данных: {ex.Message}");
+            }
+        }
+
+        // Загрузка категорий из базы данных
+        public List<EventsModelForView> GetEvents()
+        {
+            var events = new List<EventsModelForView>();
+
+            using (var connection = new SQLiteConnection(_connectionString))
+            {
+                connection.Open();
+                //string query = "SELECT id, DateEvent, Unit, OilRefining, Category, Description, Action, DateCreate, Creator  FROM vwEvents";
+                string query = $" SELECT id, DateEvent, Unit, OilRefining, Category, Description, Action, DateCreate, Creator FROM vwEvents " +
+                    $"Where DateEvent BETWEEN '{StartDate.Date.ToString("yyyy-MM-dd")}' AND '{EndDate.Date.ToString("yyyy-MM-dd")}' ";
+
+                var command = new SQLiteCommand(query, connection);
+                using (var reader = command.ExecuteReader())
+                {
+                    int idIndex = reader.GetOrdinal("id");
+                    int dateIndex = reader.GetOrdinal("DateEvent");
+                    int unitIndex = reader.GetOrdinal("Unit");
+                    int refiningIndex = reader.GetOrdinal("OilRefining");
+                    int categotyIndex = reader.GetOrdinal("Category");
+                    int descriptionIndex = reader.GetOrdinal("Description");
+                    int actionIndex = reader.GetOrdinal("Action");
+                    int createIndex = reader.GetOrdinal("DateCreate");
+                    int creatorIndex = reader.GetOrdinal("Creator");
+
+                    while (reader.Read())
+                    {
+                        events.Add(new EventsModelForView
+                        {
+                            Id = reader.GetInt32(idIndex),
+                            DateEventString = reader.GetString(dateIndex),
+                            Unit = reader.GetString(unitIndex),
+                            OilRefining = reader.IsDBNull(refiningIndex) ? null : reader.GetString(refiningIndex),
+                            Category = reader.GetString(categotyIndex),
+                            Description = reader.IsDBNull(descriptionIndex) ? null : reader.GetString(descriptionIndex),
+                            Action = reader.IsDBNull(actionIndex) ? null : reader.GetString(actionIndex),
+                            DateCreate = reader.GetString(createIndex),
+                            Creator = reader.GetString(creatorIndex)
+                        });
+                    }
+                }
+                return events;
+            }
+        }
 
         private void Delete(object parameter)
         {
@@ -272,30 +393,6 @@ namespace FlowEvents
         }
 
 
-        private void ExecuteDeleteCommand(SQLiteConnection connection, string query, int eventId)
-        {
-            using (var command = new SQLiteCommand(query, connection))
-            {
-                command.Parameters.AddWithValue("@EventId", eventId);
-                command.ExecuteNonQuery();
-            }
-        }
-
-
-        private void RemoveEventById(int id) // Удаление события из коллекции по ID
-        {
-            if (Events == null || Events.Count == 0) return;
-
-            for (int i = 0; i < Events.Count; i++)
-            {
-                if (Events[i].Id == id)
-                {
-                    Events.RemoveAt(i);
-                    return; // Выходим после удаления
-                }
-            }
-        }
-
 
         //====================================================================================================
         //Свойство для управления видимостью кнопок
@@ -328,8 +425,8 @@ namespace FlowEvents
         public bool IsToolBarVisible
         {
             get { return _isToolBarVisible; }
-            set 
-            { 
+            set
+            {
                 _isToolBarVisible = value;
                 OnPropertyChanged();
             }
