@@ -57,14 +57,12 @@
 
             <Label Content="Установка:" VerticalAlignment="Center"/>
             <ComboBox x:Name="CB_Units"
-          HorizontalAlignment="Left" VerticalAlignment="Center" Width="200" Margin="10"
-          IsEditable="False" StaysOpenOnEdit="True" IsDropDownOpen="False">
-                <ComboBox.ItemTemplate>
-                    <DataTemplate>
-
-                    </DataTemplate>
-                </ComboBox.ItemTemplate>
-            </ComboBox>
+                      ItemsSource="{Binding Units}"
+                      DisplayMemberPath="Unit"
+                      SelectedValuePath="Id"
+                      SelectedItem="{Binding SelectedUnit}"                      
+                      HorizontalAlignment="Left" VerticalAlignment="Center" Width="200" Margin="10"
+                      IsEditable="False" StaysOpenOnEdit="True" IsDropDownOpen="False"/>
 
             <Separator Margin="10"/>
            <!-- <Button x:Name="btnBack" Content="Back" HorizontalAlignment="Left" VerticalAlignment="Center" BorderBrush="Gray"/> -->

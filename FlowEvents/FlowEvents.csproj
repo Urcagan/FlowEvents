@@ -189,6 +189,9 @@
     <PackageReference Include="squirrel.windows">
       <Version>2.0.1</Version>
     </PackageReference>
+    <PackageReference Include="System.Buffers">
+      <Version>4.6.1</Version>
+    </PackageReference>
     <PackageReference Include="System.Data.SQLite">
       <Version>1.0.119</Version>
     </PackageReference>

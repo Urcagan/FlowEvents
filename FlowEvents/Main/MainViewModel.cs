@@ -4,7 +4,9 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Data.SQLite;
+using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices.ComTypes;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -69,6 +71,9 @@ namespace FlowEvents
             {
                 _selectedUnit = value;
                 OnPropertyChanged();
+                // При изменении выбранной установки, формируем SQL запрос для получения событий
+                string mes = buildSQLQueryEvents(SelectedUnit, StartDate, EndDate);
+                MessageBox.Show(mes, "SQL запрос", MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
 
@@ -133,7 +138,9 @@ namespace FlowEvents
             IsUnitButtonVisible = true;
             IsToolBarVisible = true;
 
-            
+            Units.Insert(0, new UnitModel { Id = -1, Unit = "Все" });
+            GetUnitFromDatabase();
+            SelectedUnit = Units.FirstOrDefault();
 
             Events.Clear();
 
@@ -152,15 +159,7 @@ namespace FlowEvents
             _connectionString = $"Data Source={newPathDB};Version=3;foreign keys=true;";
         }
 
-        /// Формирует строку SQL запроса для вывода данных в таблицу gv_Task
-        /// 
-        public string buildSQLQuery()
-        {
-            string SQLrow = " SELECT id, DateEvent, Unit, OilRefining, Category, Description, Action, DateCreate, Creator FROM vwEvents Where DateEvent BETWEEN '2025-07-01' AND '2025-07-06' ";
-
-
-            return SQLrow;
-        }
+        
 
 
         private void UnitMenuItem(object parameter)
@@ -298,6 +297,34 @@ namespace FlowEvents
             catch (Exception ex)
             {
                 MessageBox.Show($"Ошибка загрузки данных: {ex.Message}");
+            }
+        }
+
+
+        /// <summary>
+        /// Формирует строку SQL запроса для вывода данных в таблицу 
+        /// </summary>
+        /// <param name="selectedUnit"></param>
+        /// <param name="startDate"></param>
+        /// <param name="endDate"></param>
+        /// <returns></returns>
+        public string buildSQLQueryEvents(UnitModel selectedUnit, DateTime startDate, DateTime endDate)
+        {
+            string query;
+            if (selectedUnit == null || selectedUnit.Id == -1)
+            {
+                // Если выбрана установка "Все", то возвращаем все события за указанный период
+                query = $" SELECT id, DateEvent, Unit, OilRefining, Category, Description, Action, DateCreate, Creator FROM vwEvents " +
+                   $"Where DateEvent BETWEEN '{startDate.Date.ToString("yyyy-MM-dd")}' AND '{endDate.Date.ToString("yyyy-MM-dd")}' ";
+                return query;
+            }
+            else
+            {
+                string unitName = selectedUnit.Unit.Replace("'", "''"); // Экранируем одинарные кавычки в названии установки
+                // Формируем SQL запрос для получения данных по выбранной установке
+                query = $" SELECT id, DateEvent, Unit, OilRefining, Category, Description, Action, DateCreate, Creator FROM vwEvents " +
+                   $"Where Unit Like '%{unitName}%' AND DateEvent BETWEEN '{startDate.Date.ToString("yyyy-MM-dd")}' AND '{endDate.Date.ToString("yyyy-MM-dd")}' ";
+                return query;
             }
         }
 
