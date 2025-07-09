@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:FlowEvents"
         mc:Ignorable="d"
         Title="Журнал событий" Height="750" Width="1400" >
-   <!-- Loaded="Window_Loaded"> -->
+    <!-- Loaded="Window_Loaded"> -->
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
         <!-- Стиль для текста с переносом строк -->
@@ -41,7 +41,7 @@
                           IsEnabled="{Binding IsCategoryButtonVisible}"/>
                 <Separator/>
                 <MenuItem Header="Пользователи" Command="{Binding UserManagerWindow}">
-                    
+
                 </MenuItem>
                 <Separator />
                 <MenuItem Header="Настройка" Command="{Binding SettingOpenWindow}"/>
@@ -64,32 +64,41 @@
                       HorizontalAlignment="Left" VerticalAlignment="Center" Width="200" Margin="10"
                       IsEditable="False" StaysOpenOnEdit="True" IsDropDownOpen="False"/>
 
-            <Separator Margin="10"/>
-           <!-- <Button x:Name="btnBack" Content="Back" HorizontalAlignment="Left" VerticalAlignment="Center" BorderBrush="Gray"/> -->
-            <Label Content="Период" VerticalAlignment="Center"/>            
+            <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="20,0,20,0"/>
+            <!-- <Button x:Name="btnBack" Content="Back" HorizontalAlignment="Left" VerticalAlignment="Center" BorderBrush="Gray"/> -->
+            <Label Content="Период" VerticalAlignment="Center"/>
             <DatePicker x:Name="datePickerStart"
                         SelectedDate="{Binding StartDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                         VerticalAlignment="Center"
                         FirstDayOfWeek="Monday"
                         SelectedDateFormat="Short"/>
-            
+
             <Label Content=" - " VerticalAlignment="Center"/>
             <DatePicker x:Name="datePickerEnd"
             SelectedDate="{Binding EndDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
             VerticalAlignment="Center"
             FirstDayOfWeek="Monday"
             SelectedDateFormat="Short"/>
-           <!-- <Button x:Name="btnForvard" Content="Forvard" HorizontalAlignment="Left" VerticalAlignment="Center" BorderBrush="Gray" Margin="5"/> -->
+            <!-- <Button x:Name="btnForvard" Content="Forvard" HorizontalAlignment="Left" VerticalAlignment="Center" BorderBrush="Gray" Margin="5"/> -->
 
-            
-            <Border BorderBrush="Black" Margin="20 0 1 0" />
-            
-            <Button x:Name="AddEvent" 
+            <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="20,0,20,0"/>
+
+            <StackPanel Orientation="Horizontal" >
+                <StackPanel.Resources>
+                    <Style TargetType="Button">
+                        <Setter Property="Margin" Value="0,0,10,0"/>
+                        <Setter Property="VerticalAlignment" Value="Center"/>
+                        <Setter Property="Padding" Value="8,4"/>
+                    </Style>
+                </StackPanel.Resources>
+                <Button x:Name="AddEvent" 
                     Command="{Binding EventAddWindow}"
-                    Content="Добавить событие" 
-                    HorizontalAlignment="Left" 
-                    VerticalAlignment="Center" 
-                    BorderBrush="#FF617584"/>
+                    Content="Добавить событие"                   
+                   
+                    BorderBrush="#FF617584" />
+                <Button Content=" Кнопка 1"/>
+                <Button Content=" Кнопка 2"/>
+            </StackPanel>
         </ToolBar>
 
         <StatusBar x:Name="statusBar" DockPanel.Dock="Bottom">
@@ -112,7 +121,7 @@
                       IsReadOnly="True"
                       SelectionMode="Single"
                       Margin="5" Grid.Column="0" >
-                
+
                 <!-- Добавьте контекстное меню -->
                 <DataGrid.ContextMenu>
                     <ContextMenu>
@@ -132,11 +141,11 @@
                             <Style BasedOn="{StaticResource TextBlockStyle}" TargetType="TextBlock"/>
                         </DataGridTextColumn.ElementStyle>
                     </DataGridTextColumn>
-                    
+
                     <DataGridTextColumn Header="Установка" Binding="{Binding Unit}" Width="150">
-                    <DataGridTextColumn.ElementStyle>
+                        <DataGridTextColumn.ElementStyle>
                             <Style BasedOn="{StaticResource WrappedTextBlockStyle}" TargetType="TextBlock"/>
-                    </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn.ElementStyle>
                     </DataGridTextColumn>
 
                     <DataGridTextColumn Header="Переработка" Binding="{Binding OilRefining}" Width="150">
@@ -146,9 +155,9 @@
                     </DataGridTextColumn>
 
                     <DataGridTextColumn Header="Вид" Binding="{Binding Category}" Width="100" >
-                    <DataGridTextColumn.ElementStyle>
+                        <DataGridTextColumn.ElementStyle>
                             <Style BasedOn="{StaticResource WrappedTextBlockStyle}" TargetType="TextBlock"/>
-                    </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn.ElementStyle>
                     </DataGridTextColumn>
 
 
@@ -157,7 +166,7 @@
                             <Style BasedOn="{StaticResource WrappedTextBlockStyle}" TargetType="TextBlock"/>
                         </DataGridTextColumn.ElementStyle>
                     </DataGridTextColumn>
-                    
+
                     <DataGridTextColumn Header="Примечание, пояснение" Binding="{Binding Action}" Width="*">
                         <DataGridTextColumn.ElementStyle>
                             <Style BasedOn="{StaticResource WrappedTextBlockStyle}" TargetType="TextBlock"/>
@@ -177,10 +186,10 @@
                     </DataGridTextColumn>
 
                     <DataGridTextColumn Header="Автор" Binding="{Binding Creator}" Width="auto">
-                    <DataGridTextColumn.ElementStyle>
-                        <Style BasedOn="{StaticResource TextBlockStyle}" TargetType="TextBlock"/>
-                    </DataGridTextColumn.ElementStyle>
-                        
+                        <DataGridTextColumn.ElementStyle>
+                            <Style BasedOn="{StaticResource TextBlockStyle}" TargetType="TextBlock"/>
+                        </DataGridTextColumn.ElementStyle>
+
                     </DataGridTextColumn>
                 </DataGrid.Columns>
             </DataGrid>

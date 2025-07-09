@@ -41,7 +41,8 @@ namespace FlowEvents
                 {
                     _sartDate = value;
                     OnPropertyChanged(nameof(StartDate));
-                    LoadEvents();
+                    QueryEvent = buildSQLQueryEvents(SelectedUnit, StartDate, EndDate);
+                    //LoadEvents();
                 }
             }
         }
@@ -56,12 +57,11 @@ namespace FlowEvents
                 {
                     _endDate = value;
                     OnPropertyChanged(nameof(EndDate));
-                    LoadEvents();
+                    QueryEvent = buildSQLQueryEvents(SelectedUnit, StartDate, EndDate);
+                    //LoadEvents();
                 }
             }
         }
-
-        public ObservableCollection<UnitModel> Units { get; set; } = new ObservableCollection<UnitModel>();
 
         private UnitModel _selectedUnit;
         public UnitModel SelectedUnit
@@ -72,11 +72,23 @@ namespace FlowEvents
                 _selectedUnit = value;
                 OnPropertyChanged();
                 // При изменении выбранной установки, формируем SQL запрос для получения событий
-                string mes = buildSQLQueryEvents(SelectedUnit, StartDate, EndDate);
-                MessageBox.Show(mes, "SQL запрос", MessageBoxButton.OK, MessageBoxImage.Information);
+                QueryEvent = buildSQLQueryEvents(SelectedUnit, StartDate, EndDate);
+                //MessageBox.Show(mes, "SQL запрос", MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
 
+        private string _queryEvent; // Для хранения Запроса получения Events 
+        public string QueryEvent
+        {
+            get => _queryEvent;
+            set
+            {
+                _queryEvent = value;                
+                LoadEvents();
+            }
+        }
+
+        public ObservableCollection<UnitModel> Units { get; set; } = new ObservableCollection<UnitModel>();
 
         // Коллекция для записей журнала (автоматически уведомляет об изменениях)
         public ObservableCollection<EventsModelForView> Events { get; set; } = new ObservableCollection<EventsModelForView>();
@@ -125,7 +137,11 @@ namespace FlowEvents
 
             //if (!CheckDB.CheckDatabaseFileVer(pathDB, appSettings.VerDB)) return; //Проверяем версию БД
 
-            LoadEvents();// Загрузка данных из БД
+            Units.Insert(0, new UnitModel { Id = -1, Unit = "Все" });
+            GetUnitFromDatabase();
+            SelectedUnit = Units.FirstOrDefault();
+
+           // LoadEvents();// Загрузка данных из БД
 
             FilePath = pathDB; //Выводим путь к файлу в нижную часть главного окна
         }
@@ -138,14 +154,12 @@ namespace FlowEvents
             IsUnitButtonVisible = true;
             IsToolBarVisible = true;
 
-            Units.Insert(0, new UnitModel { Id = -1, Unit = "Все" });
-            GetUnitFromDatabase();
-            SelectedUnit = Units.FirstOrDefault();
+
 
             Events.Clear();
 
             // Получаем данные из базы
-            var eventsFromDb = GetEvents();
+            var eventsFromDb = GetEvents(QueryEvent);
 
             // Добавляем данные в коллекцию
             foreach (var eventModel in eventsFromDb)
@@ -159,7 +173,7 @@ namespace FlowEvents
             _connectionString = $"Data Source={newPathDB};Version=3;foreign keys=true;";
         }
 
-        
+
 
 
         private void UnitMenuItem(object parameter)
@@ -329,18 +343,17 @@ namespace FlowEvents
         }
 
         // Загрузка категорий из базы данных
-        public List<EventsModelForView> GetEvents()
+        public List<EventsModelForView> GetEvents(string queryEvent)
         {
             var events = new List<EventsModelForView>();
 
             using (var connection = new SQLiteConnection(_connectionString))
             {
                 connection.Open();
-                //string query = "SELECT id, DateEvent, Unit, OilRefining, Category, Description, Action, DateCreate, Creator  FROM vwEvents";
-                string query = $" SELECT id, DateEvent, Unit, OilRefining, Category, Description, Action, DateCreate, Creator FROM vwEvents " +
-                    $"Where DateEvent BETWEEN '{StartDate.Date.ToString("yyyy-MM-dd")}' AND '{EndDate.Date.ToString("yyyy-MM-dd")}' ";
+                //string query = $" SELECT id, DateEvent, Unit, OilRefining, Category, Description, Action, DateCreate, Creator FROM vwEvents " +
+                //    $"Where DateEvent BETWEEN '{StartDate.Date.ToString("yyyy-MM-dd")}' AND '{EndDate.Date.ToString("yyyy-MM-dd")}' ";
 
-                var command = new SQLiteCommand(query, connection);
+                var command = new SQLiteCommand(QueryEvent, connection);
                 using (var reader = command.ExecuteReader())
                 {
                     int idIndex = reader.GetOrdinal("id");
