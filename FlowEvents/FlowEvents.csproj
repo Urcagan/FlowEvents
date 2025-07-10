@@ -202,5 +202,65 @@
   <ItemGroup>
     <Folder Include="View\" />
   </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resource\Images\Icons\Save 24x24.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resource\Images\Icons\Copy.png" />
+    <Resource Include="Resource\Images\Icons\Create.png" />
+    <Resource Include="Resource\Images\Icons\Cut.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resource\Images\Icons\Abort.png" />
+    <Resource Include="Resource\Images\Icons\Alert.png" />
+    <Resource Include="Resource\Images\Icons\Application.png" />
+    <Resource Include="Resource\Images\Icons\Apply.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resource\Images\Icons\Comment.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resource\Images\Icons\Cancel.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resource\Images\Icons\Exit.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resource\Images\Icons\Alert_32.png" />
+    <Resource Include="Resource\Images\Icons\Alert_64.png" />
+    <Resource Include="Resource\Images\Icons\Allert.png" />
+    <Resource Include="Resource\Images\Icons\Allert_128.png" />
+    <Resource Include="Resource\Images\Icons\Back.png" />
+    <Resource Include="Resource\Images\Icons\Bad mark.png" />
+    <Resource Include="Resource\Images\Icons\Black pin.png" />
+    <Resource Include="Resource\Images\Icons\Calendar.png" />
+    <Resource Include="Resource\Images\Icons\Clock.png" />
+    <Resource Include="Resource\Images\Icons\Close 24x24.png" />
+    <Resource Include="Resource\Images\Icons\Danger.png" />
+    <Resource Include="Resource\Images\Icons\Database.png" />
+    <Resource Include="Resource\Images\Icons\Delete.bmp" />
+    <Resource Include="Resource\Images\Icons\Equipment.png" />
+    <Resource Include="Resource\Images\Icons\Erase.png" />
+    <Resource Include="Resource\Images\Icons\Filter.png" />
+    <Resource Include="Resource\Images\Icons\Find.png" />
+    <Resource Include="Resource\Images\Icons\Forward.png" />
+    <Resource Include="Resource\Images\Icons\History.png" />
+    <Resource Include="Resource\Images\Icons\List.png" />
+    <Resource Include="Resource\Images\Icons\Load.png" />
+    <Resource Include="Resource\Images\Icons\Lock.png" />
+    <Resource Include="Resource\Images\Icons\Modify.bmp" />
+    <Resource Include="Resource\Images\Icons\Modify.png" />
+    <Resource Include="Resource\Images\Icons\New document.png" />
+    <Resource Include="Resource\Images\Icons\Next.bmp" />
+    <Resource Include="Resource\Images\Icons\Notes.png" />
+    <Resource Include="Resource\Images\Icons\People.png" />
+    <Resource Include="Resource\Images\Icons\Previous.bmp" />
+    <Resource Include="Resource\Images\Icons\Refresh.bmp" />
+    <Resource Include="Resource\Images\Icons\Sync.png" />
+    <Resource Include="Resource\Images\Icons\Trash 24x24.png" />
+    <Resource Include="Resource\Images\Icons\Trash.png" />
+    <Resource Include="Resource\Images\Icons\User group.png" />
+    <Resource Include="Resource\Images\Icons\Yes.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -88,6 +88,18 @@ namespace FlowEvents
             }
         }
 
+        private bool _isAllEvents;
+        public bool IsAllEvents
+        {
+            get => _isAllEvents;
+            set
+            {
+                _isAllEvents = value;
+                OnPropertyChanged();
+                MessageBox.Show("hChhh");
+            }
+        }
+
         public ObservableCollection<UnitModel> Units { get; set; } = new ObservableCollection<UnitModel>();
 
         // Коллекция для записей журнала (автоматически уведомляет об изменениях)

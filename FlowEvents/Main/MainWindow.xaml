@@ -55,17 +55,22 @@
         <ToolBar x:Name="toolBar" DockPanel.Dock="Top"
                  IsEnabled="{Binding IsToolBarVisible}">
 
+            
+
             <Label Content="Установка:" VerticalAlignment="Center"/>
             <ComboBox x:Name="CB_Units"
                       ItemsSource="{Binding Units}"
                       DisplayMemberPath="Unit"
                       SelectedValuePath="Id"
                       SelectedItem="{Binding SelectedUnit}"                      
-                      HorizontalAlignment="Left" VerticalAlignment="Center" Width="200" Margin="10"
+                      HorizontalAlignment="Left" VerticalAlignment="Center" Width="150" Margin="10"
                       IsEditable="False" StaysOpenOnEdit="True" IsDropDownOpen="False"/>
 
             <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="20,0,20,0"/>
-            <!-- <Button x:Name="btnBack" Content="Back" HorizontalAlignment="Left" VerticalAlignment="Center" BorderBrush="Gray"/> -->
+            <Button x:Name="btnBack" ToolTip="Back" HorizontalAlignment="Left" VerticalAlignment="Center" BorderBrush="Gray">
+                <Image Source="/Resource/Images/Icons/Back.png" Height="16"/>
+            </Button>
+
             <Label Content="Период" VerticalAlignment="Center"/>
             <DatePicker x:Name="datePickerStart"
                         SelectedDate="{Binding StartDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
@@ -79,7 +84,9 @@
             VerticalAlignment="Center"
             FirstDayOfWeek="Monday"
             SelectedDateFormat="Short"/>
-            <!-- <Button x:Name="btnForvard" Content="Forvard" HorizontalAlignment="Left" VerticalAlignment="Center" BorderBrush="Gray" Margin="5"/> -->
+            <Button x:Name="btnForvard" ToolTip="Forvard" HorizontalAlignment="Left" VerticalAlignment="Center" BorderBrush="Gray" Margin="5">
+                <Image Source="/Resource/Images/Icons/Forward.png" Height="16"/>
+            </Button>
 
             <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="20,0,20,0"/>
 
@@ -88,17 +95,36 @@
                     <Style TargetType="Button">
                         <Setter Property="Margin" Value="0,0,10,0"/>
                         <Setter Property="VerticalAlignment" Value="Center"/>
-                        <Setter Property="Padding" Value="8,4"/>
+                        <Setter Property="Padding" Value="4,4"/>
+                    </Style>
+                    <Style TargetType="Image">
+                        <Setter Property="Height" Value="16" />
+                        <Setter Property="Width" Value="16" />
                     </Style>
                 </StackPanel.Resources>
                 <Button x:Name="AddEvent" 
                     Command="{Binding EventAddWindow}"
-                    Content="Добавить событие"                   
-                   
-                    BorderBrush="#FF617584" />
+                    ToolTip="Добавить событие" >
+                    <Image Source="/Resource/Images/Icons/Create.png" />
+                </Button>
+                
                 <Button Content=" Кнопка 1"/>
                 <Button Content=" Кнопка 2"/>
+
+                <CheckBox IsChecked="{Binding IsAllEvents, Mode=TwoWay}"
+                          VerticalAlignment="Center">
+                    <TextBlock Text="Все даты" />
+                </CheckBox> 
+                
             </StackPanel>
+             
+            <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="20,0,20,0"/>
+
+            <StackPanel>
+                <Label Content="User" HorizontalAlignment="Right"/>
+            </StackPanel>
+            
+                
         </ToolBar>
 
         <StatusBar x:Name="statusBar" DockPanel.Dock="Bottom">
