@@ -7,7 +7,7 @@
         mc:Ignorable="d"
         Title="Журнал событий" Height="750" Width="1400" >
     <!-- Loaded="Window_Loaded"> -->
-    <Window.Resources>
+    <Window.Resources>        
         <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
         <!-- Стиль для текста с переносом строк -->
         <Style x:Key="WrappedTextBlockStyle" TargetType="TextBlock">
@@ -28,7 +28,6 @@
             <Setter Property="BorderBrush" Value="#FF617584" />
         </Style>
     </Window.Resources>
-
     <DockPanel>
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="Меню" >
@@ -55,40 +54,62 @@
         <ToolBar x:Name="toolBar" DockPanel.Dock="Top"
                  IsEnabled="{Binding IsToolBarVisible}">
 
+
+            <StackPanel Orientation="Horizontal">
+                
+                <Label Content="Установка:" VerticalAlignment="Center"/>
+                <ComboBox x:Name="CB_Units"
+                          ItemsSource="{Binding Units}"
+                          DisplayMemberPath="Unit"
+                          SelectedValuePath="Id"
+                          SelectedItem="{Binding SelectedUnit}"                      
+                          HorizontalAlignment="Left" VerticalAlignment="Center" Width="150" Margin="10"
+                          IsEditable="False" StaysOpenOnEdit="True" IsDropDownOpen="False"/>
+    
+            </StackPanel>
+            
+            <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="10,0,10,0"/>
+
+            <StackPanel Orientation="Horizontal" 
+                        IsEnabled="{Binding IsAllEvents, Converter={StaticResource InverseBooleanConverter}}">
+                <Button x:Name="btnBack" 
+                        Command="{Binding DownDateCommand}"
+                        ToolTip="Back" HorizontalAlignment="Left" VerticalAlignment="Center" BorderBrush="Gray" Margin="0,0,10,0">
+                    <Image Source="/Resource/Images/Icons/Back.png" Height="16"/>
+                </Button>
+
+                <DatePicker x:Name="datePickerStart"
+                            SelectedDate="{Binding StartDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                            VerticalAlignment="Center"
+                            FirstDayOfWeek="Monday"
+                            SelectedDateFormat="Short"/>
+
+                <Label Content=" - " VerticalAlignment="Center"/>
+                <DatePicker x:Name="datePickerEnd"
+                            SelectedDate="{Binding EndDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                            VerticalAlignment="Center"
+                            FirstDayOfWeek="Monday"
+                            SelectedDateFormat="Short"/>
+            
+                <Button x:Name="btnForvard" 
+                        Command="{Binding UpDateCommand}"
+                        ToolTip="Forvard" HorizontalAlignment="Left" VerticalAlignment="Center" BorderBrush="Gray" Margin="10,0,0,0">
+                    <Image Source="/Resource/Images/Icons/Forward.png" Height="16"/>
+                </Button>
+
+                
+            </StackPanel>
+            
+            <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="10,0,10,0"/>
+            
+            <StackPanel Orientation="Horizontal">
+                <CheckBox IsChecked="{Binding IsAllEvents, Mode=TwoWay}" VerticalAlignment="Center" >
+                <TextBlock Text="Все даты" />
+            </CheckBox>
+            </StackPanel>
             
 
-            <Label Content="Установка:" VerticalAlignment="Center"/>
-            <ComboBox x:Name="CB_Units"
-                      ItemsSource="{Binding Units}"
-                      DisplayMemberPath="Unit"
-                      SelectedValuePath="Id"
-                      SelectedItem="{Binding SelectedUnit}"                      
-                      HorizontalAlignment="Left" VerticalAlignment="Center" Width="150" Margin="10"
-                      IsEditable="False" StaysOpenOnEdit="True" IsDropDownOpen="False"/>
-
-            <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="20,0,20,0"/>
-            <Button x:Name="btnBack" ToolTip="Back" HorizontalAlignment="Left" VerticalAlignment="Center" BorderBrush="Gray">
-                <Image Source="/Resource/Images/Icons/Back.png" Height="16"/>
-            </Button>
-
-            <Label Content="Период" VerticalAlignment="Center"/>
-            <DatePicker x:Name="datePickerStart"
-                        SelectedDate="{Binding StartDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                        VerticalAlignment="Center"
-                        FirstDayOfWeek="Monday"
-                        SelectedDateFormat="Short"/>
-
-            <Label Content=" - " VerticalAlignment="Center"/>
-            <DatePicker x:Name="datePickerEnd"
-            SelectedDate="{Binding EndDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-            VerticalAlignment="Center"
-            FirstDayOfWeek="Monday"
-            SelectedDateFormat="Short"/>
-            <Button x:Name="btnForvard" ToolTip="Forvard" HorizontalAlignment="Left" VerticalAlignment="Center" BorderBrush="Gray" Margin="5">
-                <Image Source="/Resource/Images/Icons/Forward.png" Height="16"/>
-            </Button>
-
-            <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="20,0,20,0"/>
+            <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="10,0,10,0"/>
 
             <StackPanel Orientation="Horizontal" >
                 <StackPanel.Resources>
@@ -111,14 +132,11 @@
                 <Button Content=" Кнопка 1"/>
                 <Button Content=" Кнопка 2"/>
 
-                <CheckBox IsChecked="{Binding IsAllEvents, Mode=TwoWay}"
-                          VerticalAlignment="Center">
-                    <TextBlock Text="Все даты" />
-                </CheckBox> 
+                
                 
             </StackPanel>
              
-            <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="20,0,20,0"/>
+            <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="10,0,20,0"/>
 
             <StackPanel>
                 <Label Content="User" HorizontalAlignment="Right"/>

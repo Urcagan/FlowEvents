@@ -90,11 +90,7 @@ namespace FlowEvents
             GetUsers();  // Загружаем пользователей
         }
 
-        private void TestMes()
-        {
-            //MessageBox.Show($"TestMes {SelectedUser.UserName}");
-            MessageBox.Show($" {_selectedUser.Row}");
-        }
+       
         private void OpenFindUserWindows(object parameters)
         {
 

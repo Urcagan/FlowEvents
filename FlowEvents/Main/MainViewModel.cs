@@ -6,11 +6,8 @@ using System.ComponentModel;
 using System.Data.SQLite;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices.ComTypes;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
-using System.Windows.Documents;
 
 namespace FlowEvents
 {
@@ -36,13 +33,11 @@ namespace FlowEvents
             get => _sartDate;
             set
             {
-                //if (_sartDate != value)
                 if (value.Date <= EndDate.Date)
                 {
                     _sartDate = value;
                     OnPropertyChanged(nameof(StartDate));
-                    QueryEvent = buildSQLQueryEvents(SelectedUnit, StartDate, EndDate);
-                    //LoadEvents();
+                    UpdateQuery();
                 }
             }
         }
@@ -57,8 +52,7 @@ namespace FlowEvents
                 {
                     _endDate = value;
                     OnPropertyChanged(nameof(EndDate));
-                    QueryEvent = buildSQLQueryEvents(SelectedUnit, StartDate, EndDate);
-                    //LoadEvents();
+                    UpdateQuery();
                 }
             }
         }
@@ -71,9 +65,19 @@ namespace FlowEvents
             {
                 _selectedUnit = value;
                 OnPropertyChanged();
-                // При изменении выбранной установки, формируем SQL запрос для получения событий
-                QueryEvent = buildSQLQueryEvents(SelectedUnit, StartDate, EndDate);
-                //MessageBox.Show(mes, "SQL запрос", MessageBoxButton.OK, MessageBoxImage.Information);
+                UpdateQuery();
+            }
+        }
+
+        private bool _isAllEvents;
+        public bool IsAllEvents
+        {
+            get => _isAllEvents;
+            set
+            {
+                _isAllEvents = value;
+                OnPropertyChanged();
+                UpdateQuery();
             }
         }
 
@@ -88,17 +92,11 @@ namespace FlowEvents
             }
         }
 
-        private bool _isAllEvents;
-        public bool IsAllEvents
+        private void UpdateQuery()
         {
-            get => _isAllEvents;
-            set
-            {
-                _isAllEvents = value;
-                OnPropertyChanged();
-                MessageBox.Show("hChhh");
-            }
+            QueryEvent = BuildSQLQueryEvents(SelectedUnit, IsAllEvents ? null : (DateTime?)StartDate, IsAllEvents ? null : (DateTime?)EndDate, IsAllEvents);
         }
+
 
         public ObservableCollection<UnitModel> Units { get; set; } = new ObservableCollection<UnitModel>();
 
@@ -112,6 +110,8 @@ namespace FlowEvents
         public RelayCommand EditEventCommand { get; } // команда для редактирования
         public RelayCommand DeleteEventCommand { get; }
         public RelayCommand UserManagerWindow { get; }
+        public RelayCommand DownDateCommand { get; }
+        public RelayCommand UpDateCommand { get; }
 
         //===============================================================================================================================================
 
@@ -124,9 +124,20 @@ namespace FlowEvents
             EditEventCommand = new RelayCommand(EditEvent);
             DeleteEventCommand = new RelayCommand(Delete);
             UserManagerWindow = new RelayCommand(UserManagerMenuItem);
+            
+            DownDateCommand = new RelayCommand((parameter) =>
+            {
+                StartDate = StartDate.AddDays(-1);
+                EndDate = EndDate.AddDays(-1);
+            });
+            UpDateCommand = new RelayCommand((parameter) =>
+            {
+                EndDate = EndDate.AddDays(1);
+                StartDate = StartDate.AddDays(1);
+                
+            });
 
             appSettings = AppSettings.GetSettingsApp(); // Загружаем настройки программы из файла при запуске программы
-            //IsCategoryButtonVisible = false;
         }
 
         public void StartUP()
@@ -149,15 +160,22 @@ namespace FlowEvents
 
             //if (!CheckDB.CheckDatabaseFileVer(pathDB, appSettings.VerDB)) return; //Проверяем версию БД
 
-            Units.Insert(0, new UnitModel { Id = -1, Unit = "Все" });
-            GetUnitFromDatabase();
-            SelectedUnit = Units.FirstOrDefault();
-
-           // LoadEvents();// Загрузка данных из БД
+            LoadUnitsToComboBox(); // Загружаем перечень установок из базы данных
+            //Units.Insert(0, new UnitModel { Id = -1, Unit = "Все" });
+            //GetUnitFromDatabase();
+            //SelectedUnit = Units.FirstOrDefault();
 
             FilePath = pathDB; //Выводим путь к файлу в нижную часть главного окна
         }
 
+        public void LoadUnitsToComboBox()
+        {
+            Units.Clear();
+            Units.Insert(0, new UnitModel { Id = -1, Unit = "Все" });
+            // Загружаем перечень установок из базы данных
+            GetUnitFromDatabase();
+            SelectedUnit = Units.FirstOrDefault();
+        }
 
         // Метод для загрузки данных из базы
         public void LoadEvents()
@@ -165,8 +183,6 @@ namespace FlowEvents
             IsCategoryButtonVisible = true;
             IsUnitButtonVisible = true;
             IsToolBarVisible = true;
-
-
 
             Events.Clear();
 
@@ -199,7 +215,8 @@ namespace FlowEvents
 
         private void UnitsView_Closed(object sender, EventArgs e)
         {
-            LoadEvents();
+            LoadUnitsToComboBox(); // Перезагружаем установки после закрытия окна UnitsView
+            //LoadEvents();
         }
 
         private void CategoryMenuItem(object parameter)
@@ -212,7 +229,7 @@ namespace FlowEvents
 
         private void CategoryView_Closed(object sender, EventArgs e)
         {
-            LoadEvents();
+            //LoadEvents();
         }
 
         private void SettingsMenuItem(object parameter)
@@ -334,26 +351,57 @@ namespace FlowEvents
         /// <param name="startDate"></param>
         /// <param name="endDate"></param>
         /// <returns></returns>
-        public string buildSQLQueryEvents(UnitModel selectedUnit, DateTime startDate, DateTime endDate)
+        public string BuildSQLQueryEvents(UnitModel selectedUnit, DateTime? startDate, DateTime? endDate, bool isAllEvents)
         {
-            string query;
-            if (selectedUnit == null || selectedUnit.Id == -1)
-            {
-                // Если выбрана установка "Все", то возвращаем все события за указанный период
-                query = $" SELECT id, DateEvent, Unit, OilRefining, Category, Description, Action, DateCreate, Creator FROM vwEvents " +
-                   $"Where DateEvent BETWEEN '{startDate.Date.ToString("yyyy-MM-dd")}' AND '{endDate.Date.ToString("yyyy-MM-dd")}' ";
-                return query;
-            }
-            else
-            {
-                string unitName = selectedUnit.Unit.Replace("'", "''"); // Экранируем одинарные кавычки в названии установки
-                // Формируем SQL запрос для получения данных по выбранной установке
-                query = $" SELECT id, DateEvent, Unit, OilRefining, Category, Description, Action, DateCreate, Creator FROM vwEvents " +
-                   $"Where Unit Like '%{unitName}%' AND DateEvent BETWEEN '{startDate.Date.ToString("yyyy-MM-dd")}' AND '{endDate.Date.ToString("yyyy-MM-dd")}' ";
-                return query;
-            }
-        }
+            var conditions = new List<string>();
 
+            // Фильтрация по установке
+            if (selectedUnit != null && selectedUnit.Id != -1)
+            {
+                string unitName = selectedUnit.Unit.Replace("'", "''");
+                conditions.Add($"Unit LIKE '%{unitName}%'");
+            }
+
+            // Фильтрация по времени (если не выбрано "Все даты")
+            if (!isAllEvents)
+            {
+                string startDateStr = startDate?.Date.ToString("yyyy-MM-dd") ?? DateTime.MinValue.Date.ToString("yyyy-MM-dd");
+                string endDateStr = endDate?.Date.ToString("yyyy-MM-dd") ?? DateTime.MaxValue.Date.ToString("yyyy-MM-dd");
+                conditions.Add($"DateEvent BETWEEN '{startDateStr}' AND '{endDateStr}'");
+            }
+
+            // Основной запрос
+            string query = "SELECT id, DateEvent, Unit, OilRefining, Category, Description, Action, DateCreate, Creator FROM vwEvents";
+
+            // Добавляем условия, если они есть
+            if (conditions.Count > 0)
+            {
+                query += " WHERE " + string.Join(" AND ", conditions);
+            }
+
+            return query;
+        }
+        
+        //public string buildSQLQueryEvents(UnitModel selectedUnit, DateTime startDate, DateTime endDate)
+        //{
+        //    string query;
+        //    if (selectedUnit == null || selectedUnit.Id == -1)
+        //    {
+        //        // Если выбрана установка "Все", то возвращаем все события за указанный период
+        //        query = $" SELECT id, DateEvent, Unit, OilRefining, Category, Description, Action, DateCreate, Creator FROM vwEvents " +
+        //           $"Where DateEvent BETWEEN '{startDate.Date.ToString("yyyy-MM-dd")}' AND '{endDate.Date.ToString("yyyy-MM-dd")}' ";
+        //        return query;
+        //    }
+        //    else
+        //    {
+        //        string unitName = selectedUnit.Unit.Replace("'", "''"); // Экранируем одинарные кавычки в названии установки
+        //        // Формируем SQL запрос для получения данных по выбранной установке
+        //        query = $" SELECT id, DateEvent, Unit, OilRefining, Category, Description, Action, DateCreate, Creator FROM vwEvents " +
+        //           $"Where Unit Like '%{unitName}%' AND DateEvent BETWEEN '{startDate.Date.ToString("yyyy-MM-dd")}' AND '{endDate.Date.ToString("yyyy-MM-dd")}' ";
+        //        return query;
+        //    }
+        //}
+        
         // Загрузка категорий из базы данных
         public List<EventsModelForView> GetEvents(string queryEvent)
         {

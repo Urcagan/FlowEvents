@@ -4,6 +4,8 @@
              xmlns:local="clr-namespace:FlowEvents"
              StartupUri="Main/MainWindow.xaml">      
     <Application.Resources>
-         
+        <ResourceDictionary>
+            <local:InverseBooleanConverter x:Key="InverseBooleanConverter"/> <!-- Регистрация конвертера в ресурсах -->
+        </ResourceDictionary>
     </Application.Resources>
 </Application>

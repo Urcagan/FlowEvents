@@ -63,6 +63,7 @@
       <DependentUpon>CategoryView.xaml</DependentUpon>
     </Compile>
     <Compile Include="Category\CategoryViewModel.cs" />
+    <Compile Include="Converters\InverseBooleanConverter.cs" />
     <Compile Include="RoleService.cs" />
     <Compile Include="Users\DomainHelper.cs" />
     <Compile Include="EventAdd\EventAddViewModel.cs" />
@@ -94,7 +95,7 @@
     <Compile Include="Units\UnitsView.xaml.cs">
       <DependentUpon>UnitsView.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Models\UnitViewModel.cs" />
+    <Compile Include="Units\UnitViewModel.cs" />
     <Compile Include="Users\UserManager.xaml.cs">
       <DependentUpon>UserManager.xaml</DependentUpon>
     </Compile>
