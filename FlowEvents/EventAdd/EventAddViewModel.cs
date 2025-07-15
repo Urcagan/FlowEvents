@@ -153,14 +153,19 @@ namespace FlowEvents
         private readonly string formatDateTime = AppBaseConfig.formatDateTime; // формат даты с временем
 
         // Команды взаимодействия с view
+        
+        public RelayCommand AttachFileCommand { get; }
         public RelayCommand SaveCommand { get; }
         public RelayCommand CancelCommand { get; }
+
+
 
         public EventAddViewModel(MainViewModel mainViewModel)
         {
             MainViewModel = mainViewModel;
             ConnectionString = $"Data Source={_mainViewModel.appSettings.pathDB};Version=3;";
 
+            AttachFileCommand = new RelayCommand(AttachFile);
             SaveCommand = new RelayCommand(SaveNewEvent);
             CancelCommand = new RelayCommand(Cancel);
 
@@ -170,10 +175,8 @@ namespace FlowEvents
             Categories.Insert(0, new CategoryModel { Id = -1, Name = "Выбор события" });
             SelectedCategory = Categories.FirstOrDefault();
             GetCategoryFromDatabase();
-
-            // Установка текущей даты по умолчанию
-            SelectedDateEvent = DateTime.Now;
-
+                        
+            SelectedDateEvent = DateTime.Now; // Установка текущей даты по умолчанию
 
             // Подписка на изменение IsSelected (чтобы Label обновлялся автоматически)
             foreach (var unit in Units)
@@ -187,11 +190,14 @@ namespace FlowEvents
                     }
                 };
             }
-
             // Первоначальное обновление
             UpdateSelectedUnitsText();
         }
 
+        private void AttachFile(object parameters)
+        {
+            MessageBox.Show("Attach file");
+        }
 
         private void UpdateSelectedUnitsText()
         {

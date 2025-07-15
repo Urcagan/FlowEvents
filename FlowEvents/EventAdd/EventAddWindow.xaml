@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:FlowEvents"
         mc:Ignorable="d"
-        Title="EventView" Height="650" Width="1200" 
+        Title="EventView" Height="650" Width="1600" 
         ResizeMode="NoResize"
         WindowStartupLocation="CenterScreen">
     <Window.Resources>
@@ -58,8 +58,12 @@
                 <Border BorderBrush="Black" BorderThickness="1" Width="400" Margin="50,0,0,0">
                 <Label Content="{Binding SelectedUnitsText}"  Height="20" Padding="0" Background="#F0F0F0"/>
             </Border>
+                
             </StatusBarItem>
-            
+            <Button Content="Прикрепить файл" 
+                Command="{Binding AttachFileCommand}"
+                Width="120" Height="30" Margin ="500,0" 
+                Grid.Column="1"/>
             <StatusBarItem Grid.Column="2">
                 <Button Content="Сохранить" 
                 Command="{Binding SaveCommand}"
@@ -82,6 +86,8 @@
                 <ColumnDefinition Width="260"/>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="200"/>
+                <ColumnDefinition Width="200"/>
             </Grid.ColumnDefinitions>
 
             <GroupBox Header="Обьект" Grid.Column="0" Grid.Row="1" >
@@ -124,6 +130,43 @@
                         VerticalScrollBarVisibility="Auto"
                         HorizontalScrollBarVisibility="Disabled"
                         Margin="5" BorderBrush="{x:Null}"/>
+            </GroupBox>
+
+            <GroupBox Header="Документ" Grid.Column="3" Grid.Row="1">
+
+                <ListView ItemsSource="{Binding AttachedFiles}">
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Header="Имя файла" DisplayMemberBinding="{Binding FileName}"/>
+                            <GridViewColumn Header="Размер">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding FileSize, Converter={StaticResource FileSizeConverter}}"/>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Header="Действия">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Button Content="Открыть" Command="{Binding OpenCommand}"/>
+                                            <Button Content="Удалить" Command="{Binding DeleteCommand}"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+                
+                
+            </GroupBox>
+            
+            <GroupBox Header="Мониторинг + Диспетчерский отчет" Grid.Column="4" Grid.Row="2">
+                <Button Content="Добавить мониторинг"
+                        Command="{Binding AddMonitoringCommand}"
+                        
+                        Width="150" Height="30" Margin ="10" />
             </GroupBox>
 
         </Grid>
