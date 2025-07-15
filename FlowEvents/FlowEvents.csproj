@@ -64,7 +64,9 @@
     </Compile>
     <Compile Include="Category\CategoryViewModel.cs" />
     <Compile Include="Converters\InverseBooleanConverter.cs" />
+    <Compile Include="Models\AttachedFileModel.cs" />
     <Compile Include="RoleService.cs" />
+    <Compile Include="Services\FileAttachmentService.cs" />
     <Compile Include="Users\DomainHelper.cs" />
     <Compile Include="EventAdd\EventAddViewModel.cs" />
     <Compile Include="EventAdd\EventAddWindow.xaml.cs">

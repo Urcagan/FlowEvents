@@ -8,7 +8,6 @@ using System.Xml.Serialization;
 
 namespace FlowEvents
 {
-
     public static class AppBaseConfig
     {
         public static WindowsIdentity UserId = WindowsIdentity.GetCurrent();   // статическая переменная UserId типа WindowsIdentity, которая получает текущую идентичность пользователя Windows

@@ -1,4 +1,5 @@
 ﻿using FlowEvents.Models;
+using Microsoft.Win32;
 using Mono.Cecil.Cil;
 using System;
 using System.Collections.Generic;
@@ -41,7 +42,6 @@ namespace FlowEvents
 
         public ObservableCollection<UnitModel> Units { get; set; } = new ObservableCollection<UnitModel>();
         
-
         public ObservableCollection<CategoryModel> Categories { get; set; } = new ObservableCollection<CategoryModel>();
 
 
@@ -169,7 +169,6 @@ namespace FlowEvents
             SaveCommand = new RelayCommand(SaveNewEvent);
             CancelCommand = new RelayCommand(Cancel);
 
-           
             GetUnitFromDatabase(); //Получаем элементы УСТАНОВКА из БД
 
             Categories.Insert(0, new CategoryModel { Id = -1, Name = "Выбор события" });
@@ -196,7 +195,23 @@ namespace FlowEvents
 
         private void AttachFile(object parameters)
         {
-            MessageBox.Show("Attach file");
+            MessageBox.Show($"{SelectFile()}");
+        }
+
+        public string SelectFile()
+        {
+            var openFileDialog = new OpenFileDialog
+            {
+                Title = "Выберите файл",
+                Filter = "Все файлы (*.*)|*.*|PDF (*.pdf)|*.pdf|Изображения (*.png;*.jpg)|*.png;*.jpg",
+                Multiselect = false
+            };
+
+            if (openFileDialog.ShowDialog() == true)
+            {
+                return openFileDialog.FileName;
+            }
+            return null;
         }
 
         private void UpdateSelectedUnitsText()
@@ -210,11 +225,8 @@ namespace FlowEvents
         //Сохранение новой записи 
         private void SaveNewEvent(object parameters)
         {
-
-            if (!ValidateEvent()) return;
-
-            // Создание экземпляра для хранения нового Event
-            var newEvent = new EventsModel
+            if (!ValidateEvent()) return;            
+            var newEvent = new EventsModel // Создание экземпляра для хранения нового Event
             {
                 //DateEvent = DatePicker.SelectedDate?.ToString(formatDate) ?? DateTime.Now.ToString(formatDate),
                 DateEvent = SelectedDateEvent.ToString(formatDate),
@@ -228,35 +240,29 @@ namespace FlowEvents
 
             AddEvent(newEvent);
 
-            CloseWindow();
-
-     
+            CloseWindow();     
         }
 
         //Валидация перед сохранением:
         private bool ValidateEvent()
-        {
-            // Проверка выбранной установки
-            if (SelectedIds == null || SelectedIds.Count == 0 )
+        {            
+            if (SelectedIds == null || SelectedIds.Count == 0 ) // Проверка выбранной установки
             {
                 MessageBox.Show("Не выбрана установка");
                 return false;
             }
-
-            // Проверка выбранной категории
-            if (SelectedCategory == null || SelectedCategory.Id == -1)
+            
+            if (SelectedCategory == null || SelectedCategory.Id == -1) // Проверка выбранной категории
             {
                 MessageBox.Show("Не выбрана категория");
                 return false;
             }
-
-            // Проверка описания события
-            if (string.IsNullOrWhiteSpace(Description))
+                        
+            if (string.IsNullOrWhiteSpace(Description)) // Проверка описания события
             {
                 MessageBox.Show("Не заполнено описание события");
                 return false;
             }
-
             return true;
         }
 
@@ -419,13 +425,11 @@ namespace FlowEvents
             }
         }
 
-        //свойство, которое проверяет все обязательные поля:
-        public bool CanSave
-        {
-            
+        
+        public bool CanSave //свойство, которое проверяет все обязательные поля:
+        {           
             get
             {
-                //MessageBox.Show("CanSave");
                 return SelectedIds != null &&  SelectedIds.Count > 0 &&
                        SelectedCategory != null && SelectedCategory.Id != -1 &&
                        !string.IsNullOrWhiteSpace(Description);

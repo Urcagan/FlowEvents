@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Data.SQLite;
+using System.Diagnostics.Eventing.Reader;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Windows;
@@ -97,7 +98,6 @@ namespace FlowEvents
             QueryEvent = BuildSQLQueryEvents(SelectedUnit, IsAllEvents ? null : (DateTime?)StartDate, IsAllEvents ? null : (DateTime?)EndDate, IsAllEvents);
         }
 
-
         public ObservableCollection<UnitModel> Units { get; set; } = new ObservableCollection<UnitModel>();
 
         // Коллекция для записей журнала (автоматически уведомляет об изменениях)
@@ -138,6 +138,7 @@ namespace FlowEvents
             });
 
             appSettings = AppSettings.GetSettingsApp(); // Загружаем настройки программы из файла при запуске программы
+            
         }
 
         public void StartUP()
@@ -166,6 +167,8 @@ namespace FlowEvents
             //SelectedUnit = Units.FirstOrDefault();
 
             FilePath = pathDB; //Выводим путь к файлу в нижную часть главного окна
+
+            
         }
 
         public void LoadUnitsToComboBox()
@@ -177,12 +180,34 @@ namespace FlowEvents
             SelectedUnit = Units.FirstOrDefault();
         }
 
+        // ------------------------------------------------------------------------------------------------------
+        public void CheckRoleUser()
+        {
+            // Проверяем роль пользователя и устанавливаем видимость кнопок
+    //        if (appSettings.UserRole == 1) // Администратор
+    //        {
+                IsCategoryButtonVisible = true;
+                IsUnitButtonVisible = true;
+                IsToolBarVisible = true;
+            //}
+            //else if (appSettings.UserRole == 2) // Оператор
+            //{
+            //    IsCategoryButtonVisible = false;
+            //    IsUnitButtonVisible = false;
+            //    IsToolBarVisible = true;
+            //}
+            //else // Гость
+            //{
+            //    IsCategoryButtonVisible = false;
+            //    IsUnitButtonVisible = false;
+            //    IsToolBarVisible = false;
+            //}
+        }
+
         // Метод для загрузки данных из базы
         public void LoadEvents()
         {
-            IsCategoryButtonVisible = true;
-            IsUnitButtonVisible = true;
-            IsToolBarVisible = true;
+            CheckRoleUser(); // Проверяем роль пользователя и устанавливаем видимость кнопок
 
             Events.Clear();
 
