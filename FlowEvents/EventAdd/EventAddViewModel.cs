@@ -195,7 +195,7 @@ namespace FlowEvents
 
         private void AttachFile(object parameters)
         {
-            MessageBox.Show($"{SelectFile()}");
+            MessageBox.Show($"{SelectFile()}  {Guid.NewGuid()}");
         }
 
         public string SelectFile()
