@@ -63,6 +63,7 @@
       <DependentUpon>CategoryView.xaml</DependentUpon>
     </Compile>
     <Compile Include="Category\CategoryViewModel.cs" />
+    <Compile Include="Converters\FileSizeConverter.cs" />
     <Compile Include="Converters\InverseBooleanConverter.cs" />
     <Compile Include="Models\AttachedFileModel.cs" />
     <Compile Include="RoleService.cs" />

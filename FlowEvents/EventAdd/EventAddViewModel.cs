@@ -1,20 +1,15 @@
 ﻿using FlowEvents.Models;
 using Microsoft.Win32;
-using Mono.Cecil.Cil;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Data.Common;
 using System.Data.SQLite;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
 
 namespace FlowEvents
 {
@@ -41,7 +36,7 @@ namespace FlowEvents
         }
 
         public ObservableCollection<UnitModel> Units { get; set; } = new ObservableCollection<UnitModel>();
-        
+
         public ObservableCollection<CategoryModel> Categories { get; set; } = new ObservableCollection<CategoryModel>();
 
 
@@ -152,8 +147,13 @@ namespace FlowEvents
         private readonly string formatDate = AppBaseConfig.formatDate; //Формат даты в приложении
         private readonly string formatDateTime = AppBaseConfig.formatDateTime; // формат даты с временем
 
+        public ObservableCollection<AttachedFileModel> AttachedFiles { get; } = new ObservableCollection<AttachedFileModel>();
+
+        private string _storagePath = "G:\\VS Dev\\Attachments";  // Путь для хранения файлов
+        private long? _currentEventId;  // Будет установлен после сохранения события
+
         // Команды взаимодействия с view
-        
+
         public RelayCommand AttachFileCommand { get; }
         public RelayCommand SaveCommand { get; }
         public RelayCommand CancelCommand { get; }
@@ -174,7 +174,7 @@ namespace FlowEvents
             Categories.Insert(0, new CategoryModel { Id = -1, Name = "Выбор события" });
             SelectedCategory = Categories.FirstOrDefault();
             GetCategoryFromDatabase();
-                        
+
             SelectedDateEvent = DateTime.Now; // Установка текущей даты по умолчанию
 
             // Подписка на изменение IsSelected (чтобы Label обновлялся автоматически)
@@ -193,9 +193,53 @@ namespace FlowEvents
             UpdateSelectedUnitsText();
         }
 
-        private void AttachFile(object parameters)
+        private async void AttachFile(object parameters)
         {
-            MessageBox.Show($"{SelectFile()}  {Guid.NewGuid()}");
+            var filePath = SelectFile();
+            if (string.IsNullOrEmpty(filePath)) return;
+
+            try
+            {
+                var fileInfo = new FileInfo(filePath);
+
+                // Проверка размера файла (например, до 10MB)
+                if (fileInfo.Length > 10 * 1024 * 1024)
+                {
+                    MessageBox.Show("Файл слишком большой. Максимальный размер: 10 МБ.");
+                    return;
+                }
+
+                // Генерируем уникальное имя файла
+                string originalFileName = fileInfo.Name;
+                string fileExtension = fileInfo.Extension;
+                string uniqueFileName = $"{Guid.NewGuid()}_{originalFileName}{fileExtension}";
+                string storagePath = Path.Combine(_storagePath, uniqueFileName);
+
+                // Проверяем, существует ли папка для хранения файлов
+                if (!File.Exists(_storagePath))
+                { 
+                    Directory.CreateDirectory(_storagePath); // Создаем папку, если ее нет
+                }
+
+                // Копируем файл
+                File.Copy(filePath, storagePath);
+
+                // Добавляем запись в коллекцию (пока без EventId)
+                AttachedFiles.Add(new AttachedFileModel
+                {
+                    FileName = fileInfo.Name,
+                    FilePath = storagePath,
+                    FileSize = fileInfo.Length,
+                    FileType = fileExtension,
+                    UploadDate = DateTime.Now
+                });
+
+                MessageBox.Show("Файл успешно прикреплен!");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка прикрепления файла: {ex.Message}");
+            }
         }
 
         public string SelectFile()
@@ -225,7 +269,7 @@ namespace FlowEvents
         //Сохранение новой записи 
         private void SaveNewEvent(object parameters)
         {
-            if (!ValidateEvent()) return;            
+            if (!ValidateEvent()) return;
             var newEvent = new EventsModel // Создание экземпляра для хранения нового Event
             {
                 //DateEvent = DatePicker.SelectedDate?.ToString(formatDate) ?? DateTime.Now.ToString(formatDate),
@@ -238,26 +282,34 @@ namespace FlowEvents
                 Creator = "Автор"
             };
 
-            AddEvent(newEvent);
+            //AddEvent(newEvent);
+            // Сохраняем событие и получаем его ID
+            _currentEventId = AddEventAndGetId(newEvent);
 
-            CloseWindow();     
+            // Сохраняем прикрепленные файлы в БД
+            if (_currentEventId.HasValue)
+            {
+                SaveAttachedFilesToDatabase(_currentEventId.Value);
+            }
+
+            CloseWindow();
         }
 
         //Валидация перед сохранением:
         private bool ValidateEvent()
-        {            
-            if (SelectedIds == null || SelectedIds.Count == 0 ) // Проверка выбранной установки
+        {
+            if (SelectedIds == null || SelectedIds.Count == 0) // Проверка выбранной установки
             {
                 MessageBox.Show("Не выбрана установка");
                 return false;
             }
-            
+
             if (SelectedCategory == null || SelectedCategory.Id == -1) // Проверка выбранной категории
             {
                 MessageBox.Show("Не выбрана категория");
                 return false;
             }
-                        
+
             if (string.IsNullOrWhiteSpace(Description)) // Проверка описания события
             {
                 MessageBox.Show("Не заполнено описание события");
@@ -376,6 +428,33 @@ namespace FlowEvents
 
         }
 
+        private long AddEventAndGetId(EventsModel newEvent)
+        {
+            using (var connection = new SQLiteConnection(_connectionString))
+            {
+                connection.Open();
+                using (var transaction = connection.BeginTransaction())
+                {
+                    try
+                    {
+                        long eventId = InsertEvent(connection, newEvent);
+
+                        foreach (long unitId in SelectedIds)
+                        {
+                            InsertEventUnit(connection, eventId, unitId);
+                        }
+
+                        transaction.Commit();
+                        return eventId;
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
+                }
+            }
+        }
 
         /// <summary>
         /// Вставка нового события в базу данных
@@ -425,12 +504,39 @@ namespace FlowEvents
             }
         }
 
-        
+        private void SaveAttachedFilesToDatabase(long eventId)
+        {
+            using (var connection = new SQLiteConnection(_connectionString))
+            {
+                connection.Open();
+                foreach (var file in AttachedFiles)
+                {
+                    string query = @"
+                INSERT INTO AttachedFiles 
+                (EventId, FileName, FilePath, FileSize, FileType, UploadDate)
+                VALUES 
+                (@EventId, @FileName, @FilePath, @FileSize, @FileType, @UploadDate)";
+
+                    using (var command = new SQLiteCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@EventId", eventId);
+                        command.Parameters.AddWithValue("@FileName", file.FileName);
+                        command.Parameters.AddWithValue("@FilePath", file.FilePath);
+                        command.Parameters.AddWithValue("@FileSize", file.FileSize);
+                        command.Parameters.AddWithValue("@FileType", file.FileType);
+                        command.Parameters.AddWithValue("@UploadDate", file.UploadDate.ToString("yyyy-MM-dd HH:mm:ss"));
+
+                        command.ExecuteNonQuery();
+                    }
+                }
+            }
+        }
+
         public bool CanSave //свойство, которое проверяет все обязательные поля:
-        {           
+        {
             get
             {
-                return SelectedIds != null &&  SelectedIds.Count > 0 &&
+                return SelectedIds != null && SelectedIds.Count > 0 &&
                        SelectedCategory != null && SelectedCategory.Id != -1 &&
                        !string.IsNullOrWhiteSpace(Description);
             }

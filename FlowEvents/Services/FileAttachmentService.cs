@@ -20,7 +20,7 @@ namespace FlowEvents.Services
             _connectionString = connectionString;
         }
 
-        public async Task<bool> AttachFileToRecordAsync(AttachedFile file, Stream fileStream)
+        public async Task<bool> AttachFileToRecordAsync(AttachedFileModel file, Stream fileStream)
         {
             // 1. Генерация пути
             string fileExtension = Path.GetExtension(file.FileName);
@@ -48,12 +48,12 @@ namespace FlowEvents.Services
                 await connection.OpenAsync();
                 using (var command = new SQLiteCommand(query, connection))
                 {
-                    command.Parameters.AddWithValue("@RecordId", file.RecordId);
+                    command.Parameters.AddWithValue("@RecordId", file.EventId);
                     command.Parameters.AddWithValue("@FileName", file.FileName);
                     command.Parameters.AddWithValue("@FilePath", relativePath);
                     command.Parameters.AddWithValue("@FileSize", new FileInfo(fullPath).Length);
                     command.Parameters.AddWithValue("@FileType", fileExtension);
-                    command.Parameters.AddWithValue("@Description", string.IsNullOrEmpty(file.Description) ? DBNull.Value : (object)file.Description);
+                    //command.Parameters.AddWithValue("@Description", string.IsNullOrEmpty(file.Description) ? DBNull.Value : (object)file.Description);
                     command.Parameters.AddWithValue("@UploadedBy", Environment.UserName);
 
                     await command.ExecuteNonQueryAsync();

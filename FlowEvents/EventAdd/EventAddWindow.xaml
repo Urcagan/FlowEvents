@@ -9,6 +9,7 @@
         ResizeMode="NoResize"
         WindowStartupLocation="CenterScreen">
     <Window.Resources>
+        <local:FileSizeConverter x:Key="FileSizeConverter"/>
         <Style TargetType="ComboBox" x:Key="RequiredComboBox">
             <Style.Triggers>
                 <DataTrigger Binding="{Binding SelectedItem.Id, RelativeSource={RelativeSource Self}}" Value="-1">
