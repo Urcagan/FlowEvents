@@ -9,6 +9,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Runtime.Remoting.Messaging;
 using System.Windows;
 
 namespace FlowEvents
@@ -149,7 +150,7 @@ namespace FlowEvents
 
         public ObservableCollection<AttachedFileModel> AttachedFiles { get; } = new ObservableCollection<AttachedFileModel>();
 
-        private string _storagePath = "G:\\VS Dev\\Attachments";  // Путь для хранения файлов
+        private string _storagePath; // = "C:\\temp\\Attachments";  // Путь для хранения файлов
         private long? _currentEventId;  // Будет установлен после сохранения события
 
         // Команды взаимодействия с view
@@ -191,7 +192,39 @@ namespace FlowEvents
             }
             // Первоначальное обновление
             UpdateSelectedUnitsText();
+
         }
+
+        /// <summary>
+        /// Возвращает путь к папке "Attachments" в той же директории, где находится указанный файл.
+        /// </summary>
+        /// <param name="filePath">Полный путь к файлу.</param>
+        /// <returns>Путь к папке Attachments.</returns>
+        public string GetAttachmentsFolderPath(string filePath)
+        {
+            if (string.IsNullOrEmpty(filePath))
+                throw new ArgumentException("File path cannot be null or empty.", nameof(filePath));
+
+            string basePath = Path.GetDirectoryName(filePath);
+            string attachmentsFolder = "Attachments";
+
+            return Path.Combine(basePath, attachmentsFolder);
+        }
+
+        public string GetAttachmentsFolderPath(string filePath, DateTime eventDate)
+        {
+            if (string.IsNullOrEmpty(filePath))
+                throw new ArgumentException("File path cannot be null or empty.", nameof(filePath));
+
+            string basePath = Path.GetDirectoryName(filePath);
+            string attachmentsRoot = "Attachments";
+            string yearFolder = eventDate.Year.ToString();
+            string monthFolder = eventDate.Month.ToString("00"); // Форматируем с ведущим нулем
+
+            // Комбинируем все части пути
+            return Path.Combine(basePath, attachmentsRoot, yearFolder, monthFolder);
+        }
+
 
         private async void AttachFile(object parameters)
         {
@@ -209,10 +242,13 @@ namespace FlowEvents
                     return;
                 }
 
+                // Гененрируем путь для хранения файла
+                _storagePath = GetAttachmentsFolderPath(_mainViewModel.FilePath, SelectedDateEvent);
+                
                 // Генерируем уникальное имя файла
                 string originalFileName = fileInfo.Name;
                 string fileExtension = fileInfo.Extension;
-                string uniqueFileName = $"{Guid.NewGuid()}_{originalFileName}{fileExtension}";
+                string uniqueFileName = $"{Guid.NewGuid()}_{originalFileName}";
                 string storagePath = Path.Combine(_storagePath, uniqueFileName);
 
                 // Проверяем, существует ли папка для хранения файлов
@@ -527,6 +563,40 @@ namespace FlowEvents
                         command.Parameters.AddWithValue("@UploadDate", file.UploadDate.ToString("yyyy-MM-dd HH:mm:ss"));
 
                         command.ExecuteNonQuery();
+                    }
+                }
+            }
+        }
+
+        // 
+        private void LoadAttachedFiles(int eventId)
+        {
+            AttachedFiles.Clear();
+
+            using (var connection = new SQLiteConnection(_connectionString))
+            {
+                connection.Open();
+                string query = "SELECT * FROM AttachedFiles WHERE EventId = @EventId";
+
+                using (var command = new SQLiteCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@EventId", eventId);
+
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            AttachedFiles.Add(new AttachedFileModel
+                            {
+                                FileId = reader.GetInt32(0),
+                                EventId = reader.GetInt32(1),
+                                FileName = reader.GetString(2),
+                                FilePath = reader.GetString(3),
+                                FileSize = reader.GetInt64(4),
+                                FileType = reader.GetString(5),
+                                UploadDate = DateTime.Parse(reader.GetString(6))
+                            });
+                        }
                     }
                 }
             }

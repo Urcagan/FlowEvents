@@ -9,7 +9,10 @@
         ResizeMode="NoResize"
         WindowStartupLocation="CenterScreen">
     <Window.Resources>
+        <!-- Регистрируем конвертеры -->
         <local:FileSizeConverter x:Key="FileSizeConverter"/>
+        <local:FileIconConverter x:Key="FileIconConverter"/>
+        
         <Style TargetType="ComboBox" x:Key="RequiredComboBox">
             <Style.Triggers>
                 <DataTrigger Binding="{Binding SelectedItem.Id, RelativeSource={RelativeSource Self}}" Value="-1">
@@ -17,6 +20,12 @@
                 </DataTrigger>
             </Style.Triggers>
         </Style>
+
+        <!-- Стиль для отображения файла с иконкой -->
+        <Style x:Key="FileItemStyle" TargetType="ListViewItem">
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+        </Style>
+        
     </Window.Resources>
     <DockPanel>
         <ToolBar x:Name="toolBar" DockPanel.Dock="Top">
@@ -135,23 +144,73 @@
 
             <GroupBox Header="Документ" Grid.Column="3" Grid.Row="1">
 
-                <ListView ItemsSource="{Binding AttachedFiles}">
+                <!--<ListView ItemsSource="{Binding AttachedFiles}">
                     <ListView.View>
                         <GridView>
-                            <GridViewColumn Header="Имя файла" DisplayMemberBinding="{Binding FileName}"/>
-                            <GridViewColumn Header="Размер">
-                                <GridViewColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <TextBlock Text="{Binding FileSize, Converter={StaticResource FileSizeConverter}}"/>
-                                    </DataTemplate>
-                                </GridViewColumn.CellTemplate>
-                            </GridViewColumn>
-                            <GridViewColumn Header="Действия">
+                            <GridViewColumn Header="Имя файла" DisplayMemberBinding="{Binding FileName}" Width="200"/>
+                            <GridViewColumn Header="Размер" DisplayMemberBinding="{Binding FileSize, Converter={StaticResource FileSizeConverter}}" Width="100"/>
+                            <GridViewColumn Header="Тип" DisplayMemberBinding="{Binding FileType}" Width="80"/>
+                            <GridViewColumn Header="Действия" Width="120">
                                 <GridViewColumn.CellTemplate>
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal">
-                                            <Button Content="Открыть" Command="{Binding OpenCommand}"/>
-                                            <Button Content="Удалить" Command="{Binding DeleteCommand}"/>
+                                            <Button Content="Открыть" Command="{Binding OpenCommand}" Margin="2"/>
+                                            <Button Content="Удалить" Command="{Binding DeleteCommand}" Margin="2"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                        </GridView>
+                    
+                    </ListView.View>
+                    <ListView.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem Header="Открыть" Command="{Binding OpenCommand}"/>
+                            <MenuItem Header="Удалить" Command="{Binding DeleteCommand}"/>
+                        </ContextMenu>
+                    </ListView.ContextMenu>
+                </ListView>-->
+
+
+
+                <!-- ListView для прикрепленных файлов -->
+                <ListView ItemsSource="{Binding AttachedFiles}" ItemContainerStyle="{StaticResource FileItemStyle}">
+                    <ListView.View>
+                        <GridView>
+                            <!-- Колонка с иконкой -->
+                            <GridViewColumn Width="30">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Image 
+                            Source="{Binding FileName, Converter={StaticResource FileIconConverter}}"
+                            Width="16"
+                            Height="16"
+                            ToolTip="{Binding FileName}"/>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+
+                            <!-- Колонка с именем файла -->
+                            <GridViewColumn Header="Имя файла" DisplayMemberBinding="{Binding FileName}" Width="200"/>
+
+                            <!-- Колонка с размером -->
+                            <GridViewColumn Header="Размер" DisplayMemberBinding="{Binding FileSize, Converter={StaticResource FileSizeConverter}}" Width="80"/>
+
+                            <!-- Колонка с действиями -->
+                            <GridViewColumn Header="Действия" Width="120">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Button 
+                                Content="Открыть" 
+                                Command="{Binding OpenCommand}" 
+                                Margin="2"
+                                Padding="5 0"/>
+                                            <Button 
+                                Content="Удалить" 
+                                Command="{Binding DeleteCommand}" 
+                                Margin="2"
+                                Padding="5 0"/>
                                         </StackPanel>
                                     </DataTemplate>
                                 </GridViewColumn.CellTemplate>
@@ -159,7 +218,6 @@
                         </GridView>
                     </ListView.View>
                 </ListView>
-                
                 
             </GroupBox>
             
