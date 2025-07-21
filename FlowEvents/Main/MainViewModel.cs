@@ -396,7 +396,12 @@ namespace FlowEvents
             }
 
             // Основной запрос
-            string query = "SELECT id, DateEvent, Unit, OilRefining, Category, Description, Action, DateCreate, Creator FROM vwEvents";
+           // string query = "SELECT id, DateEvent, Unit, OilRefining, Category, Description, Action, DateCreate, Creator FROM vwEvents";
+
+            // Основной запрос теперь включает LEFT JOIN к AttachedFiles
+            string query = @"SELECT e.id, e.DateEvent, e.Unit, e.OilRefining, e.Category, e.Description, e.Action, e.DateCreate, e.Creator, 
+                            af.FileId, af.FileName, af.FilePath, af.FileSize, af.FileType, af.UploadDate
+                            FROM vwEvents e LEFT JOIN AttachedFiles af ON e.id = af.EventId";
 
             // Добавляем условия, если они есть
             if (conditions.Count > 0)
@@ -406,70 +411,104 @@ namespace FlowEvents
 
             return query;
         }
-        
-        //public string buildSQLQueryEvents(UnitModel selectedUnit, DateTime startDate, DateTime endDate)
-        //{
-        //    string query;
-        //    if (selectedUnit == null || selectedUnit.Id == -1)
-        //    {
-        //        // Если выбрана установка "Все", то возвращаем все события за указанный период
-        //        query = $" SELECT id, DateEvent, Unit, OilRefining, Category, Description, Action, DateCreate, Creator FROM vwEvents " +
-        //           $"Where DateEvent BETWEEN '{startDate.Date.ToString("yyyy-MM-dd")}' AND '{endDate.Date.ToString("yyyy-MM-dd")}' ";
-        //        return query;
-        //    }
-        //    else
-        //    {
-        //        string unitName = selectedUnit.Unit.Replace("'", "''"); // Экранируем одинарные кавычки в названии установки
-        //        // Формируем SQL запрос для получения данных по выбранной установке
-        //        query = $" SELECT id, DateEvent, Unit, OilRefining, Category, Description, Action, DateCreate, Creator FROM vwEvents " +
-        //           $"Where Unit Like '%{unitName}%' AND DateEvent BETWEEN '{startDate.Date.ToString("yyyy-MM-dd")}' AND '{endDate.Date.ToString("yyyy-MM-dd")}' ";
-        //        return query;
-        //    }
-        //}
-        
-        // Загрузка категорий из базы данных
+
+
+        // Метод для получения событий из базы данных
         public List<EventsModelForView> GetEvents(string queryEvent)
         {
-            var events = new List<EventsModelForView>();
+            var eventsDict = new Dictionary<int, EventsModelForView>();
 
             using (var connection = new SQLiteConnection(_connectionString))
             {
                 connection.Open();
-                //string query = $" SELECT id, DateEvent, Unit, OilRefining, Category, Description, Action, DateCreate, Creator FROM vwEvents " +
-                //    $"Where DateEvent BETWEEN '{StartDate.Date.ToString("yyyy-MM-dd")}' AND '{EndDate.Date.ToString("yyyy-MM-dd")}' ";
-
-                var command = new SQLiteCommand(QueryEvent, connection);
+                var command = new SQLiteCommand(queryEvent, connection);
                 using (var reader = command.ExecuteReader())
                 {
-                    int idIndex = reader.GetOrdinal("id");
-                    int dateIndex = reader.GetOrdinal("DateEvent");
-                    int unitIndex = reader.GetOrdinal("Unit");
-                    int refiningIndex = reader.GetOrdinal("OilRefining");
-                    int categotyIndex = reader.GetOrdinal("Category");
-                    int descriptionIndex = reader.GetOrdinal("Description");
-                    int actionIndex = reader.GetOrdinal("Action");
-                    int createIndex = reader.GetOrdinal("DateCreate");
-                    int creatorIndex = reader.GetOrdinal("Creator");
-
                     while (reader.Read())
                     {
-                        events.Add(new EventsModelForView
+                        int eventId = reader.GetInt32(reader.GetOrdinal("id"));
+
+                        // Если события еще нет в словаре, добавляем его
+                        if (!eventsDict.TryGetValue(eventId, out var eventModel))
                         {
-                            Id = reader.GetInt32(idIndex),
-                            DateEventString = reader.GetString(dateIndex),
-                            Unit = reader.GetString(unitIndex),
-                            OilRefining = reader.IsDBNull(refiningIndex) ? null : reader.GetString(refiningIndex),
-                            Category = reader.GetString(categotyIndex),
-                            Description = reader.IsDBNull(descriptionIndex) ? null : reader.GetString(descriptionIndex),
-                            Action = reader.IsDBNull(actionIndex) ? null : reader.GetString(actionIndex),
-                            DateCreate = reader.GetString(createIndex),
-                            Creator = reader.GetString(creatorIndex)
-                        });
+                            eventModel = new EventsModelForView
+                            {
+                                Id = eventId,
+                                DateEventString = reader.GetString(reader.GetOrdinal("DateEvent")),
+                                Unit = reader.GetString(reader.GetOrdinal("Unit")),
+                                OilRefining = reader.IsDBNull(reader.GetOrdinal("OilRefining")) ? null : reader.GetString(reader.GetOrdinal("OilRefining")),
+                                Category = reader.GetString(reader.GetOrdinal("Category")),
+                                Description = reader.IsDBNull(reader.GetOrdinal("Description")) ? null : reader.GetString(reader.GetOrdinal("Description")),
+                                Action = reader.IsDBNull(reader.GetOrdinal("Action")) ? null : reader.GetString(reader.GetOrdinal("Action")),
+                                DateCreate = reader.GetString(reader.GetOrdinal("DateCreate")),
+                                Creator = reader.GetString(reader.GetOrdinal("Creator"))
+                            };
+                            eventsDict[eventId] = eventModel;
+                        }
+
+                        // Если есть прикрепленный файл, добавляем его
+                        if (!reader.IsDBNull(reader.GetOrdinal("FileId")))
+                        {
+                            eventModel.AttachedFiles.Add(new AttachedFileModel(_connectionString) // Передаем строку подключения
+                            {
+                                FileId = reader.GetInt32(reader.GetOrdinal("FileId")),
+                                FileName = reader.GetString(reader.GetOrdinal("FileName")),
+                                FilePath = reader.GetString(reader.GetOrdinal("FilePath")),
+                                FileSize = reader.GetInt64(reader.GetOrdinal("FileSize")),
+                                FileType = reader.GetString(reader.GetOrdinal("FileType")),
+                                UploadDate = DateTime.Parse(reader.GetString(reader.GetOrdinal("UploadDate")))
+                            });
+                        }
                     }
                 }
-                return events;
             }
+
+            return eventsDict.Values.ToList();
         }
+
+        // Загрузка категорий из базы данных
+        //public List<EventsModelForView> GetEvents(string queryEvent)
+        //{
+        //    var events = new List<EventsModelForView>();
+
+        //    using (var connection = new SQLiteConnection(_connectionString))
+        //    {
+        //        connection.Open();
+        //        //string query = $" SELECT id, DateEvent, Unit, OilRefining, Category, Description, Action, DateCreate, Creator FROM vwEvents " +
+        //        //    $"Where DateEvent BETWEEN '{StartDate.Date.ToString("yyyy-MM-dd")}' AND '{EndDate.Date.ToString("yyyy-MM-dd")}' ";
+
+        //        var command = new SQLiteCommand(QueryEvent, connection);
+        //        using (var reader = command.ExecuteReader())
+        //        {
+        //            int idIndex = reader.GetOrdinal("id");
+        //            int dateIndex = reader.GetOrdinal("DateEvent");
+        //            int unitIndex = reader.GetOrdinal("Unit");
+        //            int refiningIndex = reader.GetOrdinal("OilRefining");
+        //            int categotyIndex = reader.GetOrdinal("Category");
+        //            int descriptionIndex = reader.GetOrdinal("Description");
+        //            int actionIndex = reader.GetOrdinal("Action");
+        //            int createIndex = reader.GetOrdinal("DateCreate");
+        //            int creatorIndex = reader.GetOrdinal("Creator");
+
+        //            while (reader.Read())
+        //            {
+        //                events.Add(new EventsModelForView
+        //                {
+        //                    Id = reader.GetInt32(idIndex),
+        //                    DateEventString = reader.GetString(dateIndex),
+        //                    Unit = reader.GetString(unitIndex),
+        //                    OilRefining = reader.IsDBNull(refiningIndex) ? null : reader.GetString(refiningIndex),
+        //                    Category = reader.GetString(categotyIndex),
+        //                    Description = reader.IsDBNull(descriptionIndex) ? null : reader.GetString(descriptionIndex),
+        //                    Action = reader.IsDBNull(actionIndex) ? null : reader.GetString(actionIndex),
+        //                    DateCreate = reader.GetString(createIndex),
+        //                    Creator = reader.GetString(creatorIndex)
+        //                });
+        //            }
+        //        }
+        //        return events;
+        //    }
+        //}
 
         private void Delete(object parameter)
         {

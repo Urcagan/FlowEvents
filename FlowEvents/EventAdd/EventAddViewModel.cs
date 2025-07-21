@@ -195,6 +195,16 @@ namespace FlowEvents
 
         }
 
+
+
+        public void RemoveAttachedFile(AttachedFileModel file) // метод для удаления файла из коллекции
+        {
+            if (AttachedFiles.Contains(file))
+            {
+                AttachedFiles.Remove(file);
+            }
+        }
+
         /// <summary>
         /// Возвращает путь к папке "Attachments" в той же директории, где находится указанный файл.
         /// </summary>
@@ -244,7 +254,7 @@ namespace FlowEvents
 
                 // Гененрируем путь для хранения файла
                 _storagePath = GetAttachmentsFolderPath(_mainViewModel.FilePath, SelectedDateEvent);
-                
+
                 // Генерируем уникальное имя файла
                 string originalFileName = fileInfo.Name;
                 string fileExtension = fileInfo.Extension;
@@ -253,22 +263,27 @@ namespace FlowEvents
 
                 // Проверяем, существует ли папка для хранения файлов
                 if (!File.Exists(_storagePath))
-                { 
+                {
                     Directory.CreateDirectory(_storagePath); // Создаем папку, если ее нет
                 }
 
                 // Копируем файл
                 File.Copy(filePath, storagePath);
 
-                // Добавляем запись в коллекцию (пока без EventId)
-                AttachedFiles.Add(new AttachedFileModel
+
+                // Создаем модель файла
+                var newFile = new AttachedFileModel(_connectionString) // Передаем строку подключения
                 {
                     FileName = fileInfo.Name,
                     FilePath = storagePath,
                     FileSize = fileInfo.Length,
                     FileType = fileExtension,
                     UploadDate = DateTime.Now
-                });
+                };
+
+                newFile.FileDeleted += RemoveAttachedFile;
+                // Добавляем запись в коллекцию (пока без EventId)
+                AttachedFiles.Add(newFile);
 
                 MessageBox.Show("Файл успешно прикреплен!");
             }
@@ -586,7 +601,7 @@ namespace FlowEvents
                     {
                         while (reader.Read())
                         {
-                            AttachedFiles.Add(new AttachedFileModel
+                            AttachedFiles.Add(new AttachedFileModel(_connectionString) // Передаем строку подключения
                             {
                                 FileId = reader.GetInt32(0),
                                 EventId = reader.GetInt32(1),
@@ -620,6 +635,21 @@ namespace FlowEvents
 
         private void CloseWindow()
         {
+            // Если событие не сохранено (_currentEventId == null), удаляем файлы
+            if (!_currentEventId.HasValue)
+            {
+                foreach (var file in AttachedFiles.ToList()) // ToList() для копирования коллекции
+                {
+                    try
+                    {
+                        if (File.Exists(file.FilePath))
+                            File.Delete(file.FilePath);
+                    }
+                    catch { /* Игнорируем ошибки */ }
+                }
+            }
+
+            // Закрытие окна, в котором находится этот ViewModel
             Application.Current.Windows.OfType<Window>()
                 .FirstOrDefault(w => w.DataContext == this)?
                 .Close();

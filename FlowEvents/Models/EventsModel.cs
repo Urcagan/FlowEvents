@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FlowEvents.Models;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
@@ -41,6 +42,9 @@ namespace FlowEvents
         public string Action { get; set; }
         public string DateCreate { get; set; }
         public string Creator { get; set; }
+
+        // Новое свойство для хранения списка файлов
+        public List<AttachedFileModel> AttachedFiles { get; set; } = new List<AttachedFileModel>();
     }
 
     public class EventsModel

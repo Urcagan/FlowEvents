@@ -27,6 +27,15 @@
             <Setter Property="VerticalAlignment" Value="Center" />
             <Setter Property="BorderBrush" Value="#FF617584" />
         </Style>
+        
+        <!--Добавим стиль для кнопки-->
+        <Style x:Key="TransparentButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        
     </Window.Resources>
     <DockPanel>
         <Menu DockPanel.Dock="Top">
@@ -217,11 +226,38 @@
                         </DataGridTextColumn.ElementStyle>
                     </DataGridTextColumn>
 
-                    <DataGridTextColumn Header="Документ"  Width="*">
+                    <!--<DataGridTextColumn Header="Документ"  Width="*">
                         <DataGridTextColumn.ElementStyle>
                             <Style BasedOn="{StaticResource WrappedTextBlockStyle}" TargetType="TextBlock"/>
                         </DataGridTextColumn.ElementStyle>
-                    </DataGridTextColumn>
+                    </DataGridTextColumn>-->
+                    <DataGridTemplateColumn Header="Документ" Width="*">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <ItemsControl ItemsSource="{Binding AttachedFiles}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" Margin="2">
+                                                <TextBlock Text="{Binding FileName}" ToolTip="{Binding FileName}"/>
+                                                <Button 
+                                                    Content="📂" 
+                                                    Command="{Binding OpenCommand}"
+                                                    ToolTip="Открыть файл"
+                                                    Margin="5,0,0,0"
+                                                    Style="{StaticResource TransparentButtonStyle}"/>
+                                                <StackPanel.ContextMenu>
+                                                    <ContextMenu>
+                                                        <MenuItem Header="Открыть" Command="{Binding OpenCommand}"/>
+                                                        <MenuItem Header="Удалить" Command="{Binding DeleteCommand}"/>
+                                                    </ContextMenu>
+                                                </StackPanel.ContextMenu>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
 
                     <DataGridTextColumn Header="Мониторинг + Диспетчерский отчет"  Width="150" >
                         <DataGridTextColumn.ElementStyle>
