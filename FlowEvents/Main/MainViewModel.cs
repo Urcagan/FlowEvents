@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Data.Entity.Infrastructure.DependencyResolution;
 using System.Data.SQLite;
 using System.Diagnostics.Eventing.Reader;
 using System.Linq;
@@ -159,12 +160,7 @@ namespace FlowEvents
                 return;
             }
 
-            //if (!CheckDB.CheckDatabaseFileVer(pathDB, appSettings.VerDB)) return; //Проверяем версию БД
-
             LoadUnitsToComboBox(); // Загружаем перечень установок из базы данных
-            //Units.Insert(0, new UnitModel { Id = -1, Unit = "Все" });
-            //GetUnitFromDatabase();
-            //SelectedUnit = Units.FirstOrDefault();
 
             FilePath = pathDB; //Выводим путь к файлу в нижную часть главного окна
 
@@ -275,8 +271,12 @@ namespace FlowEvents
 
         private void EventAddBtb(object parameter)
         {
-            var eventAddViewModel = new EventAddViewModel(this);
-            EventAddWindow eventView = new EventAddWindow(eventAddViewModel);
+            //var eventAddViewModel = new EventAddViewModel(this);
+            //EventAddWindow eventView = new EventAddWindow(eventAddViewModel);
+
+            var eventViewModel = new EventViewModel(this);
+            EventWindow eventView = new EventWindow(eventViewModel);
+
             eventView.Closed += EventAdd_Closed;
             if (eventView.ShowDialog() == true) { }
         }
@@ -287,17 +287,32 @@ namespace FlowEvents
         }
 
 
+        //private void EditEvent(object parameter)
+        //{
+        //    if (parameter is EventsModelForView selectedEvent)
+        //    {
+        //        // Создаем ViewModel для редактирования, передавая выбранное событие
+        //        var eventEditViewModel = new EventEditViewModel(this, selectedEvent);
+
+        //        // Создаем и показываем окно редактирования
+        //        var eventEditWindow = new EventEditWindow(eventEditViewModel);
+        //        eventEditWindow.Closed += EventAdd_Closed;
+        //        eventEditWindow.ShowDialog();
+        //    }
+        //}
+
         private void EditEvent(object parameter)
         {
             if (parameter is EventsModelForView selectedEvent)
             {
                 // Создаем ViewModel для редактирования, передавая выбранное событие
-                var eventEditViewModel = new EventEditViewModel(this, selectedEvent);
+                var eventViewModel = new EventViewModel(this, selectedEvent);
 
                 // Создаем и показываем окно редактирования
-                var eventEditWindow = new EventEditWindow(eventEditViewModel);
-                eventEditWindow.Closed += EventAdd_Closed;
-                eventEditWindow.ShowDialog();
+                var eventWindow = new EventWindow(eventViewModel);
+
+                eventWindow.Closed += EventAdd_Closed;
+                eventWindow.ShowDialog();
             }
         }
 

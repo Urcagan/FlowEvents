@@ -10,37 +10,17 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.Remoting.Messaging;
+using System.Threading.Tasks;
 using System.Windows;
 
 namespace FlowEvents
 {
-    public class EventAddViewModel : INotifyPropertyChanged
+    public class EventViewModel : INotifyPropertyChanged
     {
         private MainViewModel _mainViewModel;
-        public MainViewModel MainViewModel
-        {
-            get { return _mainViewModel; }
-            set
-            {
-                _mainViewModel = value;
-            }
-        }
-
-        private string _connectionString;
-        public string ConnectionString
-        {
-            get { return _connectionString; }
-            set
-            {
-                _connectionString = value;
-            }
-        }
-
-        public ObservableCollection<UnitModel> Units { get; set; } = new ObservableCollection<UnitModel>();
-
-        public ObservableCollection<CategoryModel> Categories { get; set; } = new ObservableCollection<CategoryModel>();
-
-
+        public readonly EventsModelForView _originalEvent;
+        private readonly string _connectionString;
+        
         private CategoryModel _selectedCategory;
         public CategoryModel SelectedCategory
         {
@@ -56,7 +36,7 @@ namespace FlowEvents
         private DateTime _selectedDateEvent;
         public DateTime SelectedDateEvent
         {
-            get { return _selectedDateEvent; }
+            get => _selectedDateEvent; 
             set
             {
                 _selectedDateEvent = value;
@@ -67,7 +47,7 @@ namespace FlowEvents
         private string _refining;
         public string Refining
         {
-            get { return _refining; }
+            get => _refining;
             set
             {
                 _refining = value;
@@ -75,13 +55,13 @@ namespace FlowEvents
             }
         }
 
-        private int id_Category;
+        private int _idCategory;
         public int Id_Category
         {
-            get { return id_Category; }
+            get => _idCategory;
             set
             {
-                id_Category = value;
+                _idCategory = value;
                 OnPropertyChanged();
             }
         }
@@ -101,7 +81,7 @@ namespace FlowEvents
         private string _action;
         public string Action
         {
-            get { return _action; }
+            get => _action;
             set
             {
                 _action = value;
@@ -109,22 +89,22 @@ namespace FlowEvents
             }
         }
 
-        private string dateCteate;
+        private string _dateCteate;
         public string DateCreate
         {
-            get { return dateCteate; }
+            get => _dateCteate;
             set
             {
-                dateCteate = value;
+                _dateCteate = value;
                 OnPropertyChanged();
             }
         }
 
-        private string creator;
+        private string _creator;
         public string Creator
         {
-            get { return creator; }
-            set { creator = value; }
+            get => _creator;        
+            set => _creator = value; 
         }
 
         private string _selectedUnitsText = "";
@@ -138,6 +118,13 @@ namespace FlowEvents
                 OnPropertyChanged(nameof(CanSave));
             }
         }
+
+        private int _edtedEventId; // Идентификатор редактируемого события, если есть
+        public ObservableCollection<UnitModel> Units { get; set; } = new ObservableCollection<UnitModel>();
+        public ObservableCollection<CategoryModel> Categories { get; set; } = new ObservableCollection<CategoryModel>
+        {
+            new CategoryModel { Id = -1, Name = "Выбор события" }
+        };
 
         // Свойство с Id выбранных элементов
         public List<int> SelectedIds => Units.Where(u => u.IsSelected).Select(u => u.Id).ToList();
@@ -153,18 +140,18 @@ namespace FlowEvents
         private string _storagePath; // = "C:\\temp\\Attachments";  // Путь для хранения файлов
         private long? _currentEventId;  // Будет установлен после сохранения события
 
-        // Команды взаимодействия с view
 
+        // Команды 
         public RelayCommand AttachFileCommand { get; }
         public RelayCommand SaveCommand { get; }
         public RelayCommand CancelCommand { get; }
 
 
-
-        public EventAddViewModel(MainViewModel mainViewModel)
+        // Конструктор класса инициализации ViewModel для добавления события
+        public EventViewModel(MainViewModel mainViewModel)
         {
-            MainViewModel = mainViewModel;
-            ConnectionString = $"Data Source={_mainViewModel.appSettings.pathDB};Version=3;";
+            _mainViewModel = mainViewModel;
+            _connectionString = _mainViewModel._connectionString;  //$"Data Source={_mainViewModel.appSettings.pathDB};Version=3;";
 
             AttachFileCommand = new RelayCommand(AttachFile);
             SaveCommand = new RelayCommand(SaveNewEvent);
@@ -172,13 +159,41 @@ namespace FlowEvents
 
             GetUnitFromDatabase(); //Получаем элементы УСТАНОВКА из БД
 
-            Categories.Insert(0, new CategoryModel { Id = -1, Name = "Выбор события" });
-            SelectedCategory = Categories.FirstOrDefault();
+            SelectedCategory = Categories.FirstOrDefault(); // Установка категории по умолчанию
             GetCategoryFromDatabase();
 
             SelectedDateEvent = DateTime.Now; // Установка текущей даты по умолчанию
 
             // Подписка на изменение IsSelected (чтобы Label обновлялся автоматически)
+            SubscribeToUnitsPropertyChanged();            
+            //UpdateSelectedUnitsText();
+        }
+
+
+        // Конструктор класса инициализации ViewModel для РЕДАКТИРОВАНИЯ события
+        public EventViewModel(MainViewModel mainViewModel, EventsModelForView eventToEdit)
+        {
+            _mainViewModel = mainViewModel;
+            _originalEvent = eventToEdit;
+            _connectionString = _mainViewModel._connectionString; //$"Data Source={_mainViewModel.appSettings.pathDB};Version=3;";
+
+            AttachFileCommand = new RelayCommand(AttachFile);
+            SaveCommand = new RelayCommand(SaveUpdatedEvents);
+            CancelCommand = new RelayCommand(Cancel);
+
+            _edtedEventId = _originalEvent.Id; // Сохраняем ID редактируемого события
+            SelectedDateEvent = _originalEvent.DateEvent; // Установка даты события
+            Refining = _originalEvent.OilRefining;
+            Description = _originalEvent.Description;  
+            Action = _originalEvent.Action;
+
+            GetUnitFromDatabase(); //Получаем элементы УСТАНОВКА из БД
+            SubscribeToUnitsPropertyChanged(); // Подписка на изменение IsSelected (чтобы Label обновлялся автоматически)
+        }
+
+
+        private void SubscribeToUnitsPropertyChanged() // Подписка на изменение IsSelected (чтобы Label обновлялся автоматически)
+        {
             foreach (var unit in Units)
             {
                 unit.PropertyChanged += (s, e) =>
@@ -186,16 +201,61 @@ namespace FlowEvents
                     if (e.PropertyName == nameof(UnitModel.IsSelected))
                     {
                         UpdateSelectedUnitsText();
-                        OnPropertyChanged(nameof(SelectedIds)); // Уведомляем об изменении SelectedI
+                        OnPropertyChanged(nameof(SelectedIds));
                     }
                 };
             }
-            // Первоначальное обновление
-            UpdateSelectedUnitsText();
-
         }
 
 
+        // Асинхронная инициализация (Запуск происходит в EventWindows.xaml.cs)
+        public async Task InitializeAsync()
+        {
+            // здесь запускаем все асинхронные операции коорые надо выполнять в момент открытия окна
+            GetCategoryFromDatabase(); // Получаем категории из БД
+            SelectedCategory = Categories.FirstOrDefault(c => c.Name == _originalEvent.Category);
+            await LoadSelectedUnitsForEvent(_edtedEventId); // Получение перечень установок связанных с этим событием
+        }
+
+
+        // Востанавливаем выбор на элементах в окне установок
+        public async Task LoadSelectedUnitsForEvent(int eventId)
+        {
+            // 1. Получаем список UnitID, связанных с этим EventID из базы
+            List<int> selectedUnitIds = await GetUnitIdsForEvent(eventId);
+
+            // 2. Обновляем флаги IsSelected в коллекции Units
+            foreach (var unit in Units)
+            {
+                unit.IsSelected = selectedUnitIds.Contains(unit.Id);
+            }
+        }
+
+        // Возвращает список UnitID для данного EventID
+        private async Task<List<int>> GetUnitIdsForEvent(int eventId)
+        {
+            var unitIds = new List<int>();
+
+            using (var connection = new SQLiteConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+                using (var command = new SQLiteCommand(
+                    "SELECT UnitID FROM EventUnits WHERE EventID = @eventId",
+                    connection))
+                {
+                    command.Parameters.AddWithValue("@eventId", eventId);
+
+                    using (var reader = await command.ExecuteReaderAsync())
+                    {
+                        while (await reader.ReadAsync())
+                        {
+                            unitIds.Add(reader.GetInt32(0));
+                        }
+                    }
+                }
+            }
+            return unitIds;
+        }
 
         public void RemoveAttachedFile(AttachedFileModel file) // метод для удаления файла из коллекции
         {
@@ -323,7 +383,6 @@ namespace FlowEvents
             if (!ValidateEvent()) return;
             var newEvent = new EventsModel // Создание экземпляра для хранения нового Event
             {
-                //DateEvent = DatePicker.SelectedDate?.ToString(formatDate) ?? DateTime.Now.ToString(formatDate),
                 DateEvent = SelectedDateEvent.ToString(formatDate),
                 OilRefining = Refining,
                 Id_Category = _selectedCategory.Id,
@@ -333,7 +392,6 @@ namespace FlowEvents
                 Creator = "Автор"
             };
 
-            //AddEvent(newEvent);
             // Сохраняем событие и получаем его ID
             _currentEventId = AddEventAndGetId(newEvent);
 
@@ -342,6 +400,29 @@ namespace FlowEvents
             {
                 SaveAttachedFilesToDatabase(_currentEventId.Value);
             }
+
+            CloseWindow();
+        }
+
+        private void SaveUpdatedEvents(object parameters)
+        {
+            if (!ValidateEvent()) return;
+            // Создание экземпляра для хранения нового Event
+            var _updateEvent = new EventsModel
+            {
+                Id = this._edtedEventId,
+                DateEvent = SelectedDateEvent.ToString(AppBaseConfig.formatDate),
+                OilRefining = Refining,
+                Id_Category = _selectedCategory.Id,
+                Description = Description,
+                Action = Action
+            };
+            EditEvent(_updateEvent, SelectedIds);
+
+            // Сохраняем прикрепленные файлы в БД
+
+            SaveAttachedFilesToDatabase(_updateEvent.Id);
+            _currentEventId = _updateEvent.Id;
 
             CloseWindow();
         }
@@ -429,7 +510,7 @@ namespace FlowEvents
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка загрузки данных: {ex.Message}");
+                MessageBox.Show($"Ошибка загрузки категорий: {ex.Message}");
             }
         }
 
@@ -437,48 +518,6 @@ namespace FlowEvents
 
         /// <summary>
         /// Добавление новой строки в таблицу задач 
-        /// </summary>
-        /// <param name="newEvent"></param>
-        public void AddEvent(EventsModel newEvent)
-        {
-            try
-            {
-                using (var connection = new SQLiteConnection(_connectionString))
-                {
-                    connection.Open();
-
-                    using (SQLiteTransaction transaction = connection.BeginTransaction())
-                    {
-                        try
-                        {
-                            // Выполнение вставки записи в таблицу Tasks
-                            long eventId = InsertEvent(connection, newEvent);
-
-                            // Добавление записей в таблицу TaskUnits для связывания с элементами ListView
-                            foreach (long unitId in SelectedIds)
-                            {
-                                InsertEventUnit(connection, eventId, unitId);
-                            }
-
-                            // Подтвердить транзакцию
-                            transaction.Commit();
-                        }
-                        catch (Exception ex)
-                        {
-                            // В случае ошибки откатить транзакцию
-                            transaction.Rollback();
-                            MessageBox.Show($"Ошибка при сохранении: {ex.Message}");
-                        }
-                    }
-                }
-            }
-            catch (SQLiteException ex)
-            {
-                MessageBox.Show($"Ошибка базы данных: {ex.Message}");
-            }
-
-        }
-
         private long AddEventAndGetId(EventsModel newEvent)
         {
             using (var connection = new SQLiteConnection(_connectionString))
@@ -489,12 +528,7 @@ namespace FlowEvents
                     try
                     {
                         long eventId = InsertEvent(connection, newEvent);
-
-                        foreach (long unitId in SelectedIds)
-                        {
-                            InsertEventUnit(connection, eventId, unitId);
-                        }
-
+                        InsertEventUnit(connection, eventId, SelectedIds);
                         transaction.Commit();
                         return eventId;
                     }
@@ -530,12 +564,9 @@ namespace FlowEvents
                 command.Parameters.AddWithValue("@Action", newEvent.Action ?? (object)DBNull.Value); // Если Action == null, вставляем NULL
                 command.Parameters.AddWithValue("@DateCreate", newEvent.DateCreate);
                 command.Parameters.AddWithValue("@Creator", newEvent.Creator);
-
-                // Выполнение запроса
                 command.ExecuteNonQuery();
             }
             return connection.LastInsertRowId;
-
         }
 
 
@@ -544,16 +575,83 @@ namespace FlowEvents
         /// </summary>
         /// <param name="eventId"></param>
         /// <param name="unitId"></param>
-        private void InsertEventUnit(SQLiteConnection connection, long eventId, long unitId)
+        private void InsertEventUnit(SQLiteConnection connection, long eventId, List<int> unitIds)
         {
             string insertTaskUnitsQuery = "INSERT INTO EventUnits (EventID, UnitID) VALUES (@EventID, @UnitID);";
-            using (SQLiteCommand command = new SQLiteCommand(insertTaskUnitsQuery, connection))
+            foreach (long unitId in unitIds)
             {
-                command.Parameters.AddWithValue("@EventID", eventId);
-                command.Parameters.AddWithValue("@UnitID", unitId);
+                using (SQLiteCommand command = new SQLiteCommand(insertTaskUnitsQuery, connection))
+                {
+                    command.Parameters.AddWithValue("@EventID", eventId);
+                    command.Parameters.AddWithValue("@UnitID", unitId);
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+
+        public void EditEvent(EventsModel updateEvent, List<int> selectedIds)
+        {
+            try
+            {
+                using (var connection = new SQLiteConnection(_connectionString))
+                {
+                    connection.Open();
+
+                    using (SQLiteTransaction transaction = connection.BeginTransaction())
+                    {
+                        try
+                        {
+                            UpdateEvent(connection, updateEvent);
+
+                            // надо переписать для записи нескольких ID
+                            UpdateEventUnit(connection, _edtedEventId, selectedIds);
+
+                            transaction.Commit();
+                        }
+                        catch (Exception ex)
+                        {
+                            // В случае ошибки откатить транзакцию
+                            transaction.Rollback();
+                            MessageBox.Show($"Ошибка при сохранении: {ex.Message}");
+                        }
+                    }
+                }
+            }
+            catch (SQLiteException ex)
+            {
+                MessageBox.Show($"Ошибка базы данных: {ex.Message}");
+            }
+        }
+
+        private void UpdateEvent(SQLiteConnection connection, EventsModel updateEvent) // SQL-запрос для обновления данных
+        {
+            var query = "UPDATE Events SET DateEvent = @DateEvent, OilRefining = @OilRefining , id_category = @id_category, Description = @Description, Action = @Action WHERE id = @SelectedRowId ";
+
+            using (var command = new SQLiteCommand(query, connection))
+            {
+                command.Parameters.AddWithValue("@DateEvent", updateEvent.DateEvent);
+                command.Parameters.AddWithValue("@OilRefining", updateEvent.OilRefining ?? (object)DBNull.Value); // Если OilRefining == null, вставляем NULL
+                command.Parameters.AddWithValue("@id_category", updateEvent.Id_Category);
+                command.Parameters.AddWithValue("@Description", updateEvent.Description ?? (object)DBNull.Value); // Если Description == null, вставляем NULL
+                command.Parameters.AddWithValue("@Action", updateEvent.Action ?? (object)DBNull.Value); // Если Action == null, вставляем NULL
+                command.Parameters.AddWithValue("@SelectedRowId", updateEvent.Id);
                 command.ExecuteNonQuery();
             }
         }
+
+        private void UpdateEventUnit(SQLiteConnection connection, long eventId, List<int> unitIds)
+        {
+            // Удаляем все существующие связи для данной задачи
+            var deleteQuery = "DELETE FROM EventUnits WHERE EventID = @EventId;";
+            using (var command = new SQLiteCommand(deleteQuery, connection))
+            {
+                command.Parameters.AddWithValue("@EventId", eventId);
+                command.ExecuteNonQuery();
+            }
+            // Вставляем новые связи
+            InsertEventUnit(connection, eventId, unitIds);
+        }
+
 
         private void SaveAttachedFilesToDatabase(long eventId)
         {
@@ -653,6 +751,25 @@ namespace FlowEvents
             Application.Current.Windows.OfType<Window>()
                 .FirstOrDefault(w => w.DataContext == this)?
                 .Close();
+        }
+
+        private void DeleteAttachedFile(AttachedFileModel file)
+        {
+            if (file != null) return;
+            // Удаляем файл из коллекции
+            AttachedFiles.Remove(file);
+            // Удаляем файл с диска
+            try
+            {
+                if (File.Exists(file.FilePath))
+                {
+                    File.Delete(file.FilePath);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при удалении файла: {ex.Message}");
+            }
         }
 
         //-------------------------------------------------------------------------------------

@@ -67,18 +67,14 @@
     <Compile Include="Converters\FileIconConverter.cs" />
     <Compile Include="Converters\FileSizeConverter.cs" />
     <Compile Include="Converters\InverseBooleanConverter.cs" />
+    <Compile Include="EventAdd\EventViewModel.cs" />
+    <Compile Include="EventAdd\EventWindow.xaml.cs">
+      <DependentUpon>EventWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Models\AttachedFileModel.cs" />
     <Compile Include="RoleService.cs" />
     <Compile Include="Services\FileAttachmentService.cs" />
     <Compile Include="Users\DomainHelper.cs" />
-    <Compile Include="EventAdd\EventAddViewModel.cs" />
-    <Compile Include="EventAdd\EventAddWindow.xaml.cs">
-      <DependentUpon>EventAddWindow.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="EventEdit\EventEditViewModel.cs" />
-    <Compile Include="EventEdit\EventEditWindow.xaml.cs">
-      <DependentUpon>EventEditWindow.xaml</DependentUpon>
-    </Compile>
     <Compile Include="Global_Var.cs" />
     <Compile Include="LoginWindow.xaml.cs">
       <DependentUpon>LoginWindow.xaml</DependentUpon>
@@ -109,13 +105,9 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="EventAdd\EventAddWindow.xaml">
-      <SubType>Designer</SubType>
+    <Page Include="EventAdd\EventWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="EventEdit\EventEditWindow.xaml">
       <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="LoginWindow.xaml">
       <SubType>Designer</SubType>
