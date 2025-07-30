@@ -8,6 +8,7 @@ using System.Data.SQLite;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.Remoting.Messaging;
 using System.Threading.Tasks;
@@ -136,7 +137,7 @@ namespace FlowEvents
         private readonly string formatDateTime = AppBaseConfig.formatDateTime; // формат даты с временем
 
         public ObservableCollection<AttachedFileModel> AttachedFiles { get; } = new ObservableCollection<AttachedFileModel>();
-
+        
         private string _storagePath; // = "C:\\temp\\Attachments";  // Путь для хранения файлов
         private long? _currentEventId;  // Будет установлен после сохранения события
 
@@ -215,6 +216,7 @@ namespace FlowEvents
             GetCategoryFromDatabase(); // Получаем категории из БД
             SelectedCategory = Categories.FirstOrDefault(c => c.Name == _originalEvent.Category);
             await LoadSelectedUnitsForEvent(_edtedEventId); // Получение перечень установок связанных с этим событием
+            LoadAttachedFiles(_edtedEventId); // Получаем перечень прикрепленных файлов.
         }
 
 
@@ -257,11 +259,13 @@ namespace FlowEvents
             return unitIds;
         }
 
-        public void RemoveAttachedFile(AttachedFileModel file) // метод для удаления файла из коллекции
+        public void RemoveAttachedFile(AttachedFileModel deletedFile) // метод для удаления файла из коллекции
         {
-            if (AttachedFiles.Contains(file))
+            if (AttachedFiles.Contains(deletedFile))
             {
-                AttachedFiles.Remove(file);
+                deletedFile.FileDeleted -= RemoveAttachedFile; // Отписываемся от события т.к. удаляем запись
+                // Удаляем файл из коллекции
+                AttachedFiles.Remove(deletedFile);
             }
         }
 
@@ -298,7 +302,7 @@ namespace FlowEvents
 
         private async void AttachFile(object parameters)
         {
-            var filePath = SelectFile();
+            var filePath = SelectFile(); // Вызываем диалоговое окно для выбора файла
             if (string.IsNullOrEmpty(filePath)) return;
 
             try
@@ -329,10 +333,8 @@ namespace FlowEvents
 
                 // Копируем файл
                 File.Copy(filePath, storagePath);
-
-
-                // Создаем модель файла
-                var newFile = new AttachedFileModel(_connectionString) // Передаем строку подключения
+                                
+                var newFile = new AttachedFileModel(_connectionString) // Создаем модель файла
                 {
                     FileName = fileInfo.Name,
                     FilePath = storagePath,
@@ -341,11 +343,10 @@ namespace FlowEvents
                     UploadDate = DateTime.Now
                 };
 
-                newFile.FileDeleted += RemoveAttachedFile;
+                // Подписываемся на событие удаления файла
+                newFile.FileDeleted += RemoveAttachedFile; //Подписываем событие FileDeleted на выполнение метода RemoveAttachedFile;
                 // Добавляем запись в коллекцию (пока без EventId)
                 AttachedFiles.Add(newFile);
-
-                MessageBox.Show("Файл успешно прикреплен!");
             }
             catch (Exception ex)
             {
@@ -353,6 +354,7 @@ namespace FlowEvents
             }
         }
 
+        // Диалоговое окно для выбора файла
         public string SelectFile()
         {
             var openFileDialog = new OpenFileDialog
@@ -601,10 +603,9 @@ namespace FlowEvents
                     {
                         try
                         {
-                            UpdateEvent(connection, updateEvent);
+                            UpdateEvent(connection, updateEvent); // Обновление записи события
 
-                            // надо переписать для записи нескольких ID
-                            UpdateEventUnit(connection, _edtedEventId, selectedIds);
+                            UpdateEventUnit(connection, _edtedEventId, selectedIds); // Обновление данных по объектам
 
                             transaction.Commit();
                         }
@@ -660,11 +661,8 @@ namespace FlowEvents
                 connection.Open();
                 foreach (var file in AttachedFiles)
                 {
-                    string query = @"
-                INSERT INTO AttachedFiles 
-                (EventId, FileName, FilePath, FileSize, FileType, UploadDate)
-                VALUES 
-                (@EventId, @FileName, @FilePath, @FileSize, @FileType, @UploadDate)";
+                    string query = @" INSERT INTO AttachedFiles (EventId, FileName, FilePath, FileSize, FileType, UploadDate)
+                                      VALUES (@EventId, @FileName, @FilePath, @FileSize, @FileType, @UploadDate)";
 
                     using (var command = new SQLiteCommand(query, connection))
                     {
@@ -674,7 +672,6 @@ namespace FlowEvents
                         command.Parameters.AddWithValue("@FileSize", file.FileSize);
                         command.Parameters.AddWithValue("@FileType", file.FileType);
                         command.Parameters.AddWithValue("@UploadDate", file.UploadDate.ToString("yyyy-MM-dd HH:mm:ss"));
-
                         command.ExecuteNonQuery();
                     }
                 }
@@ -696,20 +693,23 @@ namespace FlowEvents
                     command.Parameters.AddWithValue("@EventId", eventId);
 
                     using (var reader = command.ExecuteReader())
-                    {
+                    {                        
                         while (reader.Read())
                         {
-                            AttachedFiles.Add(new AttachedFileModel(_connectionString) // Передаем строку подключения
+                            var loadFile = new AttachedFileModel(_connectionString) // Создаем экземпляр модели для загрузки файлов
                             {
                                 FileId = reader.GetInt32(0),
                                 EventId = reader.GetInt32(1),
                                 FileName = reader.GetString(2),
                                 FilePath = reader.GetString(3),
                                 FileSize = reader.GetInt64(4),
-                                FileType = reader.GetString(5),
-                                UploadDate = DateTime.Parse(reader.GetString(6))
-                            });
-                        }
+                                UploadDate = DateTime.Parse(reader.GetString(5)),
+                                FileType = reader.GetString(6)                                
+                            };
+                            // Подписываемся на событие удаления файла
+                            loadFile.FileDeleted += RemoveAttachedFile;
+                            AttachedFiles.Add(loadFile); // Добавляем файл в коллекцию
+                        }                                               
                     }
                 }
             }

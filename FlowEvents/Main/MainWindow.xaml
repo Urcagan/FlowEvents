@@ -178,7 +178,7 @@
                 <!-- Добавьте контекстное меню -->
                 <DataGrid.ContextMenu>
                     <ContextMenu>
-                        <MenuItem Header="Редактировать" 
+                        <MenuItem Header="Редактировать запись" 
                                   Command="{Binding EditEventCommand}"
                                   CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"/>
                         <Separator/>
@@ -247,8 +247,8 @@
                                                     Style="{StaticResource TransparentButtonStyle}"/>
                                                 <StackPanel.ContextMenu>
                                                     <ContextMenu>
-                                                        <MenuItem Header="Открыть" Command="{Binding OpenCommand}"/>
-                                                        <MenuItem Header="Удалить" Command="{Binding DeleteCommand}"/>
+                                                        <MenuItem Header="Открыть файл" Command="{Binding OpenCommand}"/>
+                                                        <!--<MenuItem Header="Удалить" Command="{Binding DeleteCommand}"/>-->
                                                     </ContextMenu>
                                                 </StackPanel.ContextMenu>
                                             </StackPanel>

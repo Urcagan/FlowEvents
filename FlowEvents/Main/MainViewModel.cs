@@ -162,9 +162,7 @@ namespace FlowEvents
 
             LoadUnitsToComboBox(); // Загружаем перечень установок из базы данных
 
-            FilePath = pathDB; //Выводим путь к файлу в нижную часть главного окна
-
-            
+            FilePath = pathDB; //Выводим путь к файлу в нижную часть главного окна            
         }
 
         public void LoadUnitsToComboBox()
