@@ -55,6 +55,8 @@ namespace FlowEvents
             _mainViewModel = mainViewModel;
             _userManagerModel = userManagerModel;
 
+            DomainName = App.Settings.DomenName; // Имя домена по умолчанию
+
             ConnectionString = _mainViewModel._connectionString;
 
             SearchCommand = new RelayCommand(async (param) => await LoadDomainUserAsync());
@@ -212,13 +214,14 @@ namespace FlowEvents
             }
         }
 
-        private string _domainName = "corp.lukoil.com";
+        private string _domainName; // = "corp.lukoil.com";
         public string DomainName
         {
             get => _domainName;
             set
             {
                 _domainName = value;
+                App.Settings.DomenName = value;
                 OnPropertyChanged();
             }
         }

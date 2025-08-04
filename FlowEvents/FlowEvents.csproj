@@ -60,12 +60,15 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="App.cs" />
     <Compile Include="Category\CategoryView.xaml.cs">
       <DependentUpon>CategoryView.xaml</DependentUpon>
     </Compile>
     <Compile Include="Category\CategoryViewModel.cs" />
     <Compile Include="Converters\FileIconConverter.cs" />
     <Compile Include="Converters\FileSizeConverter.cs" />
+    <Compile Include="Converters\FileStatusToButtonTextConverter.cs" />
+    <Compile Include="Converters\FileStatusToStyleConverter.cs" />
     <Compile Include="Converters\InverseBooleanConverter.cs" />
     <Compile Include="EventAdd\EventViewModel.cs" />
     <Compile Include="EventAdd\EventWindow.xaml.cs">

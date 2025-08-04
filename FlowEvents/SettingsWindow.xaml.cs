@@ -21,7 +21,7 @@ namespace FlowEvents
         {
             InitializeComponent();
             _MainViewModel = mainViewModel;
-            _pathDB = _MainViewModel.appSettings.pathDB;
+            _pathDB = App.Settings.pathDB; //_MainViewModel.appSettings.pathDB;
             // Загружаем текущий путь к базе данных в текстовое поле
            // FilePathTextBox.Text = _pathDB;
         }
@@ -49,16 +49,14 @@ namespace FlowEvents
                 string _connectionString = $"Data Source={newPathDB};Version=3;foreign keys=true;"; //Формируем сторку подключения к БД
 
                 // Проверка версии базы данных
-                if (!CheckDB.IsDatabaseVersionCorrect(_MainViewModel.appSettings.VerDB, _connectionString))  //проверка версии базы данных
+                if (!CheckDB.IsDatabaseVersionCorrect(App.Settings.VerDB, _connectionString)) //проверка версии базы данных
                 {
-                    MessageBox.Show($"Версия БД не соответствует требуемой версии {_MainViewModel.appSettings.VerDB}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show($"Версия БД не соответствует требуемой версии {App.Settings.VerDB}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                     return ;
                 }
 
-                // if (!CheckDB.CheckDatabaseFileVer(_pathDB, _MainViewModel.appSettings.VerDB)) return; //Проверяем версию БД
-
                 _pathDB = newPathDB;
-                _MainViewModel.appSettings.pathDB = _pathDB;
+                App.Settings.pathDB = _pathDB;
                 FilePathTextBox.Text = _pathDB;
                 _MainViewModel.FilePath = _pathDB;
             }
@@ -78,7 +76,8 @@ namespace FlowEvents
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            _MainViewModel.appSettings.SaveSettingsApp();
+            
+            App.Settings.SaveSettingsApp(); 
             this.DialogResult = true;
 
             _MainViewModel.UpdateConnectionString(_pathDB);

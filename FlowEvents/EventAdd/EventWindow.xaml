@@ -12,7 +12,7 @@
         <!-- Регистрируем конвертеры -->
         <local:FileSizeConverter x:Key="FileSizeConverter"/>
         <local:FileIconConverter x:Key="FileIconConverter"/>
-        
+
         <Style TargetType="ComboBox" x:Key="RequiredComboBox">
             <Style.Triggers>
                 <DataTrigger Binding="{Binding SelectedItem.Id, RelativeSource={RelativeSource Self}}" Value="-1">
@@ -25,7 +25,23 @@
         <Style x:Key="FileItemStyle" TargetType="ListViewItem">
             <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
         </Style>
-        
+
+        <!--  ====================================================  -->
+        <!-- Стиль для удаленных файлов -->
+        <Style x:Key="DeletedFileStyle" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+            <Setter Property="TextDecorations" Value="Strikethrough"/>
+            <Setter Property="Opacity" Value="0.6"/>
+            <Setter Property="Foreground" Value="Gray"/>
+        </Style>
+
+        <!-- Конвертер для определения стиля -->
+        <local:FileStatusToStyleConverter x:Key="StatusToStyleConverter"
+        NormalStyle="{StaticResource {x:Type TextBlock}}"
+        DeletedStyle="{StaticResource DeletedFileStyle}"/>
+
+        <local:FileStatusToButtonTextConverter x:Key="StatusToButtonTextConverter"/>
+        <local:StatusToVisibilityConverter x:Key="StatusToVisibilityConverter"/>
+        <!--  ====================================================  -->
     </Window.Resources>
     <DockPanel>
         <ToolBar x:Name="toolBar" DockPanel.Dock="Top">
@@ -178,6 +194,9 @@
                                         <GridViewColumn.CellTemplate>
                                             <DataTemplate>
                                                 <TextBlock Text="{Binding FileName}" 
+                                                           
+                                                           Style="{Binding Status, Converter={StaticResource StatusToStyleConverter}}"
+                                                           
                                                            TextWrapping="Wrap"
                                                            TextTrimming="CharacterEllipsis"
                                                            ToolTip="{Binding FileName}"
@@ -198,10 +217,12 @@
                                                         Content="Открыть" 
                                                         Command="{Binding OpenCommand}" 
                                                         Margin="2"
-                                                        Padding="5 0"/>
+                                                        Padding="5 0"
+                                                        Visibility="{Binding Status, Converter={StaticResource StatusToVisibilityConverter}}"/>
                                                     <Button 
-                                                        Content="Удалить" 
-                                                        Command="{Binding DeleteCommand}" 
+                                                        Content="{Binding Status, Converter={StaticResource StatusToButtonTextConverter}}"
+                                                        
+                                                        Command="{Binding ToggleDeleteCommand}" 
                                                         Margin="2"
                                                         Padding="5 0"/>
                                                 </StackPanel>
@@ -238,8 +259,10 @@
                                     </GridViewColumn>
 
                                     <!-- Колонка с именем файла -->
-                                    <GridViewColumn Header="Имя файла" DisplayMemberBinding="{Binding FileName}" Width="Auto"/>
+                                    <GridViewColumn Header="Имя файла" DisplayMemberBinding="{Binding FileName}" Width="Auto"/> 
 
+                                    
+                                    
                                     <!-- Колонка с размером -->
                                     <GridViewColumn Header="Размер" DisplayMemberBinding="{Binding FileSize, Converter={StaticResource FileSizeConverter}}" Width="80"/>
 

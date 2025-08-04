@@ -6,10 +6,12 @@ using System.ComponentModel;
 using System.Data.Entity.Infrastructure.DependencyResolution;
 using System.Data.SQLite;
 using System.Diagnostics.Eventing.Reader;
+using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Shapes;
 
 namespace FlowEvents
 {
@@ -89,7 +91,7 @@ namespace FlowEvents
             get => _queryEvent;
             set
             {
-                _queryEvent = value;                
+                _queryEvent = value;
                 LoadEvents();
             }
         }
@@ -123,9 +125,9 @@ namespace FlowEvents
             CategoryOpenWindow = new RelayCommand(CategoryMenuItem);
             EventAddWindow = new RelayCommand(EventAddBtb);
             EditEventCommand = new RelayCommand(EditEvent);
-            DeleteEventCommand = new RelayCommand(Delete);
+            DeleteEventCommand = new RelayCommand(DeletEvent);
             UserManagerWindow = new RelayCommand(UserManagerMenuItem);
-            
+
             DownDateCommand = new RelayCommand((parameter) =>
             {
                 StartDate = StartDate.AddDays(-1);
@@ -135,19 +137,19 @@ namespace FlowEvents
             {
                 EndDate = EndDate.AddDays(1);
                 StartDate = StartDate.AddDays(1);
-                
+
             });
 
-            appSettings = AppSettings.GetSettingsApp(); // Загружаем настройки программы из файла при запуске программы
-            
+            //    appSettings = AppSettings.GetSettingsApp(); // Загружаем настройки программы из файла при запуске программы
+
         }
 
         public void StartUP()
         {
             //         appSettings = AppSettings.GetSettingsApp(); // Загружаем настройки программы из файла при запуске программы
 
-            string pathDB = appSettings.pathDB;
-            string verDB = appSettings.VerDB;
+            string pathDB = App.Settings.pathDB; //appSettings.pathDB;
+            string verDB = App.Settings.VerDB; //appSettings.VerDB;
 
             if (!CheckDB.CheckPathToFileDB(pathDB)) return;   // Проверяем путь к базе данных и выходим, если он неверен
 
@@ -178,11 +180,11 @@ namespace FlowEvents
         public void CheckRoleUser()
         {
             // Проверяем роль пользователя и устанавливаем видимость кнопок
-    //        if (appSettings.UserRole == 1) // Администратор
-    //        {
-                IsCategoryButtonVisible = true;
-                IsUnitButtonVisible = true;
-                IsToolBarVisible = true;
+            //        if (appSettings.UserRole == 1) // Администратор
+            //        {
+            IsCategoryButtonVisible = true;
+            IsUnitButtonVisible = true;
+            IsToolBarVisible = true;
             //}
             //else if (appSettings.UserRole == 2) // Оператор
             //{
@@ -206,6 +208,7 @@ namespace FlowEvents
             Events.Clear();
 
             // Получаем данные из базы
+            if (QueryEvent == null) return;
             var eventsFromDb = GetEvents(QueryEvent);
 
             // Добавляем данные в коллекцию
@@ -235,7 +238,7 @@ namespace FlowEvents
         private void UnitsView_Closed(object sender, EventArgs e)
         {
             LoadUnitsToComboBox(); // Перезагружаем установки после закрытия окна UnitsView
-            //LoadEvents();
+            
         }
 
         private void CategoryMenuItem(object parameter)
@@ -269,9 +272,6 @@ namespace FlowEvents
 
         private void EventAddBtb(object parameter)
         {
-            //var eventAddViewModel = new EventAddViewModel(this);
-            //EventAddWindow eventView = new EventAddWindow(eventAddViewModel);
-
             var eventViewModel = new EventViewModel(this);
             EventWindow eventView = new EventWindow(eventViewModel);
 
@@ -284,20 +284,6 @@ namespace FlowEvents
             LoadEvents();
         }
 
-
-        //private void EditEvent(object parameter)
-        //{
-        //    if (parameter is EventsModelForView selectedEvent)
-        //    {
-        //        // Создаем ViewModel для редактирования, передавая выбранное событие
-        //        var eventEditViewModel = new EventEditViewModel(this, selectedEvent);
-
-        //        // Создаем и показываем окно редактирования
-        //        var eventEditWindow = new EventEditWindow(eventEditViewModel);
-        //        eventEditWindow.Closed += EventAdd_Closed;
-        //        eventEditWindow.ShowDialog();
-        //    }
-        //}
 
         private void EditEvent(object parameter)
         {
@@ -340,15 +326,110 @@ namespace FlowEvents
         }
 
 
-        private void datePicker_SelectedDatesChanged(object sender, SelectionChangedEventArgs e)
+        // Удаление события
+        private void DeletEvent(object parameter)
         {
-            //DateTime? selectedDate = calendar;
-            MessageBox.Show("DatePicker");
+            List<AttachedFileForEvent> listAttachedFIles = new List<AttachedFileForEvent>();
+
+            if (parameter is EventsModelForView selectedEvent)
+            {
+                int eventId = selectedEvent.Id; //Получили ID события которое надо удалить
+
+                var confirm = MessageBox.Show(
+                    $"Вы действительно хотите удалить событие от {selectedEvent.DateEvent:dd.MM.yyyy} по объекту {selectedEvent.Unit} ?",
+                    "Подтверждение удаления",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question);
+                if (confirm != MessageBoxResult.Yes) return;
+
+                // 1. Получаем пепречень файлов связанных с этим событием
+                listAttachedFIles = GetIdFilesOnEvent(eventId);
+
+                // 2. Удаляем Файлы связанные с событием
+                DeleteFiles(listAttachedFIles);
+
+                // 3. Удалям записи о событии из БД (таблица Events) Записи о файлах удаляются автоматически каскадом
+                DeleteEventFromDB(eventId);
+
+            }
+        }
+
+        // Удаление файлов связанных с событием
+        private bool DeleteFiles(List<AttachedFileForEvent> listAttact)
+        {
+            if (!listAttact.Any()) return true;
+
+            bool allDeleted = true;
+
+            foreach (var file in listAttact)
+            {
+                if (!DeleteFileFromDisk(file.FilePath))
+                    allDeleted = false;
+            }
+            return allDeleted;
+        }
+
+        private bool DeleteFileFromDisk(string path)
+        {
+            try
+            {
+                // 1. Удаление файла с диска
+                if (File.Exists(path))
+                {
+                    File.Delete(path);
+                    return true;
+                }
+                return false; // файл не существовал
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Не удалось удалить файл: {ex.Message}");
+                return false;
+            }
         }
 
         //------------------------------------------------------------------------------------------------------
         //Запросы к базе данных
         //------------------------------------------------------------------------------------------------------
+
+        //Получить перечень файлов связанных с событием
+        private List<AttachedFileForEvent> GetIdFilesOnEvent(int EventId)
+        {
+            List<AttachedFileForEvent> attachedFile = new List<AttachedFileForEvent>();
+            try
+            {
+                using (var connection = new SQLiteConnection(_connectionString))
+                {
+                    connection.Open();
+
+                    string query = @" Select FileId, EventId, FileName, FilePath From AttachedFiles Where EventId = @SelectedRowId ";
+
+                    using (var command = new SQLiteCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@SelectedRowId", EventId);
+
+                        using (var reader = command.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                attachedFile.Add(new AttachedFileForEvent
+                                {
+                                    FileId = reader.GetInt32(0),
+                                    EventId = reader.GetInt32(1), // ID события с которым связан файл
+                                    FileName = reader.IsDBNull(2) ? null : reader.GetString(2), // Имя файла
+                                    FilePath = reader.IsDBNull(3) ? null : reader.GetString(3), // Путь к файлу на диске, где он хранится
+                                });
+                            }
+                        }
+                    }
+                }
+                return attachedFile;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
 
         private void GetUnitFromDatabase() //Загрузка перечня установок из ДБ
         {
@@ -407,9 +488,6 @@ namespace FlowEvents
                 string endDateStr = endDate?.Date.ToString("yyyy-MM-dd") ?? DateTime.MaxValue.Date.ToString("yyyy-MM-dd");
                 conditions.Add($"DateEvent BETWEEN '{startDateStr}' AND '{endDateStr}'");
             }
-
-            // Основной запрос
-           // string query = "SELECT id, DateEvent, Unit, OilRefining, Category, Description, Action, DateCreate, Creator FROM vwEvents";
 
             // Основной запрос теперь включает LEFT JOIN к AttachedFiles
             string query = @"SELECT e.id, e.DateEvent, e.Unit, e.OilRefining, e.Category, e.Description, e.Action, e.DateCreate, e.Creator, 
@@ -479,94 +557,42 @@ namespace FlowEvents
             return eventsDict.Values.ToList();
         }
 
-        // Загрузка категорий из базы данных
-        //public List<EventsModelForView> GetEvents(string queryEvent)
-        //{
-        //    var events = new List<EventsModelForView>();
 
-        //    using (var connection = new SQLiteConnection(_connectionString))
-        //    {
-        //        connection.Open();
-        //        //string query = $" SELECT id, DateEvent, Unit, OilRefining, Category, Description, Action, DateCreate, Creator FROM vwEvents " +
-        //        //    $"Where DateEvent BETWEEN '{StartDate.Date.ToString("yyyy-MM-dd")}' AND '{EndDate.Date.ToString("yyyy-MM-dd")}' ";
 
-        //        var command = new SQLiteCommand(QueryEvent, connection);
-        //        using (var reader = command.ExecuteReader())
-        //        {
-        //            int idIndex = reader.GetOrdinal("id");
-        //            int dateIndex = reader.GetOrdinal("DateEvent");
-        //            int unitIndex = reader.GetOrdinal("Unit");
-        //            int refiningIndex = reader.GetOrdinal("OilRefining");
-        //            int categotyIndex = reader.GetOrdinal("Category");
-        //            int descriptionIndex = reader.GetOrdinal("Description");
-        //            int actionIndex = reader.GetOrdinal("Action");
-        //            int createIndex = reader.GetOrdinal("DateCreate");
-        //            int creatorIndex = reader.GetOrdinal("Creator");
-
-        //            while (reader.Read())
-        //            {
-        //                events.Add(new EventsModelForView
-        //                {
-        //                    Id = reader.GetInt32(idIndex),
-        //                    DateEventString = reader.GetString(dateIndex),
-        //                    Unit = reader.GetString(unitIndex),
-        //                    OilRefining = reader.IsDBNull(refiningIndex) ? null : reader.GetString(refiningIndex),
-        //                    Category = reader.GetString(categotyIndex),
-        //                    Description = reader.IsDBNull(descriptionIndex) ? null : reader.GetString(descriptionIndex),
-        //                    Action = reader.IsDBNull(actionIndex) ? null : reader.GetString(actionIndex),
-        //                    DateCreate = reader.GetString(createIndex),
-        //                    Creator = reader.GetString(creatorIndex)
-        //                });
-        //            }
-        //        }
-        //        return events;
-        //    }
-        //}
-
-        private void Delete(object parameter)
+        private void DeleteEventFromDB(int eventId)
         {
-            if (parameter is EventsModelForView selectedEvent)
+            try
             {
-                int eventId = selectedEvent.Id;
-
-                var confirm = MessageBox.Show(
-                    $"Вы действительно хотите удалить событие от {selectedEvent.DateEvent:dd.MM.yyyy} по объекту {selectedEvent.Unit} ?",
-                    "Подтверждение удаления",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Question);
-                if (confirm != MessageBoxResult.Yes) return;
-
-                try
+                using (var connection = new SQLiteConnection(_connectionString))
                 {
-                    using (var connection = new SQLiteConnection(_connectionString))
+                    connection.Open();
+                    using (SQLiteTransaction transaction = connection.BeginTransaction())
                     {
-                        connection.Open();
-                        using (SQLiteTransaction transaction = connection.BeginTransaction())
+                        try
                         {
-                            try
-                            {
-                                ExecuteDeleteCommand(connection, "DELETE FROM Events WHERE ID = @EventId", eventId);
+                            ExecuteDeleteCommand(connection, "DELETE FROM Events WHERE ID = @EventId", eventId);
 
-                                // ExecuteDeleteCommand(connection, "DELETE FROM EventUnits WHERE EventID = @EventId", eventId);
+                            // ExecuteDeleteCommand(connection, "DELETE FROM EventUnits WHERE EventID = @EventId", eventId);
 
-                                transaction.Commit();
+                            transaction.Commit();
 
-                                RemoveEventById(eventId); // Удаляем из UI только после успешной транзакции
-                            }
-                            catch (Exception ex)
-                            {
-                                // В случае ошибки откатить транзакцию
-                                transaction.Rollback();
-                                MessageBox.Show($"Не удалось удалении событие {ex.Message}");
-                            }
+                            RemoveEventById(eventId); // Удаляем из UI только после успешной транзакции
+
+                        }
+                        catch (Exception ex)
+                        {
+                            // В случае ошибки откатить транзакцию
+                            transaction.Rollback();
+                            MessageBox.Show($"Не удалось удалении событие {ex.Message}");
                         }
                     }
                 }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"Ошибка базы данных: {ex.Message}");
-                }
             }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка базы данных: {ex.Message}");
+            }
+
         }
 
 
