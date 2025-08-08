@@ -1,0 +1,178 @@
+﻿<Window x:Class="FlowEvents.Users.LoginUser"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:FlowEvents.Users"
+        mc:Ignorable="d"
+        Height="460" Width="350"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize"
+        WindowStyle="None"
+        Background="Transparent">
+    <Window.Resources>
+        <!-- Тень для окна -->
+        <DropShadowEffect x:Key="ShadowEffect" BlurRadius="10" ShadowDepth="2" Color="#33000000"/>
+
+        <!-- Стиль для текстового поля -->
+        <Style x:Key="MaterialTextBox" TargetType="TextBox">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#FFCCCCCC"/>
+            <Setter Property="BorderThickness" Value="0 0 0 2"/>
+            <Setter Property="Padding" Value="0,8"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="BorderBrush" Value="#FF4285F4"/>
+                </Trigger>
+                <Trigger Property="IsFocused" Value="True">
+                    <Setter Property="BorderBrush" Value="#FF4285F4"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Стиль для поля пароля -->
+        <Style x:Key="MaterialPasswordBox" TargetType="PasswordBox">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#FFCCCCCC"/>
+            <Setter Property="BorderThickness" Value="0 0 0 2"/>
+            <Setter Property="Padding" Value="0,8"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="BorderBrush" Value="#FF4285F4"/>
+                </Trigger>
+                <Trigger Property="IsFocused" Value="True">
+                    <Setter Property="BorderBrush" Value="#FF4285F4"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Стиль для плоских кнопок -->
+        <Style x:Key="FlatButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#FF4285F4"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                            CornerRadius="2">
+                            <ContentPresenter HorizontalAlignment="Center" 
+                                          VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#10000000"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+    <Border CornerRadius="0" 
+            Background="White" 
+            BorderThickness="0"
+            BorderBrush="#FFE0E0E0"
+            Effect="{StaticResource ShadowEffect}">
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <!-- Шапка для перетаскивания -->
+                <RowDefinition Height="40"/>
+                <!-- Заголовок -->
+                <RowDefinition Height="Auto"/>
+                <!-- Поле логина -->
+                <RowDefinition Height="Auto"/>
+                <!-- Поле пароля -->
+                <RowDefinition Height="Auto"/>
+                <!-- Чекбокс "Запомнить" -->
+                <RowDefinition Height="Auto"/>
+                <!-- Кнопка входа -->
+                <RowDefinition Height="Auto"/>
+                <!-- Ссылка на регистрацию -->
+                <RowDefinition Height="*"/>
+                <!-- Кнопки -->
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Шапка для перетаскивания -->
+            <Border Grid.Row="0" 
+                    Background="#FF4285F4"  
+                    CornerRadius="0"
+                    MouseLeftButtonDown="DragArea_MouseLeftButtonDown">
+                <TextBlock Text="Авторизация"
+                           FontSize="16"
+                           FontWeight="Bold"
+                           Foreground="White"
+                           Margin="20,0"
+                           VerticalAlignment="Center"/>
+            </Border>
+
+            <!-- Иконка пользователя -->
+            <Viewbox Grid.Row="1" 
+                     Width="60" 
+                     Height="60" 
+                     Margin="0,10,0,20"
+                     HorizontalAlignment="Center">
+                <Path Data="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" 
+                      Fill="#FF4285F4"/>
+            </Viewbox>
+
+            <!-- Поле логина -->
+            <StackPanel Grid.Row="2" Margin="30,0,30,10">
+                <Label Content="Логин:" Foreground="#FF333333" FontWeight="SemiBold"/>
+                <TextBox x:Name="txtUsername" 
+                         Style="{StaticResource MaterialTextBox}"
+                         Text="{Binding Username}"/>
+            </StackPanel>
+
+            <!-- Поле пароля -->
+            <StackPanel Grid.Row="3" Margin="30,0,30,10">
+                <Label Content="Пароль:" Foreground="#FF333333" FontWeight="SemiBold"/>
+                <PasswordBox x:Name="txtPassword" 
+                             Style="{StaticResource MaterialPasswordBox}"/>
+            </StackPanel>
+
+            <!-- Чекбокс "Запомнить меня" -->
+            <CheckBox Grid.Row="4" 
+                      Content="Запомнить меня"
+                      Margin="30,10"
+                      Foreground="#FF333333"
+                      IsChecked="{Binding RememberMe}"/>
+
+            <!-- Кнопка входа -->
+            <Button Grid.Row="5"
+                    Content="Войти"
+                    Command="{Binding LoginCommand}"
+                    Margin="30,10"
+                    Height="40"
+                    Background="#FF4285F4"
+                    Foreground="White"
+                    FontWeight="Bold"
+                    BorderThickness="0"/>
+
+            <!-- Ссылка на регистрацию -->
+            <TextBlock Grid.Row="6" 
+                       Text="Нет аккаунта? Зарегистрируйтесь" 
+                       Margin="0,0,0,20"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Bottom"
+                       Foreground="#FF4285F4"
+                       Cursor="Hand"
+                       TextDecorations="Underline"
+                       MouseLeftButtonDown="RegisterText_MouseDown"/>
+
+            <!-- Кнопка закрытия -->
+            <Button Grid.Row="7"
+                    Content="Закрыть"
+                    Command="{Binding CloseCommand}"
+                    Margin="10"
+                    HorizontalAlignment="Right"
+                    Width="80"
+                    Style="{StaticResource FlatButton}"/>
+        </Grid>
+    </Border>
+</Window>

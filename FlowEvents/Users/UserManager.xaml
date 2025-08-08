@@ -16,6 +16,11 @@
                      Command="{Binding DeletUserCommand}"
                      Margin="10" HorizontalAlignment="Left" 
                      BorderBrush="Black"/>
+
+            <Button Content="Добавить пользователя" 
+                    Command="{Binding OpenAddUserWindowsCommand}"
+                    Margin="10" HorizontalAlignment="Right" 
+                    BorderBrush="Black"/>
         </ToolBar>
         <DataGrid x:Name="dgUsers" 
                   ItemsSource="{Binding UsersTable}"

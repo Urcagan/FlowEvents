@@ -5,13 +5,11 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Data.Entity.Infrastructure.DependencyResolution;
 using System.Data.SQLite;
-using System.Diagnostics.Eventing.Reader;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Security.Principal;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Shapes;
 
 namespace FlowEvents
 {
@@ -106,6 +104,17 @@ namespace FlowEvents
         // Коллекция для записей журнала (автоматически уведомляет об изменениях)
         public ObservableCollection<EventsModelForView> Events { get; set; } = new ObservableCollection<EventsModelForView>();
 
+        private string _userName;
+        public string UserName
+        {
+            get => _userName;
+            set
+            {
+                _userName = value;
+                OnPropertyChanged();
+            }
+        }
+
         public RelayCommand SettingOpenWindow { get; }
         public RelayCommand UnitOpenWindow { get; }
         public RelayCommand CategoryOpenWindow { get; }
@@ -140,6 +149,7 @@ namespace FlowEvents
 
             });
 
+            User();
             //    appSettings = AppSettings.GetSettingsApp(); // Загружаем настройки программы из файла при запуске программы
 
         }
@@ -643,5 +653,22 @@ namespace FlowEvents
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
+
+        private void User()
+        {
+            var identity = WindowsIdentity.GetCurrent();
+
+            // Простые свойства
+            UserName = Environment.UserName;
+            string Domain = Environment.UserDomainName;
+
+            // Более детальная информация
+            string FullName = identity.Name;
+            string AuthType = identity.AuthenticationType;
+            string IsAuthenticated = identity.IsAuthenticated.ToString();
+            string IsSystem = identity.IsSystem.ToString();
+            string IsGuest = identity.IsGuest.ToString();
+        }
     }
+    
 }

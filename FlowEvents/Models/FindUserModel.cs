@@ -62,7 +62,7 @@ namespace FlowEvents
             SearchCommand = new RelayCommand(async (param) => await LoadDomainUserAsync());
             CancelCommand = new RelayCommand(CancelSearch);
             AddDomainUserCommand = new RelayCommand(AddDomainUser);
-            _userManagerModel = userManagerModel;
+          //  _userManagerModel = userManagerModel;
         }
 
 

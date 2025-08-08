@@ -75,8 +75,13 @@
       <DependentUpon>EventWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Models\AttachedFileModel.cs" />
+    <Compile Include="Models\UserModel.cs" />
     <Compile Include="RoleService.cs" />
     <Compile Include="Services\FileAttachmentService.cs" />
+    <Compile Include="Users\AddUserViewModel.cs" />
+    <Compile Include="Users\AddUserWindow.xaml.cs">
+      <DependentUpon>AddUserWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Users\DomainHelper.cs" />
     <Compile Include="Global_Var.cs" />
     <Compile Include="LoginWindow.xaml.cs">
@@ -100,6 +105,9 @@
       <DependentUpon>UnitsView.xaml</DependentUpon>
     </Compile>
     <Compile Include="Units\UnitViewModel.cs" />
+    <Compile Include="Users\LoginUser.xaml.cs">
+      <DependentUpon>LoginUser.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Users\UserManager.xaml.cs">
       <DependentUpon>UserManager.xaml</DependentUpon>
     </Compile>
@@ -131,6 +139,10 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="Users\AddUserWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Users\FindUserWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -140,6 +152,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Units\UnitsView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Users\LoginUser.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

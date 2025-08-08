@@ -32,6 +32,8 @@ namespace FlowEvents
             InitializeComponent();
             //DataContext = new FindUserModel(mainViewModel);
             _userManagerModel = userManagerModel;
+            
+            // НЕОБХОДИМО ПЕРЕСМОТРЕТЬ НЕОБХОДИМОСТЬ ПЕРЕДАЧИ ДВУХ ПАРАМЕТРОВ ============================
             DataContext = new FindUserModel(_userManagerModel.MainViewModel, userManagerModel);
         }
         

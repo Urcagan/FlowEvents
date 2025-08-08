@@ -1,5 +1,6 @@
 ﻿using FlowEvents.Models;
 using FlowEvents.Properties;
+using FlowEvents.Users;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -21,6 +22,7 @@ namespace FlowEvents
 
         public RelayCommand OpenFindUserWindowsCommand { get; set; }
         public RelayCommand DeletUserCommand { get; set; }
+        public RelayCommand OpenAddUserWindowsCommand { get; set; }
         #region
         //public event PropertyChangedEventHandler PropertyChanged;
 
@@ -83,6 +85,7 @@ namespace FlowEvents
 
             OpenFindUserWindowsCommand = new RelayCommand(OpenFindUserWindows);
             DeletUserCommand = new RelayCommand(DeletUser);
+            OpenAddUserWindowsCommand = new RelayCommand(OpenAddUserWindows);
 
             // Загрузка данных из базы
             ConnectionString = _mainViewModel._connectionString;
@@ -91,6 +94,13 @@ namespace FlowEvents
         }
 
        
+        private void OpenAddUserWindows(object parameters)
+        {
+            AddUserWindow addUserWindow = new AddUserWindow(this);
+            addUserWindow.Closed += AddUserWindow_Closed; // Подписываемся на событие закрытия окна
+            if (addUserWindow.ShowDialog() == true) { }
+        }
+
         private void OpenFindUserWindows(object parameters)
         {
 
@@ -98,6 +108,7 @@ namespace FlowEvents
             FindUserWindow findUserWindow = new FindUserWindow(this); // Создаем дочернее окно, передавая текущую модель (this)
             findUserWindow.Closed += FindUserWindow_Closed; // Подписываемся на событие закрытия окна
             if (findUserWindow.ShowDialog() == true) { }
+
         }
 
         // Объект для размещения данных выделенной строки. При выборе строки таблицы в переменную поместятся все значения выделенной строки
@@ -162,6 +173,11 @@ namespace FlowEvents
         }
 
         private void FindUserWindow_Closed(object sender, EventArgs e)
+        {
+            GetUsers();
+        }
+
+        private void AddUserWindow_Closed(object sender, EventArgs e)
         {
             GetUsers();
         }
@@ -297,113 +313,6 @@ namespace FlowEvents
 
     }
 
-    public class UserModel : INotifyPropertyChanged
-    {
-
-        private int _id;
-        public int Id
-        {
-            get => _id;
-            set
-            {
-                _id = value;
-                OnPropertyChanged(nameof(Id));
-            }
-        }
-
-        private string _userName;
-        public string UserName
-        {
-            get => _userName;
-            set
-            {
-                _userName = value;
-                OnPropertyChanged(nameof(UserName));
-            }
-        }
-
-        private string _domainName;
-        public string DomainName
-        {
-            get => _domainName;
-            set
-            {
-                _domainName = value;
-                OnPropertyChanged(nameof(DomainName));
-            }
-        }
-
-        private string _displayName;
-        public string DisplayName
-        {
-            get => _displayName;
-            set
-            {
-                _displayName = value;
-                OnPropertyChanged(nameof(DisplayName));
-            }
-        }
-
-        private string _email;
-        public string Email
-        {
-            get => _email;
-            set
-            {
-                _email = value;
-                OnPropertyChanged(nameof(Email));
-            }
-        }
-
-        private int _roleId;
-        public int RoleId
-        {
-            get => _roleId;
-            set
-            {
-                _roleId = value;
-                OnPropertyChanged(nameof(RoleId));
-            }
-        }
-
-        private int _IsAllowed;
-        public int IsAllowed
-        {
-            get => _IsAllowed;
-            set
-            {
-                _IsAllowed = value;
-                OnPropertyChanged(nameof(IsAllowed));
-            }
-        }
-
-        private string _password;
-        public string Password
-        {
-            get => _password;
-            set
-            {
-                _password = value;
-                OnPropertyChanged(nameof(Password));
-            }
-        }
-        private string _Salt;
-        public string Salt
-        {
-            get => _Salt;
-            set
-            {
-                _Salt = value;
-                OnPropertyChanged(nameof(Salt));
-            }
-        }
-
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = "")
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-    }
+    
 
 }
