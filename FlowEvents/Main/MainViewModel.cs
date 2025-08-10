@@ -104,6 +104,23 @@ namespace FlowEvents
         // Коллекция для записей журнала (автоматически уведомляет об изменениях)
         public ObservableCollection<EventsModelForView> Events { get; set; } = new ObservableCollection<EventsModelForView>();
 
+        private EventsModelForView _selectedEvent; // Выбранное событие в таблице
+        public EventsModelForView SelectedEvent
+        {
+            get => _selectedEvent;
+            set
+            {
+                if (_selectedEvent == value)
+                    return; // Не обновлять, если значение не изменилось
+                Console.WriteLine($"SelectedEvent changed from {_selectedEvent?.Id} to {value?.Id}");
+                _selectedEvent = value;
+                OnPropertyChanged(nameof(SelectedEvent));
+                OnPropertyChanged(nameof(SelectedEventCollection)); // Критически важно!
+                OnPropertyChanged(nameof(MonitoringFiles)); //Фильтрация привязанных файлов по признаку мониторига
+                OnPropertyChanged(nameof(DocumentFiles));
+            }
+        }
+
         private string _userName;
         public string UserName
         {
@@ -153,6 +170,23 @@ namespace FlowEvents
             //    appSettings = AppSettings.GetSettingsApp(); // Загружаем настройки программы из файла при запуске программы
 
         }
+
+        // 
+        public IEnumerable<AttachedFileModel> MonitoringFiles =>
+            SelectedEvent?.AttachedFiles?
+                .Where(f => f.FileCategory?.Contains("monitoring") == true)
+        ?? Enumerable.Empty<AttachedFileModel>();
+
+        public IEnumerable<AttachedFileModel> DocumentFiles =>
+            SelectedEvent?.AttachedFiles?
+                .Where(f => f.FileCategory?.Contains("document") == true)
+        ?? Enumerable.Empty<AttachedFileModel>();
+
+        // 
+        public ObservableCollection<EventsModelForView> SelectedEventCollection =>
+            SelectedEvent == null
+                ? new ObservableCollection<EventsModelForView>()
+                : new ObservableCollection<EventsModelForView> { SelectedEvent };
 
         public void StartUP()
         {
@@ -248,7 +282,7 @@ namespace FlowEvents
         private void UnitsView_Closed(object sender, EventArgs e)
         {
             LoadUnitsToComboBox(); // Перезагружаем установки после закрытия окна UnitsView
-            
+
         }
 
         private void CategoryMenuItem(object parameter)
@@ -412,7 +446,7 @@ namespace FlowEvents
                 {
                     connection.Open();
 
-                    string query = @" Select FileId, EventId, FileName, FilePath From AttachedFiles Where EventId = @SelectedRowId ";
+                    string query = @" Select FileId, EventId, FileCategory, FileName, FilePath From AttachedFiles Where EventId = @SelectedRowId ";
 
                     using (var command = new SQLiteCommand(query, connection))
                     {
@@ -501,7 +535,7 @@ namespace FlowEvents
 
             // Основной запрос теперь включает LEFT JOIN к AttachedFiles
             string query = @"SELECT e.id, e.DateEvent, e.Unit, e.OilRefining, e.Category, e.Description, e.Action, e.DateCreate, e.Creator, 
-                            af.FileId, af.FileName, af.FilePath, af.FileSize, af.FileType, af.UploadDate
+                            af.FileId, af.FileCategory, af.FileName, af.FilePath, af.FileSize, af.FileType, af.UploadDate
                             FROM vwEvents e LEFT JOIN AttachedFiles af ON e.id = af.EventId";
 
             // Добавляем условия, если они есть
@@ -553,6 +587,7 @@ namespace FlowEvents
                             eventModel.AttachedFiles.Add(new AttachedFileModel(_connectionString) // Передаем строку подключения
                             {
                                 FileId = reader.GetInt32(reader.GetOrdinal("FileId")),
+                                FileCategory = reader.GetString(reader.GetOrdinal("FileCategory")),
                                 FileName = reader.GetString(reader.GetOrdinal("FileName")),
                                 FilePath = reader.GetString(reader.GetOrdinal("FilePath")),
                                 FileSize = reader.GetInt64(reader.GetOrdinal("FileSize")),
@@ -670,5 +705,5 @@ namespace FlowEvents
             string IsGuest = identity.IsGuest.ToString();
         }
     }
-    
+
 }

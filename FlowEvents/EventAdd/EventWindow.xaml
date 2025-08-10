@@ -167,12 +167,13 @@
                     <DockPanel>
                         <Button Content="Прикрепить файл"
                                 Command="{Binding AttachFileCommand}"
+                                CommandParameter="document"
                                 Width="120"
                                 Height="28"
                                 Margin="5"
                                 DockPanel.Dock="Bottom"/>
                         
-                        <ListView ItemsSource="{Binding AttachedFiles}" ItemContainerStyle="{StaticResource FileItemStyle}">
+                        <ListView ItemsSource="{Binding AttachedFilesDocument}" ItemContainerStyle="{StaticResource FileItemStyle}">
                             <ListView.View>
                                 <GridView>
                                     <!-- Колонка с иконкой -->
@@ -238,11 +239,14 @@
                 <GroupBox Header="Мониторинг + Диспетчерский отчет" Grid.Column="4" Grid.Row="2">
                     <DockPanel>
                         <Button Content="Прикрепить файл"
-                            Width="120"
-                            Height="28"
-                            Margin="5"
-                            DockPanel.Dock="Bottom"/>
-                        <ListView ItemsSource="{Binding AttachedFiles}" ItemContainerStyle="{StaticResource FileItemStyle}">
+                                Command="{Binding AttachFileCommand}"
+                                CommandParameter="monitoring"
+                                Width="120"
+                                Height="28"
+                                Margin="5"
+                                DockPanel.Dock="Bottom"/>
+
+                        <ListView ItemsSource="{Binding AttachedFilesMonitoring}" ItemContainerStyle="{StaticResource FileItemStyle}">
                             <ListView.View>
                                 <GridView>
                                     <!-- Колонка с иконкой -->
@@ -250,19 +254,31 @@
                                         <GridViewColumn.CellTemplate>
                                             <DataTemplate>
                                                 <Image 
-                            Source="{Binding FileName, Converter={StaticResource FileIconConverter}}"
-                            Width="16"
-                            Height="16"
-                            ToolTip="{Binding FileName}"/>
+                                                     Source="{Binding FileName, Converter={StaticResource FileIconConverter}}"
+                                                     Width="16"
+                                                     Height="16"
+                                                     ToolTip="{Binding FileName}"/>
                                             </DataTemplate>
                                         </GridViewColumn.CellTemplate>
                                     </GridViewColumn>
 
                                     <!-- Колонка с именем файла -->
-                                    <GridViewColumn Header="Имя файла" DisplayMemberBinding="{Binding FileName}" Width="Auto"/> 
-
+                                    <!--<GridViewColumn Header="Имя файла" DisplayMemberBinding="{Binding FileName}" Width="Auto"/>-->
+                                    <GridViewColumn Header="Имя файла" Width="300">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding FileName}" 
                                     
+                                    Style="{Binding Status, Converter={StaticResource StatusToStyleConverter}}"
                                     
+                                    TextWrapping="Wrap"
+                                    TextTrimming="CharacterEllipsis"
+                                    ToolTip="{Binding FileName}"
+                                    VerticalAlignment="Center"
+                                    />
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
                                     <!-- Колонка с размером -->
                                     <GridViewColumn Header="Размер" DisplayMemberBinding="{Binding FileSize, Converter={StaticResource FileSizeConverter}}" Width="80"/>
 
@@ -272,15 +288,17 @@
                                             <DataTemplate>
                                                 <StackPanel Orientation="Horizontal">
                                                     <Button 
-                                Content="Открыть" 
-                                Command="{Binding OpenCommand}" 
-                                Margin="2"
-                                Padding="5 0"/>
+                                 Content="Открыть" 
+                                 Command="{Binding OpenCommand}" 
+                                 Margin="2"
+                                 Padding="5 0"
+                                 Visibility="{Binding Status, Converter={StaticResource StatusToVisibilityConverter}}"/>
                                                     <Button 
-                                Content="Удалить" 
-                                Command="{Binding DeleteCommand}" 
-                                Margin="2"
-                                Padding="5 0"/>
+                                 Content="{Binding Status, Converter={StaticResource StatusToButtonTextConverter}}"
+                                 
+                                 Command="{Binding ToggleDeleteCommand}" 
+                                 Margin="2"
+                                 Padding="5 0"/>
                                                 </StackPanel>
                                             </DataTemplate>
                                         </GridViewColumn.CellTemplate>
@@ -288,8 +306,8 @@
                                 </GridView>
                             </ListView.View>
                         </ListView>
+                        
                     </DockPanel>
-                    
                     
                 </GroupBox>
             </Grid>

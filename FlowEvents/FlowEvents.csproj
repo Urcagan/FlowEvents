@@ -65,6 +65,7 @@
       <DependentUpon>CategoryView.xaml</DependentUpon>
     </Compile>
     <Compile Include="Category\CategoryViewModel.cs" />
+    <Compile Include="Converters\Collapsed.cs" />
     <Compile Include="Converters\FileIconConverter.cs" />
     <Compile Include="Converters\FileSizeConverter.cs" />
     <Compile Include="Converters\FileStatusToButtonTextConverter.cs" />

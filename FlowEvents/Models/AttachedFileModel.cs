@@ -23,6 +23,7 @@ namespace FlowEvents.Models
         public string SourceFilePath { get; set; } // Путь к исходному файлу, если требуется
         public int FileId { get; set; }
         public int EventId { get; set; }  // Связь с таблицей Events
+        public string FileCategory { get; set; } // Тип прикрепляемого документа
         public string FileName { get; set; } // Имя файла, которое будет отображаться в UI
         public string FilePath { get; set; } // Путь к файлу на диске, где он хранится
         public long FileSize { get; set; } // Размер файла в байтах
@@ -146,8 +147,6 @@ namespace FlowEvents.Models
         }
 
     }
-
-
 }
 
 
@@ -161,6 +160,12 @@ namespace FlowEvents.Models.Enums
         Modified,   // Файл изменён (например, переименован)
         Deleted     // Файл помечен на удаление
     }
+
+    public enum FileCategory
+    {
+        document,
+        monitoring
+    }
 }
 
 
@@ -168,6 +173,7 @@ public class AttachedFileForEvent
 {   
     public int FileId { get; set; }
     public int EventId { get; set; }  // Связь с таблицей Events
+    public string FileCategory { get; set; } // Тип прикрепляемого документа
     public string FileName { get; set; } // Имя файла, которое будет отображаться в UI
     public string FilePath { get; set; } // Путь к файлу на диске, где он хранится
 }

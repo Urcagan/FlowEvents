@@ -41,6 +41,7 @@ namespace FlowEvents
 
         // Новое свойство для хранения списка файлов
         public List<AttachedFileModel> AttachedFiles { get; set; } = new List<AttachedFileModel>();
+                
     }
 
     public class EventsModel

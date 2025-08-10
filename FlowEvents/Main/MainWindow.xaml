@@ -8,6 +8,12 @@
         Title="Журнал событий" Height="750" Width="1400" >
     <!-- Loaded="Window_Loaded"> -->
     <Window.Resources>
+        <!-- Конвертер для преобразования null в Visibility -->
+        <local:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
+
+        <!-- Обратный конвертер (Inverse) -->
+        <local:InverseNullToVisibilityConverter x:Key="InverseNullToVisibilityConverter"/>
+        
         <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
         <!-- Стиль для текста с переносом строк -->
         <Style x:Key="WrappedTextBlockStyle" TargetType="TextBlock">
@@ -59,10 +65,12 @@
             </MenuItem>
 
         </Menu>
-
+        
+        
         <Grid DockPanel.Dock="Top" Background="#EEF5FD">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="auto"/>
                 <ColumnDefinition Width="auto"/>
                 <ColumnDefinition Width="auto"/>
                 <ColumnDefinition Width="*"/>
@@ -70,6 +78,8 @@
             <Grid.RowDefinitions>
                 <RowDefinition />
             </Grid.RowDefinitions>
+            
+            
 
             <StackPanel Grid.Column="0" Grid.Row="0" Orientation="Horizontal" Margin="5">
                 <Label Content="Установка:" VerticalAlignment="Center"/>
@@ -84,10 +94,10 @@
             </StackPanel>
 
             <StackPanel Grid.Column="1" Grid.Row="0" Orientation="Horizontal" 
-            IsEnabled="{Binding IsAllEvents, Converter={StaticResource InverseBooleanConverter}}">
+                        IsEnabled="{Binding IsAllEvents, Converter={StaticResource InverseBooleanConverter}}">
                 <Button x:Name="_btnBack" 
-            Command="{Binding DownDateCommand}"
-            ToolTip="Back" HorizontalAlignment="Left" VerticalAlignment="Center" BorderBrush="Gray" Margin="0,0,10,0">
+                        Command="{Binding DownDateCommand}"
+                        ToolTip="Back" HorizontalAlignment="Left" VerticalAlignment="Center" BorderBrush="Gray" Margin="0,0,10,0">
                     <Image Source="/Resource/Images/Icons/Back.png" Height="16"/>
                 </Button>
 
@@ -110,15 +120,18 @@
                     <Image Source="/Resource/Images/Icons/Forward.png" Height="16"/>
                 </Button>
 
+             </StackPanel>
+            
+            <StackPanel Grid.Column="2" Orientation="Horizontal" >
                 <CheckBox Margin="20,0,0,0"
-                    IsChecked="{Binding IsAllEvents, Mode=TwoWay}" VerticalAlignment="Center" >
+                          IsChecked="{Binding IsAllEvents, Mode=TwoWay}" VerticalAlignment="Center" >
                     <TextBlock Text="Все даты" />
                 </CheckBox>
-                
+
                 <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="10,0,10,0"/>
             </StackPanel>
 
-            <StackPanel Grid.Column="2" Orientation="Horizontal" >
+            <StackPanel Grid.Column="3" Orientation="Horizontal" >
                 <StackPanel.Resources>
                     <Style TargetType="Button">
                         <Setter Property="Margin" Value="0,0,10,0"/>
@@ -128,7 +141,7 @@
                     <Style TargetType="Image">
                         <Setter Property="Height" Value="16" />
                         <Setter Property="Width" Value="16" />
-                    </Style>                    
+                    </Style>
                 </StackPanel.Resources>
                 <Button x:Name="AddEvent" 
                         Command="{Binding EventAddWindow}"
@@ -142,7 +155,7 @@
                 <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="10,0,10,0"/>
             </StackPanel>
 
-            <Border Grid.Column="3"
+            <Border Grid.Column="4"
                     HorizontalAlignment="Right" 
                     Padding="5" 
                     Margin="0,0,15,0">
@@ -160,8 +173,6 @@
         </Grid>
 
 
-        
-
         <StatusBar x:Name="statusBar" DockPanel.Dock="Bottom">
             <Border BorderBrush="Black" BorderThickness="1" >
                 <TextBlock x:Name="lblToMainPath" 
@@ -169,128 +180,304 @@
                            HorizontalAlignment="Center" 
                            Margin="3 0 3 0 "/>
             </Border>
-            <Border BorderBrush="Black" BorderThickness="1" Width="40" >
-                <TextBlock x:Name="cap1" Text="CAP"
-                               HorizontalAlignment="Center"/>
-            </Border>
+            
         </StatusBar>
 
-        <Grid>
-            <DataGrid x:Name="eventsDataGrid"
-                      ItemsSource="{Binding Events}"  
+
+        <Grid DockPanel.Dock="Top">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="200"/>
+            </Grid.RowDefinitions>
+
+            <Grid Grid.Row="0">
+                <DataGrid x:Name="eventsDataGrid"
+                      ItemsSource="{Binding Events}" 
+                      SelectedItem="{Binding SelectedEvent, Mode=TwoWay}"
                       AutoGenerateColumns="False" 
                       CanUserAddRows="False" 
                       IsReadOnly="True"
                       SelectionMode="Single"
-                      Margin="5" Grid.Column="0" >
+                      Margin="5,5,5,5" Grid.Column="0" Grid.ColumnSpan="2" >
 
-                <!-- Контекстное меню -->
-                <DataGrid.ContextMenu>
-                    <ContextMenu>
-                        <MenuItem Header="Редактировать запись" 
-                                  Command="{Binding EditEventCommand}"
-                                  CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"/>
-                        <Separator/>
-                        <MenuItem Header="Удалить запись"
+                    <DataGrid.RowStyle>
+                        <Style TargetType="DataGridRow">
+                            <Setter Property="Background" Value="Transparent"/>
+                            <Setter Property="BorderBrush" Value="Transparent"/>
+
+                            <Style.Triggers>
+                                <!-- Выделенная строка -->
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter Property="Background" Value="#FFD6E8FF"/>
+                                    <Setter Property="BorderBrush" Value="#FFA3C1FF"/>
+                                    <Setter Property="BorderThickness" Value="1"/>
+                                </Trigger>
+
+                                <!-- Наведение на строку -->
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="#FFECF5FF"/>
+                                </Trigger>
+
+                                <!-- Альтернативные строки -->
+                                <Trigger Property="AlternationIndex" Value="1">
+                                    <Setter Property="Background" Value="#F5F5F5"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGrid.RowStyle>
+
+                    <!-- Контекстное меню -->
+                    <DataGrid.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem Header="Редактировать запись" 
+                                      Command="{Binding EditEventCommand}"
+                                      CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"/>
+                                <Separator/>
+                            <MenuItem Header="Удалить запись"
                                   Command="{Binding DeleteEventCommand}"
                                   CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"/>
-                    </ContextMenu>
-                </DataGrid.ContextMenu>
+                        </ContextMenu>
+                    </DataGrid.ContextMenu>
 
-                <DataGrid.Columns >
-                    <DataGridTextColumn Header="Дата" Binding="{Binding DateEvent, StringFormat={}{0:dd.MM.yyyy} }" Width="auto">
-                        <DataGridTextColumn.ElementStyle>
-                            <Style BasedOn="{StaticResource TextBlockStyle}" TargetType="TextBlock"/>
-                        </DataGridTextColumn.ElementStyle>
-                    </DataGridTextColumn>
+                    <DataGrid.Columns >
+                        <DataGridTextColumn Header="Дата" Binding="{Binding DateEvent, StringFormat={}{0:dd.MM.yyyy} }" Width="auto">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style BasedOn="{StaticResource TextBlockStyle}" TargetType="TextBlock"/>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
 
-                    <DataGridTextColumn Header="Установка" Binding="{Binding Unit}" Width="150">
-                        <DataGridTextColumn.ElementStyle>
-                            <Style BasedOn="{StaticResource WrappedTextBlockStyle}" TargetType="TextBlock"/>
-                        </DataGridTextColumn.ElementStyle>
-                    </DataGridTextColumn>
+                        <DataGridTextColumn Header="Установка" Binding="{Binding Unit}" Width="150">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style BasedOn="{StaticResource WrappedTextBlockStyle}" TargetType="TextBlock"/>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
 
-                    <DataGridTextColumn Header="Переработка" Binding="{Binding OilRefining}" Width="150">
-                        <DataGridTextColumn.ElementStyle>
-                            <Style BasedOn="{StaticResource WrappedTextBlockStyle}" TargetType="TextBlock"/>
-                        </DataGridTextColumn.ElementStyle>
-                    </DataGridTextColumn>
+                        <DataGridTextColumn Header="Переработка" Binding="{Binding OilRefining}" Width="150">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style BasedOn="{StaticResource WrappedTextBlockStyle}" TargetType="TextBlock"/>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
 
-                    <DataGridTextColumn Header="Вид" Binding="{Binding Category}" Width="100" >
-                        <DataGridTextColumn.ElementStyle>
-                            <Style BasedOn="{StaticResource WrappedTextBlockStyle}" TargetType="TextBlock"/>
-                        </DataGridTextColumn.ElementStyle>
-                    </DataGridTextColumn>
+                        <DataGridTextColumn Header="Вид" Binding="{Binding Category}" Width="100" >
+                            <DataGridTextColumn.ElementStyle>
+                                <Style BasedOn="{StaticResource WrappedTextBlockStyle}" TargetType="TextBlock"/>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
 
+                        <DataGridTextColumn Header="Событие" Binding="{Binding Description}" Width="*">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style BasedOn="{StaticResource WrappedTextBlockStyle}" TargetType="TextBlock"/>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
 
-                    <DataGridTextColumn Header="Событие" Binding="{Binding Description}" Width="*">
-                        <DataGridTextColumn.ElementStyle>
-                            <Style BasedOn="{StaticResource WrappedTextBlockStyle}" TargetType="TextBlock"/>
-                        </DataGridTextColumn.ElementStyle>
-                    </DataGridTextColumn>
+                        <DataGridTextColumn Header="Примечание, пояснение" Binding="{Binding Action}" Width="Auto">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style BasedOn="{StaticResource WrappedTextBlockStyle}" TargetType="TextBlock"/>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
 
-                    <DataGridTextColumn Header="Примечание, пояснение" Binding="{Binding Action}" Width="*">
-                        <DataGridTextColumn.ElementStyle>
-                            <Style BasedOn="{StaticResource WrappedTextBlockStyle}" TargetType="TextBlock"/>
-                        </DataGridTextColumn.ElementStyle>
-                    </DataGridTextColumn>
+                        
+                        <!--<DataGridTemplateColumn Header="Документ" Width="*">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <ItemsControl ItemsSource="{Binding AttachedFiles}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Background="#B3E6D9" Margin="0,0,0,3" CornerRadius="2">
+                                                    <DockPanel LastChildFill="True" Margin="2">
+                                                        --><!-- Кнопка фиксируется справа --><!--
+                                                        <Button 
+                                                            DockPanel.Dock="Right"
+                                                            Content="📂" 
+                                                            Command="{Binding OpenCommand}"
+                                                            ToolTip="Открыть файл"
+                                                            Margin="5,0,0,0"
+                                                            Style="{StaticResource TransparentButtonStyle}"/>
 
-                    <DataGridTemplateColumn Header="Документ" Width="*">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <ItemsControl ItemsSource="{Binding AttachedFiles}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border Background="#B3E6D9" Margin="0,0,0,3" CornerRadius="2">
-                                                <DockPanel LastChildFill="True" Margin="2">
-                                                    <!-- Кнопка фиксируется справа -->
-                                                    <Button 
-                                                        DockPanel.Dock="Right"
-                                                        Content="📂" 
-                                                        Command="{Binding OpenCommand}"
-                                                        ToolTip="Открыть файл"
-                                                        Margin="5,0,0,0"
-                                                        Style="{StaticResource TransparentButtonStyle}"/>
+                                                        --><!-- Текстовый блок занимает всё оставшееся пространство --><!--
+                                                        <TextBlock 
+                                                            Text="{Binding FileName}" 
+                                                            ToolTip="{Binding FileName}"
+                                                            TextWrapping="Wrap"
+                                                            TextTrimming="CharacterEllipsis"
+                                                            VerticalAlignment="Center"/>
 
-                                                    <!-- Текстовый блок занимает всё оставшееся пространство -->
-                                                    <TextBlock 
-                                                        Text="{Binding FileName}" 
-                                                        ToolTip="{Binding FileName}"
-                                                        TextWrapping="Wrap"
-                                                        TextTrimming="CharacterEllipsis"
-                                                        VerticalAlignment="Center"/>
+                                                        --><!-- Контекстное меню --><!--
+                                                        <DockPanel.ContextMenu>
+                                                            <ContextMenu>
+                                                                <MenuItem Header="Открыть файл" Command="{Binding OpenCommand}"/>
+                                                                --><!--<MenuItem Header="Удалить" Command="{Binding DeleteCommand}"/>--><!--
+                                                            </ContextMenu>
+                                                        </DockPanel.ContextMenu>
+                                                    </DockPanel>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
 
-                                                    <!-- Контекстное меню -->
-                                                    <DockPanel.ContextMenu>
-                                                        <ContextMenu>
-                                                            <MenuItem Header="Открыть файл" Command="{Binding OpenCommand}"/>
-                                                            <!--<MenuItem Header="Удалить" Command="{Binding DeleteCommand}"/>-->
-                                                        </ContextMenu>
-                                                    </DockPanel.ContextMenu>
-                                                </DockPanel>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
+                        <DataGridTextColumn Header="Мониторинг + Диспетчерский отчет"  Width="150" >
+                            <DataGridTextColumn.ElementStyle>
+                                <Style BasedOn="{StaticResource WrappedTextBlockStyle}" TargetType="TextBlock"/>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
 
-                    <DataGridTextColumn Header="Мониторинг + Диспетчерский отчет"  Width="150" >
-                        <DataGridTextColumn.ElementStyle>
-                            <Style BasedOn="{StaticResource WrappedTextBlockStyle}" TargetType="TextBlock"/>
-                        </DataGridTextColumn.ElementStyle>
-                    </DataGridTextColumn>
+                        <DataGridTextColumn Header="Автор" Binding="{Binding Creator}" Width="auto">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style BasedOn="{StaticResource TextBlockStyle}" TargetType="TextBlock"/>
+                            </DataGridTextColumn.ElementStyle>
 
-                    <DataGridTextColumn Header="Автор" Binding="{Binding Creator}" Width="auto">
-                        <DataGridTextColumn.ElementStyle>
-                            <Style BasedOn="{StaticResource TextBlockStyle}" TargetType="TextBlock"/>
-                        </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>-->
+                       
+    
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
 
-                    </DataGridTextColumn>
-                </DataGrid.Columns>
-            </DataGrid>
+            <Grid Grid.Row ="1" >
+                <Expander Header="Детали события" IsExpanded="True">
+                    <!-- Содержимое как в варианте 1 -->
+                    <Border Background="#FFF5F5F5" Padding="10" CornerRadius="5">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+
+                            <StackPanel>
+                                <!-- Детали выбранного события -->
+                                <Grid Visibility="{Binding SelectedEvent, Converter={StaticResource NullToVisibilityConverter}}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>  <!-- Для меток -->
+                                        <ColumnDefinition Width="*"/>     <!-- Документы -->
+                                        <ColumnDefinition Width="50"/>     <!-- Разделитель -->
+                                        <ColumnDefinition Width="Auto"/>  <!-- Для метки Мониторинга -->
+                                        <ColumnDefinition Width="*"/>     <!-- Мониторинг -->
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>    <!-- Дата -->
+                                        <RowDefinition Height="Auto"/>    <!-- Установка -->
+                                        <RowDefinition Height="Auto"/>    <!-- Документы + Мониторинг -->
+                                        <!-- Добавьте нужное количество строк -->
+                                    </Grid.RowDefinitions>
+
+                                    <!-- Дата -->
+                                    <TextBlock Grid.Column="0" Text="Дата:" Grid.Row="0" Style="{StaticResource TextBlockStyle}"/>
+                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SelectedEvent.DateEvent, StringFormat={}{0:dd.MM.yyyy}}" VerticalAlignment="Center"/>
+
+                                    <!-- Установка -->
+                                    <TextBlock Grid.Column="0" Text="Установка:" Grid.Row="1"  Style="{StaticResource TextBlockStyle}"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SelectedEvent.Unit}" VerticalAlignment="Center"/>
+
+                                    <!-- Блок Автор -->
+                                    <TextBlock Grid.Row="0" Grid.Column="3" Text="Автор:"  Style="{StaticResource TextBlockStyle}" HorizontalAlignment="Right" />
+                                    <TextBlock Grid.Row="0" Grid.Column="4" Text="{Binding SelectedEvent.Creator}" VerticalAlignment="Center" />
+                                    
+                                    <!-- Блок документов -->
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Документы:" Style="{StaticResource TextBlockStyle}"/>
+                                    <ItemsControl Grid.Row="2" Grid.Column="1" ItemsSource="{Binding DocumentFiles }" >  <!--SelectedEvent.AttachedFiles-->
+                                        <ItemsControl.ItemTemplate>
+
+                                            <DataTemplate>
+                                                <!-- Ваш шаблон для документов -->
+                                                <Border Background="#FFFFFF" Margin="0,0,0,3" CornerRadius="2">
+                                                    <DockPanel LastChildFill="True" Margin="2">
+                                                        <!-- Кнопка фиксируется справа -->
+
+                                                        <Button DockPanel.Dock="Right"
+                                                                Content="💾" 
+                                                                Command="{Binding OpenCommand}"
+                                                                ToolTip="Загрузить файл"
+                                                                Margin="5,0,0,0"/>
+                                                        
+                                                        <Button DockPanel.Dock="Right"
+                                                                Content="📂" 
+                                                                Command="{Binding OpenCommand}"
+                                                                ToolTip="Открыть файл"
+                                                                Margin="5,0,0,0"/>
+
+                                                        <!-- Текстовый блок занимает всё оставшееся пространство -->
+                                                        <TextBlock Text="{Binding FileName}" 
+                                                                   ToolTip="{Binding FileName}"
+                                                                   TextWrapping="Wrap"
+                                                                   TextTrimming="CharacterEllipsis"
+                                                                   VerticalAlignment="Center"/>
+
+                                                        <!-- Контекстное меню -->
+                                                        <DockPanel.ContextMenu>
+                                                            <ContextMenu>
+                                                                <MenuItem Header="Открыть файл" Command="{Binding OpenCommand}"/>
+                                                                <!--<MenuItem Header="Удалить" Command="{Binding DeleteCommand}"/>-->
+                                                            </ContextMenu>
+                                                        </DockPanel.ContextMenu>
+                                                    </DockPanel>
+                                                </Border>
+
+                                            </DataTemplate>
+
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+
+                                    <!-- Блок мониторинга -->
+                                    <TextBlock Text="Мониторинг:" Grid.Row="2" Grid.Column="3" Style="{StaticResource TextBlockStyle}" /> <!-- Visibility="Collapsed" Скрываем дублирующую метку -->
+
+                                    <ItemsControl Grid.Row="2" Grid.Column="4" ItemsSource="{Binding MonitoringFiles }" > <!--SelectedEvent.AttachedFiles-->
+                                        <ItemsControl.ItemTemplate>
+
+                                            <DataTemplate>
+                                                <!-- Ваш шаблон для мониторинга -->
+                                                <Border Background="#FFFFFF" Margin="0,0,0,3" CornerRadius="2">
+                                                    <DockPanel LastChildFill="True" Margin="2">
+                                                        <!-- Кнопка фиксируется справа -->
+                                                                                                                
+                                                        <Button DockPanel.Dock="Right"
+                                                                Content="💾" 
+                                                                Command="{Binding OpenCommand}"
+                                                                ToolTip="Загрузить файл"
+                                                                Margin="5,0,0,0"/>
+
+                                                        <Button DockPanel.Dock="Right"
+                                                                Content="📂" 
+                                                                Command="{Binding OpenCommand}"
+                                                                ToolTip="Открыть файл"
+                                                                Margin="5,0,0,0"/>
+                                                        
+                                                        <!-- Текстовый блок занимает всё оставшееся пространство -->
+                                                        <TextBlock Text="{Binding FileName}" 
+                                                                   ToolTip="{Binding FileName}"
+                                                                   TextWrapping="Wrap"
+                                                                   TextTrimming="CharacterEllipsis"
+                                                                   VerticalAlignment="Center"/>
+
+                                                        <!-- Контекстное меню -->
+                                                        <DockPanel.ContextMenu>
+                                                            <ContextMenu>
+                                                                <MenuItem Header="Открыть файл" Command="{Binding OpenCommand}"/>
+                                                                <!--<MenuItem Header="Удалить" Command="{Binding DeleteCommand}"/>-->
+                                                            </ContextMenu>
+                                                        </DockPanel.ContextMenu>
+                                                    </DockPanel>
+                                                </Border>
+
+                                            </DataTemplate>
+
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+
+                                </Grid>
+
+                                <!-- Сообщение при отсутствии выбора -->
+                                <TextBlock Text="Выберите событие для просмотра деталей" 
+                                           Visibility="{Binding SelectedEvent, Converter={StaticResource InverseNullToVisibilityConverter}}"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                           FontStyle="Italic" Foreground="Gray"/>
+                            </StackPanel>
+
+                        </ScrollViewer>
+                    </Border>
+                </Expander>
+            </Grid>
+            
         </Grid>
+       
     </DockPanel>
 </Window>
     
