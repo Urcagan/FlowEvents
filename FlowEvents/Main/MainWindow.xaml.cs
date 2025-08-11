@@ -11,7 +11,7 @@ namespace FlowEvents
     {
 
         // public DatabaseHelper databaseHelper;
-
+        
         // Конструктор по умолчанию (без параметров)
         public MainWindow()
         {

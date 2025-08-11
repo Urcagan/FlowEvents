@@ -29,6 +29,7 @@ namespace FlowEvents
         // Параметры програы с параметрами по умолчанию
         public string pathDB { get; set; } = "C:\\";  // Путь к базе данных по умолчанию
         public string VerDB { get; set; } = "0.1.0"; //Версия БД для проверки
+        public string UpdateRepository { get; set; } =  "G:\\VS Dev\\FlowEventsReleases"; //Путь к парке с обновлениями
 
         public string DomenName { get; set; } = "localhost"; // Имя домена по умолчанию
         // Свойства для хранения ширины столбцов

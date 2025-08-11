@@ -1,9 +1,9 @@
 ﻿using FlowEvents.Models;
+using FlowEvents.Repositories.Interface;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Data.Entity.Infrastructure.DependencyResolution;
 using System.Data.SQLite;
 using System.IO;
 using System.Linq;
@@ -142,6 +142,9 @@ namespace FlowEvents
         public RelayCommand DownDateCommand { get; }
         public RelayCommand UpDateCommand { get; }
         public RelayCommand CheckUpdateAppCommand { get; } // Кнопка проверки обновления программы 
+
+
+        private readonly IEventRepository _eventRepository;
 
         //===============================================================================================================================================
 
@@ -435,32 +438,25 @@ namespace FlowEvents
         }
 
 
-        private static string updateFilePath = Path.Combine(Environment.CurrentDirectory, "update.json"); //Определяем текущую директорию располажения программы
-
         private async void CheckForUpdate(string path)
         {
             await Updater.CheckForUpdateAsync(path);//Вызов метода для проверки обновлений
         }
 
-        private void CheckUpdateApp(object parameter)
+        //Проверка обновления программы
+        private void CheckUpdateApp(object parameter) 
         {
             MessageBox.Show("Проверка обновлений");
-
-            //Создаем объект RepositoryConfig
-            Repository repositoryConfig = new Repository(updateFilePath);
+                        
             try
             {
-                //Получаем конфигудацию приложения из update.json расположенно в папке с приложением
-                RepositoryData repositoryInfo = repositoryConfig.GetConfig();
-                string repositoryPath = repositoryInfo.Repository; //Получаем из файла конфигурации путь к файлу с параметрами обновления приложения
-
+                string repositoryPath = App.Settings.UpdateRepository; //Получаем из конфигурации путь к файлу с параметрами обновления приложения
                 CheckForUpdate(repositoryPath); //Проверка обновлений. И выполнение обновления
-
             }
             catch (Exception ex)
             {
                 //Обрабатываем ошибки
-                MessageBox.Show("Ошибка: " + ex.Message, "Обработка ошибки", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Ошибка: " + ex.Message, "Обработка ошибки", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             
         }

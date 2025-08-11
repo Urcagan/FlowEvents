@@ -77,6 +77,8 @@
     </Compile>
     <Compile Include="Models\AttachedFileModel.cs" />
     <Compile Include="Models\UserModel.cs" />
+    <Compile Include="Repositories\Interface\IEventRepository.cs" />
+    <Compile Include="Repositories\SqliteEventRepository.cs" />
     <Compile Include="RoleService.cs" />
     <Compile Include="Services\FileAttachmentService.cs" />
     <Compile Include="Update.cs" />

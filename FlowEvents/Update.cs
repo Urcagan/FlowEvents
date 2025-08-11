@@ -1,11 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Squirrel;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 
@@ -25,38 +21,38 @@ namespace FlowEvents
     // Класс получения пути из файла json (конфигурация пути к источнику обновления)
     internal class Repository
     {
-        private readonly string _repositoryFilePath;
+        //private readonly string _repositoryFilePath;
 
-        //Конструктор принимает путь к JSON-файлу
-        public Repository(string repositoryFilePath)
-        {
-            _repositoryFilePath = repositoryFilePath;
-        }
+        ////Конструктор принимает путь к JSON-файлу
+        //public Repository(string repositoryFilePath)
+        //{
+        //    _repositoryFilePath = repositoryFilePath;
+        //}
 
         //Метод для чтения информации о конфигурации из JSON-файла
-        public RepositoryData GetConfig()
-        {
-            try
-            {
-                //Проверяем, существует ли файл
-                if (File.Exists(_repositoryFilePath))
-                {
-                    string jsonContent = File.ReadAllText(_repositoryFilePath); //Читаем содержимое JSON-файла
-                    jsonContent = jsonContent.Replace(@"\", @"\\");
-                    RepositoryData repository = JsonConvert.DeserializeObject<RepositoryData>(jsonContent); //Десериализация JSON
-                    string repositoryPath = repository?.Repository;
-                    return repository;
-                }
-                else
-                {
-                    throw new FileNotFoundException("Файл не найден: " + _repositoryFilePath);
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("Ошибка при чтении версии: " + ex.Message);
-            }
-        }
+        //public RepositoryData GetConfig()
+        //{
+        //    try
+        //    {
+        //        //Проверяем, существует ли файл
+        //        if (File.Exists(_repositoryFilePath))
+        //        {
+        //            string jsonContent = File.ReadAllText(_repositoryFilePath); //Читаем содержимое JSON-файла
+        //            jsonContent = jsonContent.Replace(@"\", @"\\");
+        //            RepositoryData repository = JsonConvert.DeserializeObject<RepositoryData>(jsonContent); //Десериализация JSON
+        //            string repositoryPath = repository?.Repository;
+        //            return repository;
+        //        }
+        //        else
+        //        {
+        //            throw new FileNotFoundException("Файл не найден: " + _repositoryFilePath);
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        throw new Exception("Ошибка при чтении версии: " + ex.Message);
+        //    }
+        //}
     }
 
 
