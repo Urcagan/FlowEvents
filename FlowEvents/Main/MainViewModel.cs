@@ -141,6 +141,7 @@ namespace FlowEvents
         public RelayCommand UserManagerWindow { get; }
         public RelayCommand DownDateCommand { get; }
         public RelayCommand UpDateCommand { get; }
+        public RelayCommand CheckUpdateAppCommand { get; } // Кнопка проверки обновления программы 
 
         //===============================================================================================================================================
 
@@ -153,6 +154,7 @@ namespace FlowEvents
             EditEventCommand = new RelayCommand(EditEvent);
             DeleteEventCommand = new RelayCommand(DeletEvent);
             UserManagerWindow = new RelayCommand(UserManagerMenuItem);
+            CheckUpdateAppCommand = new RelayCommand(CheckUpdateApp);
 
             DownDateCommand = new RelayCommand((parameter) =>
             {
@@ -432,6 +434,38 @@ namespace FlowEvents
             }
         }
 
+
+        private static string updateFilePath = Path.Combine(Environment.CurrentDirectory, "update.json"); //Определяем текущую директорию располажения программы
+
+        private async void CheckForUpdate(string path)
+        {
+            await Updater.CheckForUpdateAsync(path);//Вызов метода для проверки обновлений
+        }
+
+        private void CheckUpdateApp(object parameter)
+        {
+            MessageBox.Show("Проверка обновлений");
+
+            //Создаем объект RepositoryConfig
+            Repository repositoryConfig = new Repository(updateFilePath);
+            try
+            {
+                //Получаем конфигудацию приложения из update.json расположенно в папке с приложением
+                RepositoryData repositoryInfo = repositoryConfig.GetConfig();
+                string repositoryPath = repositoryInfo.Repository; //Получаем из файла конфигурации путь к файлу с параметрами обновления приложения
+
+                CheckForUpdate(repositoryPath); //Проверка обновлений. И выполнение обновления
+
+            }
+            catch (Exception ex)
+            {
+                //Обрабатываем ошибки
+                MessageBox.Show("Ошибка: " + ex.Message, "Обработка ошибки", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            
+        }
+
+
         //------------------------------------------------------------------------------------------------------
         //Запросы к базе данных
         //------------------------------------------------------------------------------------------------------
@@ -704,6 +738,9 @@ namespace FlowEvents
             string IsSystem = identity.IsSystem.ToString();
             string IsGuest = identity.IsGuest.ToString();
         }
+
+        
+
     }
 
 }

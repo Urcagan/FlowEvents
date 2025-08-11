@@ -61,6 +61,8 @@
                 <Separator />
                 <MenuItem Header="Настройка" Command="{Binding SettingOpenWindow}"/>
                 <MenuItem Header="О программе"></MenuItem>
+                <Separator/>
+                <MenuItem Header="Проверить обновление" Command="{Binding CheckUpdateAppCommand}"/>
                 <Separator />
                 <MenuItem Header="Login"></MenuItem>
             </MenuItem>

@@ -79,6 +79,7 @@
     <Compile Include="Models\UserModel.cs" />
     <Compile Include="RoleService.cs" />
     <Compile Include="Services\FileAttachmentService.cs" />
+    <Compile Include="Update.cs" />
     <Compile Include="Users\AddUserViewModel.cs" />
     <Compile Include="Users\AddUserWindow.xaml.cs">
       <DependentUpon>AddUserWindow.xaml</DependentUpon>
