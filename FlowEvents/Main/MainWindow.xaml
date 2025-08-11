@@ -23,6 +23,7 @@
 
         <Style x:Key="TextBlockStyle" TargetType="TextBlock">
             <Setter Property="Padding" Value="5"/>
+            <Setter Property="FontWeight" Value="Bold"/>
         </Style>
 
         <Style x:Key="StandardButtonStyle" TargetType="Button">
@@ -149,8 +150,6 @@
                     <Image Source="/Resource/Images/Icons/Create.png" />
                 </Button>
 
-                <Button Content=" Кнопка 1"/>
-                <Button Content=" Кнопка 2"/>
 
                 <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="10,0,10,0"/>
             </StackPanel>
@@ -384,7 +383,7 @@
 
                                                         <Button DockPanel.Dock="Right"
                                                                 Content="💾" 
-                                                                Command="{Binding OpenCommand}"
+                                                                Command="{Binding SaveFileToUserCommand}"
                                                                 ToolTip="Загрузить файл"
                                                                 Margin="5,0,0,0"/>
                                                         
@@ -400,6 +399,15 @@
                                                                    TextWrapping="Wrap"
                                                                    TextTrimming="CharacterEllipsis"
                                                                    VerticalAlignment="Center"/>
+
+                                                        <TextBlock 
+                                                                   TextWrapping="Wrap"
+                                                                   TextTrimming="CharacterEllipsis"
+                                                                   VerticalAlignment="Center"
+                                                                   HorizontalAlignment="Right">
+                                                            <Run Text="Дата загрузки: " FontWeight="Bold"/>
+                                                            <Run Text="{Binding UploadDate, StringFormat='dd.MM.yyyy HH:mm'}" FontStyle="Italic"/>
+                                                        </TextBlock>
 
                                                         <!-- Контекстное меню -->
                                                         <DockPanel.ContextMenu>
@@ -417,7 +425,9 @@
                                     </ItemsControl>
 
                                     <!-- Блок мониторинга -->
-                                    <TextBlock Text="Мониторинг:" Grid.Row="2" Grid.Column="3" Style="{StaticResource TextBlockStyle}" /> <!-- Visibility="Collapsed" Скрываем дублирующую метку -->
+                                    <TextBlock Text="Мониторинг:" Grid.Row="2" Grid.Column="3" 
+                                               Style="{StaticResource TextBlockStyle}" 
+                                               FontWeight="Bold"/> <!-- Visibility="Collapsed" Скрываем дублирующую метку -->
 
                                     <ItemsControl Grid.Row="2" Grid.Column="4" ItemsSource="{Binding MonitoringFiles }" > <!--SelectedEvent.AttachedFiles-->
                                         <ItemsControl.ItemTemplate>
@@ -430,7 +440,7 @@
                                                                                                                 
                                                         <Button DockPanel.Dock="Right"
                                                                 Content="💾" 
-                                                                Command="{Binding OpenCommand}"
+                                                                Command="{Binding SaveFileToUserCommand}"
                                                                 ToolTip="Загрузить файл"
                                                                 Margin="5,0,0,0"/>
 
@@ -438,7 +448,9 @@
                                                                 Content="📂" 
                                                                 Command="{Binding OpenCommand}"
                                                                 ToolTip="Открыть файл"
-                                                                Margin="5,0,0,0"/>
+                                                                Margin="5,0,0,0"
+                                                                Cursor="Hand"/>
+
                                                         
                                                         <!-- Текстовый блок занимает всё оставшееся пространство -->
                                                         <TextBlock Text="{Binding FileName}" 
@@ -446,6 +458,15 @@
                                                                    TextWrapping="Wrap"
                                                                    TextTrimming="CharacterEllipsis"
                                                                    VerticalAlignment="Center"/>
+
+                                                        <TextBlock  
+                                                                   TextWrapping="Wrap"
+                                                                   TextTrimming="CharacterEllipsis"
+                                                                   VerticalAlignment="Center"
+                                                                   HorizontalAlignment="Right">
+                                                            <Run Text="Дата загрузки: " FontWeight="Bold"/>
+                                                            <Run Text="{Binding UploadDate, StringFormat='dd.MM.yyyy HH:mm'}" FontStyle="Italic"/>
+                                                        </TextBlock>
 
                                                         <!-- Контекстное меню -->
                                                         <DockPanel.ContextMenu>

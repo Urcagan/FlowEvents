@@ -1,4 +1,5 @@
 ﻿using FlowEvents.Models.Enums;
+using Microsoft.Win32;
 using System;
 using System.ComponentModel;
 using System.Data.SQLite;
@@ -62,6 +63,40 @@ namespace FlowEvents.Models
 
         public ICommand ToggleDeleteCommand => new RelayCommand(_ => ToggleDelete());
 
+        public ICommand SaveFileToUserCommand => new RelayCommand(_ => SaveFileToUser());  // Команда для сохранения файла пользователю
+
+
+        private void SaveFileToUser()
+        {
+            if (!File.Exists(this.FilePath))
+            {
+                MessageBox.Show("Исходный файл не найден!", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+            try
+            {
+                var saveFileDialog = new SaveFileDialog
+                {
+                    FileName = this.FileName,
+                   // Title = "Выберите файл",
+                    Filter = "Все файлы (*.*)|*.*|PDF (*.pdf)|*.pdf|Изображения (*.png;*.jpg)|*.png;*.jpg",
+                };
+
+                if (saveFileDialog.ShowDialog() == true)
+                {
+                    File.Copy(this.FilePath, saveFileDialog.FileName, overwrite: true);
+                    MessageBox.Show("Файл успешно сохранён!", "Успех",
+                                  MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при сохранении файла:\n{ex.Message}",
+                       "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        
 
         // Конструктор по умолчанию для сериализации
         private void OpenFile()
