@@ -16,14 +16,14 @@ namespace FlowEvents
 
         private string _pathDB;
         private string newPathDB;
+        private string _pathRelises;
 
         public SettingsWindow(MainViewModel mainViewModel)
         {
             InitializeComponent();
             _MainViewModel = mainViewModel;
-            _pathDB = App.Settings.pathDB; //_MainViewModel.appSettings.pathDB;
-            // Загружаем текущий путь к базе данных в текстовое поле
-           // FilePathTextBox.Text = _pathDB;
+            _pathDB = App.Settings.pathDB;
+            _pathRelises = App.Settings.UpdateRepository;
         }
 
         public bool stateDB { get; private set; }
@@ -72,6 +72,7 @@ namespace FlowEvents
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             FilePathTextBox.Text = _pathDB;
+            PathRepositoriesUpdate.Text = _pathRelises;
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
@@ -82,6 +83,7 @@ namespace FlowEvents
 
             _MainViewModel.UpdateConnectionString(_pathDB);
             _MainViewModel.LoadEvents();
+            App.Settings.UpdateRepository = _pathRelises;
         }
     }
 }
