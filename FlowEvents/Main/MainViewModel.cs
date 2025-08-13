@@ -1,5 +1,6 @@
 ﻿using FlowEvents.Models;
 using FlowEvents.Repositories.Interface;
+using FlowEvents.Settings;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -306,7 +307,8 @@ namespace FlowEvents
         private void SettingsMenuItem(object parameter)
         {
             // Создаем и показываем окно настроек
-            SettingsWindow settingsWindow = new SettingsWindow(this);
+            var settingsViewModel = new SettingsViewModel(this);
+            SettingsWindow settingsWindow = new SettingsWindow(settingsViewModel);
             if (settingsWindow.ShowDialog() == true) { }
         }
 
