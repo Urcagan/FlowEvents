@@ -1,0 +1,9 @@
+diff --git a/.gitignore b/.gitignore
+index a46cf66..1cb469c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -4,3 +4,4 @@ FlowEvents/bin/
+ FlowEvents/obj/
+ packages/
+ Attachments/
++Releases/
