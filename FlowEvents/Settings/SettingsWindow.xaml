@@ -37,7 +37,8 @@
                     <!-- Текстовое поле для отображения пути -->
                     <TextBox x:Name="FilePathTextBox"  
                              Text="{Binding PathToDB}"
-                             IsReadOnly="True" VerticalAlignment="Center" Margin="10" Grid.Column="1"/>
+                             VerticalAlignment="Center" Margin="10" Grid.Column="1"/>
+                    <!--IsReadOnly="True"-->
                     <!-- Кнопка для открытия диалогового окна выбора файла -->
                     <Button  Grid.Column="2"
                              Content="Выбрать файл..." 
@@ -64,7 +65,7 @@
                 <TextBlock Grid.Row="0" Text="Обновление программы"   Margin="10"/>
                 <TextBlock Grid.Row="1" Grid.Column="0" Text="Путь к папке обновления "   Margin="10"/>
                 <TextBox x:Name="PathRepositoriesUpdate" 
-                         Text="{Binding PathRelises}"
+                         Text="{Binding PathRelises, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Delay=300}"
                          Grid.Row="1" Grid.Column="1" 
                          Margin="5" Width="Auto"/>
             </Grid>

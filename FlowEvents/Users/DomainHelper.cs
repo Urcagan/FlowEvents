@@ -146,7 +146,7 @@ namespace FlowEvents
                 {
                     // Логирование ошибки
                     //MessageBox.Show($"Ошибка поиска: {ex.Message}");
-                    Debug.WriteLine($"Ошибка поиска: {ex.Message}");
+                    //Debug.WriteLine($"Ошибка поиска: {ex.Message}");
                     throw; // Пробрасываем исключение для обработки вызывающим кодом
                 }
                 return users;

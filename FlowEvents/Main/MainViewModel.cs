@@ -217,6 +217,7 @@ namespace FlowEvents
             FilePath = pathDB; //Выводим путь к файлу в нижную часть главного окна            
         }
 
+        // Загрузкак комбобокса установок
         public void LoadUnitsToComboBox()
         {
             Units.Clear();

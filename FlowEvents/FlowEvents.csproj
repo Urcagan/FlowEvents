@@ -36,6 +36,9 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>icons8-copybook-50.ico</ApplicationIcon>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
@@ -283,6 +286,9 @@
     <Resource Include="Resource\Images\Icons\Trash.png" />
     <Resource Include="Resource\Images\Icons\User group.png" />
     <Resource Include="Resource\Images\Icons\Yes.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="icons8-copybook-50.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

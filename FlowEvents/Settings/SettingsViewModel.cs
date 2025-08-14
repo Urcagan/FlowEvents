@@ -39,7 +39,9 @@ namespace FlowEvents.Settings
                 if (_pathRelises != value)
                 {
                     _pathRelises = value;
-                    OnPropertyChanged();
+
+                    App.Settings.UpdateRepository =value ;
+                    OnPropertyChanged(nameof(PathRelises));
                 }
             }
         }
@@ -60,19 +62,23 @@ namespace FlowEvents.Settings
 
         private void OnWindowsClosing(object paramerts) // Обработчик закрытия окна настроек
         {
-            MessageBox.Show("Закрытие окна настроек. Настройки будут сохранены.", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
+            //MessageBox.Show("Закрытие окна настроек. Настройки будут сохранены.", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
 
-            //App.Settings.UpdateRepository = _pathRelises; //Запись пути к репозиторию обновлений
+            //App.Settings.UpdateRepository = PathRelises; //Запись пути к репозиторию обновлений
 
             App.Settings.SaveSettingsApp();
 
             _mainViewModel.UpdateConnectionString(PathToDB);
-            _mainViewModel.LoadEvents();
+            //_mainViewModel.LoadUnitsToComboBox();
+            //_mainViewModel.LoadEvents();
+            _mainViewModel.StartUP();
 
             if (paramerts is Window window)
             {
                 window.Close();
             }
+
+
         }
 
         private void FileDialogToPathDB(object parameters)
@@ -102,7 +108,7 @@ namespace FlowEvents.Settings
                 }
 
                 App.Settings.pathDB = newPathDB;
-                //FilePathTextBox.Text = _pathDB;
+                PathToDB = newPathDB;
                 _mainViewModel.FilePath = newPathDB;
             }
             else
