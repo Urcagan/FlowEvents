@@ -41,7 +41,7 @@ namespace FlowEvents
         //private string _connectionString = "Data Source=G:\\VS Dev\\FlowEvents\\FlowEvents.db;Version=3;foreign keys=true;";
 
         // Коллекция для хранения категорий (источник данных (коллекцию))
-        public ObservableCollection<CategoryModel> Categories { get; set; } = new ObservableCollection<CategoryModel>();
+        public ObservableCollection<Category> Categories { get; set; } = new ObservableCollection<Category>();
 
         // Команды для добавления, редактирования и удаления
         public RelayCommand AddCommand { get; }
@@ -90,7 +90,7 @@ namespace FlowEvents
 
                         while (reader.Read())
                         {
-                            var category = new CategoryModel
+                            var category = new Category
                             {
                                 Id = reader.GetInt32(idIndex),
                                 Name = reader.GetString(nameIndex),
@@ -126,7 +126,7 @@ namespace FlowEvents
             }
 
             // Объект для новой категории
-            var newCategory = new CategoryModel
+            var newCategory = new Category
             {
                 Name = Name,
                 Description = Description,
@@ -373,8 +373,8 @@ namespace FlowEvents
         }
 
         // Объект для размещения данных выделенной строки. При выборе строки таблицы в переменную поместятся все значения выделенной строки
-        private CategoryModel _selectedCategory;
-        public CategoryModel SelectedCategory
+        private Category _selectedCategory;
+        public Category SelectedCategory
         {
             get => _selectedCategory;
             set

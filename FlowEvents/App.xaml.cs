@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FlowEvents.Services;
+using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
@@ -27,7 +28,7 @@ namespace FlowEvents
             FrameworkElement.LanguageProperty.OverrideMetadata(typeof(FrameworkElement),
                 new FrameworkPropertyMetadata(XmlLanguage.GetLanguage(CultureInfo.CurrentCulture.IetfLanguageTag)));
             base.OnStartup(e);
-
+                                  
         }
     }
 }

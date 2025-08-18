@@ -124,7 +124,7 @@
                     </ListBox.ItemsPanel>
                     <ListBox.ItemTemplate>
                         <DataTemplate>
-                            <CheckBox Content="{Binding Unit}" 
+                            <CheckBox Content="{Binding UnitName}" 
                               IsChecked="{Binding IsSelected, Mode=TwoWay}"
                               Margin="5" />
                         </DataTemplate>

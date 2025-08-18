@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace FlowEvents.Models
 {
-    public class UnitModel : INotifyPropertyChanged
+    public class Unit : INotifyPropertyChanged
     {
 
         private int _id;
@@ -21,14 +21,14 @@ namespace FlowEvents.Models
             }
         }
 
-        private string _unit;
-        public string Unit
+        private string _unitName;
+        public string UnitName
         {
-            get => _unit;
+            get => _unitName;
             set
             {
-                _unit = value;
-                OnPropertyChanged(nameof(Unit));
+                _unitName = value;
+                OnPropertyChanged(nameof(UnitName));
             }
         }
 

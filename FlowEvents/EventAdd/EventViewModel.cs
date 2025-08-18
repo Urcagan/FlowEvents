@@ -18,13 +18,13 @@ namespace FlowEvents
     public class EventViewModel : INotifyPropertyChanged
     {
         private MainViewModel _mainViewModel;
-        public readonly EventsModelForView _originalEvent;
+        public readonly EventForView _originalEvent;
         private readonly string _connectionString;
 
         private readonly string userName;
 
-        private CategoryModel _selectedCategory;
-        public CategoryModel SelectedCategory
+        private Category _selectedCategory;
+        public Category SelectedCategory
         {
             get => _selectedCategory;
             set
@@ -122,10 +122,10 @@ namespace FlowEvents
         }
 
         private int _editedEventId; // Идентификатор редактируемого события, если есть
-        public ObservableCollection<UnitModel> Units { get; set; } = new ObservableCollection<UnitModel>();
-        public ObservableCollection<CategoryModel> Categories { get; set; } = new ObservableCollection<CategoryModel>
+        public ObservableCollection<Unit> Units { get; set; } = new ObservableCollection<Unit>();
+        public ObservableCollection<Category> Categories { get; set; } = new ObservableCollection<Category>
         {
-            new CategoryModel { Id = -1, Name = "Выбор события" }
+            new Category { Id = -1, Name = "Выбор события" }
         };
 
         // Свойство с Id выбранных элементов
@@ -176,7 +176,7 @@ namespace FlowEvents
 
 
         // Конструктор класса инициализации ViewModel для РЕДАКТИРОВАНИЯ события
-        public EventViewModel(MainViewModel mainViewModel, EventsModelForView eventToEdit)
+        public EventViewModel(MainViewModel mainViewModel, EventForView eventToEdit)
         {
             _mainViewModel = mainViewModel;
             _originalEvent = eventToEdit;
@@ -203,7 +203,7 @@ namespace FlowEvents
             {
                 unit.PropertyChanged += (s, e) =>
                 {
-                    if (e.PropertyName == nameof(UnitModel.IsSelected))
+                    if (e.PropertyName == nameof(Unit.IsSelected))
                     {
                         UpdateSelectedUnitsText();
                         OnPropertyChanged(nameof(SelectedIds));
@@ -391,7 +391,7 @@ namespace FlowEvents
 
         private void UpdateSelectedUnitsText()
         {
-            var selectedUnits = Units.Where(u => u.IsSelected).Select(u => u.Unit);
+            var selectedUnits = Units.Where(u => u.IsSelected).Select(u => u.UnitName);
             SelectedUnitsText = selectedUnits.Any()
                 ? $"Выбрано: {string.Join(", ", selectedUnits)}"
                 : "Ничего не выбрано";
@@ -403,7 +403,7 @@ namespace FlowEvents
             if (!ValidateEvent())
                 return;
 
-            var newEvent = new EventsModel // Создание экземпляра для хранения нового Event
+            var newEvent = new Event // Создание экземпляра для хранения нового Event
             {
                 DateEvent = SelectedDateEvent.ToString(formatDate),
                 OilRefining = Refining,
@@ -521,7 +521,7 @@ namespace FlowEvents
         {
             if (!ValidateEvent()) return;
             // Создание экземпляра для хранения нового Event
-            var _updateEvent = new EventsModel
+            var _updateEvent = new Event
             {
                 Id = this._editedEventId,
                 DateEvent = SelectedDateEvent.ToString(AppBaseConfig.formatDate),
@@ -674,10 +674,10 @@ namespace FlowEvents
                     {
                         while (reader.Read())
                         {
-                            Units.Add(new UnitModel
+                            Units.Add(new Unit
                             {
                                 Id = reader.GetInt32(0),
-                                Unit = reader.GetString(1),
+                                UnitName = reader.GetString(1),
                                 Description = reader.IsDBNull(2) ? null : reader.GetString(2)
                             });
                         }
@@ -705,7 +705,7 @@ namespace FlowEvents
                     {
                         while (reader.Read())
                         {
-                            Categories.Add(new CategoryModel
+                            Categories.Add(new Category
                             {
                                 Id = reader.GetInt32(0),
                                 Name = reader.GetString(1),
@@ -726,7 +726,7 @@ namespace FlowEvents
 
         /// <summary>
         /// Добавление новой строки в таблицу задач 
-        private long AddEventAndGetId(EventsModel newEvent)
+        private long AddEventAndGetId(Event newEvent)
         {
             using (var connection = new SQLiteConnection(_connectionString))
             {
@@ -755,7 +755,7 @@ namespace FlowEvents
         /// <param name="connection"> Открытое соединение с базой данных</param>
         /// <param name="newEvent"> Модель с данными новой записи </param>
         /// <returns></returns>
-        private long InsertEvent(SQLiteConnection connection, EventsModel newEvent)
+        private long InsertEvent(SQLiteConnection connection, Event newEvent)
         {
             // SQL-запрос для вставки данных
             var query = @"
@@ -797,7 +797,7 @@ namespace FlowEvents
             }
         }
 
-        public void EditEvent(EventsModel updateEvent, List<int> selectedIds)
+        public void EditEvent(Event updateEvent, List<int> selectedIds)
         {
             try
             {
@@ -830,7 +830,7 @@ namespace FlowEvents
             }
         }
 
-        private void UpdateEvent(SQLiteConnection connection, EventsModel updateEvent) // SQL-запрос для обновления данных
+        private void UpdateEvent(SQLiteConnection connection, Event updateEvent) // SQL-запрос для обновления данных
         {
             var query = "UPDATE Events SET DateEvent = @DateEvent, OilRefining = @OilRefining , id_category = @id_category, Description = @Description, Action = @Action WHERE id = @SelectedRowId ";
 

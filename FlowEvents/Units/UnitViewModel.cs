@@ -42,7 +42,7 @@ namespace FlowEvents
         }
 
         // Коллекция для хранения категорий (источник данных (коллекцию))
-        public ObservableCollection<UnitModel> Units { get; set; } = new ObservableCollection<UnitModel>();
+        public ObservableCollection<Unit> Units { get; set; } = new ObservableCollection<Unit>();
 
         // Команды для добавления, редактирования и удаления
         public RelayCommand AddCommand { get; }
@@ -88,10 +88,10 @@ namespace FlowEvents
 
                         while (reader.Read())
                         {
-                            var unit = new UnitModel
+                            var unit = new Unit
                             {
                                 Id = reader.GetInt32(idIndex),
-                                Unit = reader.GetString(unitIndex),
+                                UnitName = reader.GetString(unitIndex),
                                 Description = reader.IsDBNull(descriptionIndex) ? null : reader.GetString(descriptionIndex)
                             };
                             Units.Add(unit);
@@ -131,9 +131,9 @@ namespace FlowEvents
             }
 
             // Создание экземпляра для хранения нового Юнита
-            var newUnit = new UnitModel
+            var newUnit = new Unit
             {
-                Unit = Unit,
+                UnitName = Unit,
                 Description = Description
             };
 
@@ -148,7 +148,7 @@ namespace FlowEvents
                         "VALUES (@Unit, @Description)",
                         connection);
 
-                    command.Parameters.AddWithValue("@Unit", newUnit.Unit);
+                    command.Parameters.AddWithValue("@Unit", newUnit.UnitName);
                     command.Parameters.AddWithValue("@Description", string.IsNullOrEmpty(newUnit.Description) ? DBNull.Value : (object)newUnit.Description);
                     command.ExecuteNonQuery();
 
@@ -193,7 +193,7 @@ namespace FlowEvents
             //}
 
             // Обновляем данные выбранной записи
-            SelectedUnit.Unit = Unit;
+            SelectedUnit.UnitName = Unit;
             SelectedUnit.Description = Description;
 
             try
@@ -205,7 +205,7 @@ namespace FlowEvents
                     var command = new SQLiteCommand(
                         "UPDATE Units SET Unit = @Unit, Description = @Description WHERE Id = @Id",
                         connection);
-                    command.Parameters.AddWithValue("@Unit", SelectedUnit.Unit);
+                    command.Parameters.AddWithValue("@Unit", SelectedUnit.UnitName);
                     command.Parameters.AddWithValue("@Description", SelectedUnit.Description);
                     command.Parameters.AddWithValue("@Id", SelectedUnit.Id);
                     command.ExecuteNonQuery();
@@ -232,7 +232,7 @@ namespace FlowEvents
             if (SelectedUnit == null) return;
 
             var confirm = MessageBox.Show(
-                $"Вы уверены, что хотите удалить объект {SelectedUnit.Unit} ?",
+                $"Вы уверены, что хотите удалить объект {SelectedUnit.UnitName} ?",
                 "Подтверждение",
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Question);
@@ -384,8 +384,8 @@ namespace FlowEvents
 
 
         // Объект для размещения данных выделенной строки. При выборе строки таблицы в переменную поместятся все значения выделенной строки
-        private UnitModel _selectedUnit;
-        public UnitModel SelectedUnit
+        private Unit _selectedUnit;
+        public Unit SelectedUnit
         {
             get => _selectedUnit;
             set
@@ -397,7 +397,7 @@ namespace FlowEvents
                 if (_selectedUnit != null)
                 {
                     // Заполните поля данными выбранной категории
-                    Unit = _selectedUnit.Unit;
+                    Unit = _selectedUnit.UnitName;
                     Description = _selectedUnit.Description;
 
                     // Покажите правую панель

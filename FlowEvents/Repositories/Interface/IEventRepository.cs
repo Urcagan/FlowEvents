@@ -5,6 +5,6 @@ namespace FlowEvents.Repositories.Interface
 {
     public interface IEventRepository
     {
-        List<EventsModelForView> GetEvents(string queryEvent);
+        List<EventForView> GetEvents(string queryEvent);
     }
 }

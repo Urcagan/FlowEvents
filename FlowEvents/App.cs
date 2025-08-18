@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using FlowEvents.Services;
+using System.Windows;
 
 namespace FlowEvents
 {
@@ -6,6 +7,8 @@ namespace FlowEvents
     {
         private static AppSettings _settings;
 
+        
+        
         public static AppSettings Settings
         {
             get
@@ -24,5 +27,6 @@ namespace FlowEvents
             Settings.SaveSettingsApp();
             base.OnExit(e);
         }
+
     }
 }

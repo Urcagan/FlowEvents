@@ -19,9 +19,9 @@ namespace FlowEvents.Repositories
 
 
         // Метод для получения событий из базы данных
-        public List<EventsModelForView> GetEvents(string queryEvent)
+        public List<EventForView> GetEvents(string queryEvent)
         {
-            var eventsDict = new Dictionary<int, EventsModelForView>();
+            var eventsDict = new Dictionary<int, EventForView>();
 
             using (var connection = new SQLiteConnection(_connectionString))
             {
@@ -36,7 +36,7 @@ namespace FlowEvents.Repositories
                         // Если события еще нет в словаре, добавляем его
                         if (!eventsDict.TryGetValue(eventId, out var eventModel))
                         {
-                            eventModel = new EventsModelForView
+                            eventModel = new EventForView
                             {
                                 Id = eventId,
                                 DateEventString = reader.GetString(reader.GetOrdinal("DateEvent")),

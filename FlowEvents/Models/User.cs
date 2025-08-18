@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace FlowEvents.Models
 {
-    public class UserModel : INotifyPropertyChanged
+    public class User : INotifyPropertyChanged
     {
 
         private int _id;
@@ -71,6 +71,8 @@ namespace FlowEvents.Models
                 OnPropertyChanged(nameof(RoleId));
             }
         }
+
+        public Role Role { get; set; }
 
         private int _IsAllowed;
         public int IsAllowed

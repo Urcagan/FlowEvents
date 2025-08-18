@@ -1,5 +1,6 @@
 ﻿using FlowEvents.Models;
 using FlowEvents.Repositories.Interface;
+using FlowEvents.Services;
 using FlowEvents.Settings;
 using System;
 using System.Collections.Generic;
@@ -16,6 +17,12 @@ namespace FlowEvents
 {
     public class MainViewModel : INotifyPropertyChanged
     {
+        private readonly IPolicyAuthService _authService; // Сервис проверки пользователя
+
+        private string _currentDbPath;
+        private string _currentUsername;
+        private User _currentUser;  // Кэш пользователя (опционально)
+
         public AppSettings appSettings; // Объект параметров приложения
         public string _connectionString; // = $"Data Source={Global_Var.pathDB};Version=3;foreign keys=true;";
 
@@ -60,8 +67,8 @@ namespace FlowEvents
             }
         }
 
-        private UnitModel _selectedUnit;
-        public UnitModel SelectedUnit
+        private Unit _selectedUnit;
+        public Unit SelectedUnit
         {
             get => _selectedUnit;
             set
@@ -100,13 +107,13 @@ namespace FlowEvents
             QueryEvent = BuildSQLQueryEvents(SelectedUnit, IsAllEvents ? null : (DateTime?)StartDate, IsAllEvents ? null : (DateTime?)EndDate, IsAllEvents);
         }
 
-        public ObservableCollection<UnitModel> Units { get; set; } = new ObservableCollection<UnitModel>();
+        public ObservableCollection<Unit> Units { get; set; } = new ObservableCollection<Unit>();
 
         // Коллекция для записей журнала (автоматически уведомляет об изменениях)
-        public ObservableCollection<EventsModelForView> Events { get; set; } = new ObservableCollection<EventsModelForView>();
+        public ObservableCollection<EventForView> Events { get; set; } = new ObservableCollection<EventForView>();
 
-        private EventsModelForView _selectedEvent; // Выбранное событие в таблице
-        public EventsModelForView SelectedEvent
+        private EventForView _selectedEvent; // Выбранное событие в таблице
+        public EventForView SelectedEvent
         {
             get => _selectedEvent;
             set
@@ -149,8 +156,11 @@ namespace FlowEvents
 
         //===============================================================================================================================================
 
-        public MainViewModel()
+        public MainViewModel(IPolicyAuthService authService)
         {
+            _authService = authService;
+
+
             SettingOpenWindow = new RelayCommand(SettingsMenuItem);
             UnitOpenWindow = new RelayCommand(UnitMenuItem);
             CategoryOpenWindow = new RelayCommand(CategoryMenuItem);
@@ -189,10 +199,10 @@ namespace FlowEvents
         ?? Enumerable.Empty<AttachedFileModel>();
 
         // 
-        public ObservableCollection<EventsModelForView> SelectedEventCollection =>
+        public ObservableCollection<EventForView> SelectedEventCollection =>
             SelectedEvent == null
-                ? new ObservableCollection<EventsModelForView>()
-                : new ObservableCollection<EventsModelForView> { SelectedEvent };
+                ? new ObservableCollection<EventForView>()
+                : new ObservableCollection<EventForView> { SelectedEvent };
 
         public void StartUP()
         {
@@ -214,14 +224,17 @@ namespace FlowEvents
 
             LoadUnitsToComboBox(); // Загружаем перечень установок из базы данных
 
-            FilePath = pathDB; //Выводим путь к файлу в нижную часть главного окна            
+            FilePath = pathDB; //Выводим путь к файлу в нижную часть главного окна
+                               //
+                               //_currentUser = _authService.GetUser(_currentDbPath, _currentUsername);
+            _currentUser = _authService.GetUser(pathDB, "User3");
         }
 
         // Загрузкак комбобокса установок
         public void LoadUnitsToComboBox()
         {
             Units.Clear();
-            Units.Insert(0, new UnitModel { Id = -1, Unit = "Все" });
+            Units.Insert(0, new Unit { Id = -1, UnitName = "Все" });
             // Загружаем перечень установок из базы данных
             GetUnitFromDatabase();
             SelectedUnit = Units.FirstOrDefault();
@@ -339,7 +352,7 @@ namespace FlowEvents
 
         private void EditEvent(object parameter)
         {
-            if (parameter is EventsModelForView selectedEvent)
+            if (parameter is EventForView selectedEvent)
             {
                 // Создаем ViewModel для редактирования, передавая выбранное событие
                 var eventViewModel = new EventViewModel(this, selectedEvent);
@@ -383,7 +396,7 @@ namespace FlowEvents
         {
             List<AttachedFileForEvent> listAttachedFIles = new List<AttachedFileForEvent>();
 
-            if (parameter is EventsModelForView selectedEvent)
+            if (parameter is EventForView selectedEvent)
             {
                 int eventId = selectedEvent.Id; //Получили ID события которое надо удалить
 
@@ -523,10 +536,10 @@ namespace FlowEvents
                     {
                         while (reader.Read())
                         {
-                            Units.Add(new UnitModel
+                            Units.Add(new Unit
                             {
                                 Id = reader.GetInt32(0),
-                                Unit = reader.GetString(1),
+                                UnitName = reader.GetString(1),
                                 Description = reader.IsDBNull(2) ? null : reader.GetString(2)
                             });
                         }
@@ -547,14 +560,14 @@ namespace FlowEvents
         /// <param name="startDate"></param>
         /// <param name="endDate"></param>
         /// <returns></returns>
-        public string BuildSQLQueryEvents(UnitModel selectedUnit, DateTime? startDate, DateTime? endDate, bool isAllEvents)
+        public string BuildSQLQueryEvents(Unit selectedUnit, DateTime? startDate, DateTime? endDate, bool isAllEvents)
         {
             var conditions = new List<string>();
 
             // Фильтрация по установке
             if (selectedUnit != null && selectedUnit.Id != -1)
             {
-                string unitName = selectedUnit.Unit.Replace("'", "''");
+                string unitName = selectedUnit.UnitName.Replace("'", "''");
                 conditions.Add($"Unit LIKE '%{unitName}%'");
             }
 
@@ -582,9 +595,9 @@ namespace FlowEvents
 
 
         // Метод для получения событий из базы данных
-        public List<EventsModelForView> GetEvents(string queryEvent)
+        public List<EventForView> GetEvents(string queryEvent)
         {
-            var eventsDict = new Dictionary<int, EventsModelForView>();
+            var eventsDict = new Dictionary<int, EventForView>();
 
             using (var connection = new SQLiteConnection(_connectionString))
             {
@@ -599,7 +612,7 @@ namespace FlowEvents
                         // Если события еще нет в словаре, добавляем его
                         if (!eventsDict.TryGetValue(eventId, out var eventModel))
                         {
-                            eventModel = new EventsModelForView
+                            eventModel = new EventForView
                             {
                                 Id = eventId,
                                 DateEventString = reader.GetString(reader.GetOrdinal("DateEvent")),

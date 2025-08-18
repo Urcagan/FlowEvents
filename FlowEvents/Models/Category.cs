@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace FlowEvents.Models
 {
-    public class CategoryModel : INotifyPropertyChanged
+    public class Category : INotifyPropertyChanged
     {
         private int _id;
         public int Id

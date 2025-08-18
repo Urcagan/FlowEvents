@@ -5,7 +5,7 @@ using System.Globalization;
 
 namespace FlowEvents.Models
 {
-    public class EventsModelForView
+    public class EventForView
     {
         public int Id { get; set; }
 
@@ -44,7 +44,7 @@ namespace FlowEvents.Models
                 
     }
 
-    public class EventsModel
+    public class Event
     {
         public int Id { get; set; }
         public string DateEvent { get; set; }
