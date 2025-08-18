@@ -20,7 +20,29 @@ namespace FlowEvents
         private readonly IPolicyAuthService _authService; // Сервис проверки пользователя
 
         private string _currentDbPath;
+        // Публичные свойства для динамического контекста
+        public string CurrentDbPath
+        {
+            get => _currentDbPath;
+            set
+            {
+                _currentDbPath = value;
+                LoadCurrentUser();  // Перезагружаем пользователя при смене БД
+               // OnPropertyChanged(nameof(CanEditDocument));
+            }
+        }
         private string _currentUsername;
+        public string CurrentUsername
+        {
+            get => _currentUsername;
+            set
+            {
+                _currentUsername = value;
+                LoadCurrentUser();  // Перезагружаем пользователя при смене логина
+              //  OnPropertyChanged(nameof(CanEditDocument));
+            }
+        }
+
         private User _currentUser;  // Кэш пользователя (опционально)
 
         public AppSettings appSettings; // Объект параметров приложения
@@ -227,7 +249,22 @@ namespace FlowEvents
             FilePath = pathDB; //Выводим путь к файлу в нижную часть главного окна
                                //
                                //_currentUser = _authService.GetUser(_currentDbPath, _currentUsername);
-            _currentUser = _authService.GetUser(pathDB, "User3");
+           // _currentUser = _authService.GetUser(pathDB, "User3");
+
+            CurrentDbPath = pathDB; // Устанавливаем текущий путь к базе данных
+       //     CurrentUsername = Environment.UserName; // Устанавливаем текущего пользователя
+            CurrentUsername = "Администратор"; // Временно устанавливаем пользователя для тестирования
+        }
+
+        private void LoadCurrentUser()
+        {
+            if (string.IsNullOrEmpty(_currentDbPath) || string.IsNullOrEmpty(_currentUsername))
+            {
+                _currentUser = null;
+                return;
+            }
+
+            _currentUser = _authService.GetUser(_currentDbPath, _currentUsername);
         }
 
         // Загрузкак комбобокса установок
@@ -285,6 +322,7 @@ namespace FlowEvents
         public void UpdateConnectionString(string newPathDB)
         {
             _connectionString = $"Data Source={newPathDB};Version=3;foreign keys=true;";
+            CurrentDbPath = newPathDB; // Обновляем текущий путь к базе данных
         }
 
 

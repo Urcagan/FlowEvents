@@ -14,10 +14,7 @@ namespace FlowEvents.Services
         // Кэш политик (если нужен)
         private Dictionary<string, Dictionary<string, HashSet<string>>> _policyCache = new Dictionary<string, Dictionary<string, HashSet<string>>>();
 
-       // private readonly string _dbPath;
-       // private Dictionary<string, HashSet<string>> _policyCache;  // { "PermissionName": ["Role1", "Role2"] }
-
-
+      
         public bool HasPermission(string dbPath, string username, string permissionName)
         {
             var user = GetUser(dbPath, username);
@@ -39,7 +36,7 @@ namespace FlowEvents.Services
 
         public User GetUser(string dbPath, string username)
         {
-            using (var connection = new SQLiteConnection($"Data Source={dbPath}"))
+            using (var connection = new SQLiteConnection($"Data Source={dbPath};Version=3;foreign keys=true;"))
             {
                 connection.Open();
                 var command = connection.CreateCommand();

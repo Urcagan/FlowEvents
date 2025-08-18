@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using FlowEvents.Services;
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -10,13 +11,22 @@ namespace FlowEvents
     public partial class MainWindow : Window
     {
 
-        // public DatabaseHelper databaseHelper;
-        
+        private readonly IPolicyAuthService _authService;
+        private readonly MainViewModel _mainViewModel;
+
+
         // Конструктор по умолчанию (без параметров)
         public MainWindow()
         {
             InitializeComponent();
-            DataContext = new MainViewModel();
+
+            // Инициализация сервиса (можно вынести в DI-контейнер)
+            _authService = new PolicyAuthService();
+
+            // Создаем MainViewModel и передаем сервис
+            _mainViewModel = new MainViewModel(_authService);
+
+            DataContext = _mainViewModel;
 
             // Подписываемся на события загрузки и закрытия окна
             Loaded += MainWindow_Loaded;
