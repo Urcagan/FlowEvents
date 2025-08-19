@@ -6,9 +6,6 @@ namespace FlowEvents
     public partial class App : Application
     {
         private static AppSettings _settings;
-
-        
-        
         public static AppSettings Settings
         {
             get

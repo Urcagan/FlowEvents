@@ -1,19 +1,10 @@
-﻿using FlowEvents.Models;
-using FlowEvents.Properties;
-using FlowEvents.Users;
+﻿using FlowEvents.Users;
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Data;
-using System.Data.Common;
 using System.Data.SQLite;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
 
 namespace FlowEvents
 {
@@ -217,7 +208,6 @@ namespace FlowEvents
 
                     using (var adapter = new SQLiteDataAdapter(command))
                     {
-                        //var dataTable = new DataTable();
                         var dataTable = new DataTable();
                         adapter.Fill(dataTable);
                         UsersTable = dataTable;

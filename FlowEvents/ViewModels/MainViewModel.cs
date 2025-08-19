@@ -2,6 +2,7 @@
 using FlowEvents.Repositories.Interface;
 using FlowEvents.Services;
 using FlowEvents.Settings;
+using FlowEvents.Users;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -28,7 +29,8 @@ namespace FlowEvents
             {
                 _currentDbPath = value;
                 //LoadCurrentUser();  // Перезагружаем пользователя при смене БД
-                // OnPropertyChanged(nameof(CanEditDocument));
+                //OnPropertyChanged(nameof(GetConnectionString));
+                Global_Var.ConnectionString = GetConnectionString();
                 LoadUserPermissions();
             }
         }
@@ -197,6 +199,7 @@ namespace FlowEvents
         public RelayCommand DownDateCommand { get; }
         public RelayCommand UpDateCommand { get; }
         public RelayCommand CheckUpdateAppCommand { get; } // Кнопка проверки обновления программы 
+        public RelayCommand LoginCommand { get; }
 
 
         private readonly IEventRepository _eventRepository;
@@ -216,6 +219,7 @@ namespace FlowEvents
             DeleteEventCommand = new RelayCommand(DeletEvent);
             UserManagerWindow = new RelayCommand(UserManagerMenuItem);
             CheckUpdateAppCommand = new RelayCommand(CheckUpdateApp);
+            LoginCommand = new RelayCommand(Login);
 
             DownDateCommand = new RelayCommand((parameter) =>
             {
@@ -256,18 +260,24 @@ namespace FlowEvents
             //         appSettings = AppSettings.GetSettingsApp(); // Загружаем настройки программы из файла при запуске программы
 
             string pathDB = App.Settings.pathDB; //appSettings.pathDB;
-            string verDB = App.Settings.VerDB; //appSettings.VerDB;
+            //string verDB = App.Settings.VerDB; //appSettings.VerDB;
 
-            if (!CheckDB.CheckPathToFileDB(pathDB)) return;   // Проверяем путь к базе данных и выходим, если он неверен
+            //if (!CheckDB.CheckPathToFileDB(pathDB)) return;   // Проверяем путь к базе данных и выходим, если он неверен
 
+            //_connectionString = $"Data Source={pathDB};Version=3;foreign keys=true;"; //Формируем строку подключения к БД
+
+            //// Проверка версии базы данных
+            //if (!CheckDB.IsDatabaseVersionCorrect(verDB, _connectionString))  //проверка версии базы данных
+            //{
+            //    MessageBox.Show($"Версия БД не соответствует требуемой версии {verDB}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            //    return;
+            //}
+
+            //Проверка базы данных
+            if (!CheckDB.DBGood()) return;
             _connectionString = $"Data Source={pathDB};Version=3;foreign keys=true;"; //Формируем строку подключения к БД
 
-            // Проверка версии базы данных
-            if (!CheckDB.IsDatabaseVersionCorrect(verDB, _connectionString))  //проверка версии базы данных
-            {
-                MessageBox.Show($"Версия БД не соответствует требуемой версии {verDB}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
+
 
             LoadUnitsToComboBox(); // Загружаем перечень установок из базы данных
 
@@ -279,6 +289,12 @@ namespace FlowEvents
             CurrentDbPath = pathDB; // Устанавливаем текущий путь к базе данных
        //     CurrentUsername = Environment.UserName; // Устанавливаем текущего пользователя
             CurrentUsername = "Администратор"; // Временно устанавливаем пользователя для тестирования
+        }
+
+        private static string GetConnectionString()
+        {
+            string pathDB = App.Settings.pathDB;
+            return $"Data Source={pathDB};Version=3;foreign keys=true;";
         }
 
         private void LoadCurrentUser() //Загрузка текущего пользователя 
@@ -375,6 +391,11 @@ namespace FlowEvents
             if (userManager.ShowDialog() == true) { }
         }
 
+        private void Login(object parameter)
+        {
+            LoginUser loginUser = new LoginUser();
+            if(loginUser.ShowDialog() == true) { }
+        }
 
         private void EventAddBtb(object parameter)
         {

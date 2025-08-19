@@ -32,6 +32,7 @@ namespace FlowEvents.Users
 
         private void RegisterText_MouseDown(object sender, MouseButtonEventArgs e)
         {
+            
             var registerWindow = new AddUserWindow();
             registerWindow.Show();
             this.Close();

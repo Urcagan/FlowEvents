@@ -23,6 +23,29 @@ namespace FlowEvents
 
         //private string _connectionString = $"Data Source={Global_Var.pathDB};Version=3;";
 
+        public static bool DBGood()
+        {
+            string pathDB = App.Settings.pathDB; 
+            string verDB = App.Settings.VerDB; 
+            
+            // Проверяем путь к базе данных 
+            if (!CheckDB.CheckPathToFileDB(pathDB)) return false;   
+
+            string ConnectionString = $"Data Source={pathDB};Version=3;foreign keys=true;"; //Формируем строку подключения к БД
+
+            // Проверка версии базы данных
+            if (!CheckDB.IsDatabaseVersionCorrect(verDB, ConnectionString))  //проверка версии базы данных
+            {
+                MessageBox.Show($"Версия БД не соответствует требуемой версии {verDB}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                return false;
+            }
+            // Если все проверки пройдены успешно
+            return true;
+        }
+        
+
+
+
         // Проверка наличия файла БД
         public static bool CheckDatabaseFile(AppSettings appSettings)
         {
@@ -145,10 +168,8 @@ namespace FlowEvents
             }
             catch (System.Exception)
             {
-
                 throw;
             }
-            
         }
 
 
@@ -159,7 +180,6 @@ namespace FlowEvents
             {
                 return true;
             }  
-
             ShowErrorMessage(pathDataBase);
             return false;
         }
