@@ -10,6 +10,10 @@ namespace FlowEvents.Services
     public interface IPolicyAuthService
     {
         bool HasPermission(string dbPath, string username, string permissionName);
+        bool HasAnyPermission(string dbPath, string username, params string[] permissionNames); //Комбинированная проверка
+                                                                                                
+        List<string> GetUserPermissions(string dbPath, string username);// Новый метод: загружает ВСЕ права пользователя
+
         User GetUser(string dbPath, string username);
         void ReloadPolicies(string dbPath);  // Для обновления кэша
     }

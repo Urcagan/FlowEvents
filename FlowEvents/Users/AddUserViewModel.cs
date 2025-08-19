@@ -25,7 +25,7 @@ namespace FlowEvents.Users
 
         private MainViewModel _mainViewModel;
         private string _connectionString;
-        private const int DefaultRoleId = 1; // ID роли "user"
+        private const int DefaultRoleId = 2; // ID роли "user"
 
         private string _username;
         public string Username

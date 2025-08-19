@@ -27,8 +27,9 @@ namespace FlowEvents
             set
             {
                 _currentDbPath = value;
-                LoadCurrentUser();  // Перезагружаем пользователя при смене БД
-               // OnPropertyChanged(nameof(CanEditDocument));
+                //LoadCurrentUser();  // Перезагружаем пользователя при смене БД
+                // OnPropertyChanged(nameof(CanEditDocument));
+                LoadUserPermissions();
             }
         }
         private string _currentUsername;
@@ -39,10 +40,34 @@ namespace FlowEvents
             {
                 _currentUsername = value;
                 LoadCurrentUser();  // Перезагружаем пользователя при смене логина
-              //  OnPropertyChanged(nameof(CanEditDocument));
+                                    //  OnPropertyChanged(nameof(CanEditDocument));
+                LoadUserPermissions();
             }
         }
 
+        private List<string> _currentUserPermissions = new List<string>();
+        public List<string> CurrentUserPermissions // Публичное свойство для привязки в XAML
+        {
+            get => _currentUserPermissions;
+            private set
+            {
+                _currentUserPermissions = value;
+                OnPropertyChanged(nameof(CurrentUserPermissions));
+            }
+        }
+
+        // Метод загрузки прав из БД
+        private void LoadUserPermissions()
+        {
+            if (string.IsNullOrEmpty(_currentDbPath)) return;
+
+            CurrentUserPermissions = _authService.GetUserPermissions(
+                _currentDbPath,
+                _currentUsername
+            );
+        }
+
+        
         private User _currentUser;  // Кэш пользователя (опционально)
 
         public AppSettings appSettings; // Объект параметров приложения
@@ -256,7 +281,7 @@ namespace FlowEvents
             CurrentUsername = "Администратор"; // Временно устанавливаем пользователя для тестирования
         }
 
-        private void LoadCurrentUser()
+        private void LoadCurrentUser() //Загрузка текущего пользователя 
         {
             if (string.IsNullOrEmpty(_currentDbPath) || string.IsNullOrEmpty(_currentUsername))
             {
@@ -278,33 +303,11 @@ namespace FlowEvents
         }
 
         // ------------------------------------------------------------------------------------------------------
-        public void CheckRoleUser()
-        {
-            // Проверяем роль пользователя и устанавливаем видимость кнопок
-            //        if (appSettings.UserRole == 1) // Администратор
-            //        {
-            IsCategoryButtonVisible = true;
-            IsUnitButtonVisible = true;
-            IsToolBarVisible = true;
-            //}
-            //else if (appSettings.UserRole == 2) // Оператор
-            //{
-            //    IsCategoryButtonVisible = false;
-            //    IsUnitButtonVisible = false;
-            //    IsToolBarVisible = true;
-            //}
-            //else // Гость
-            //{
-            //    IsCategoryButtonVisible = false;
-            //    IsUnitButtonVisible = false;
-            //    IsToolBarVisible = false;
-            //}
-        }
+
 
         // Метод для загрузки данных из базы
         public void LoadEvents()
         {
-            CheckRoleUser(); // Проверяем роль пользователя и устанавливаем видимость кнопок
 
             Events.Clear();
 

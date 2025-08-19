@@ -34,6 +34,47 @@ namespace FlowEvents.Services
             return false;
         }
 
+        public bool HasAnyPermission(string dbPath, string username, params string[] permissionNames)
+        {
+            if (string.IsNullOrEmpty(dbPath) || string.IsNullOrEmpty(username))
+                return false;
+
+            foreach (var permission in permissionNames)
+            {
+                if (HasPermission(dbPath, username, permission))
+                    return true;
+            }
+            return false;
+        }
+
+        public List<string> GetUserPermissions(string dbPath, string username)
+        {
+            var permissions = new List<string>();
+
+            using (var connection = new SQLiteConnection($"Data Source={dbPath}"))
+            {
+                connection.Open();
+                var command = connection.CreateCommand();
+                command.CommandText = @"
+                                    SELECT p.PermissionName
+                                    FROM Users u
+                                    JOIN RolePermissions rp ON u.RoleId = rp.RoleId
+                                    JOIN Permissions p ON rp.PermissionId = p.PermissionId
+                                    WHERE u.UserName = @username";
+                command.Parameters.AddWithValue("@username", username);
+
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        permissions.Add(reader.GetString(0));
+                    }
+                }
+            }
+
+            return permissions;
+        }
+
         public User GetUser(string dbPath, string username)
         {
             using (var connection = new SQLiteConnection($"Data Source={dbPath};Version=3;foreign keys=true;"))

@@ -8,6 +8,10 @@
         Title="Журнал событий" Height="750" Width="1400" >
     <!-- Loaded="Window_Loaded"> -->
     <Window.Resources>
+
+        <local:PermissionsToVisibilityConverter x:Key="PermissionsToVisibilityConverter"/>
+        <!-- -->
+        <local:PermissionsToBoolConverter x:Key="PermissionsConverter"/>
         <!-- Конвертер для преобразования null в Visibility -->
         <local:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
 
@@ -46,18 +50,38 @@
     </Window.Resources>
     <DockPanel>
         <Menu DockPanel.Dock="Top">
+            
             <MenuItem Header="Меню" >
-                <MenuItem Header="Установки" Command="{Binding UnitOpenWindow}"
-                          IsEnabled="{Binding IsUnitButtonVisible}">
+                
+                <MenuItem Header="Установки" Command="{Binding UnitOpenWindow}">
+                    <MenuItem.IsEnabled>
+                        <MultiBinding Converter="{StaticResource PermissionsConverter}">
+                            <Binding Path="CurrentUserPermissions"/>
+                            <Binding Source="ManageProduct, ConfigureSystem"/> <!-- Перечисление прав через запятую -->
+                        </MultiBinding>
+                    </MenuItem.IsEnabled>
                 </MenuItem>
 
-                <MenuItem Header="Категории событий" Command="{Binding CategoryOpenWindow}"
-                          
-                          IsEnabled="{Binding IsCategoryButtonVisible}"/>
-                <Separator/>
+                <MenuItem Header="Категории событий" Command="{Binding CategoryOpenWindow}">
+                    <MenuItem.IsEnabled>
+                        <MultiBinding Converter="{StaticResource PermissionsConverter}">
+                            <Binding Path="CurrentUserPermissions"/>
+                            <Binding Source="ManageProduct, ConfigureSystem"/> <!-- Перечисление прав через запятую -->
+                        </MultiBinding>
+                    </MenuItem.IsEnabled>
+                </MenuItem>
+                    
+                    <Separator/>
+                
                 <MenuItem Header="Пользователи" Command="{Binding UserManagerWindow}">
-
+                    <MenuItem.IsEnabled>
+                        <MultiBinding Converter="{StaticResource PermissionsConverter}">
+                            <Binding Path="CurrentUserPermissions"/>
+                            <Binding Source="ManageUsers, ConfigureSystem"/> <!-- Перечисление прав через запятую -->
+                        </MultiBinding>
+                    </MenuItem.IsEnabled>
                 </MenuItem>
+                
                 <Separator />
                 <MenuItem Header="Настройка" Command="{Binding SettingOpenWindow}"/>
                 <MenuItem Header="О программе"></MenuItem>
@@ -146,14 +170,20 @@
                         <Setter Property="Width" Value="16" />
                     </Style>
                 </StackPanel.Resources>
+                
                 <Button x:Name="AddEvent" 
                         Command="{Binding EventAddWindow}"
                         ToolTip="Добавить событие" >
                     <Image Source="/Resource/Images/Icons/Create.png" />
+                    <Button.Visibility>
+                        <MultiBinding Converter="{StaticResource PermissionsToVisibilityConverter}">
+                            <Binding Path="CurrentUserPermissions"/>
+                            <Binding Source="EditDocument"/> <!-- Перечисление прав через запятую -->
+                        </MultiBinding>
+                    </Button.Visibility>
                 </Button>
 
-
-                <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="10,0,10,0"/>
+                <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="5,0,10,0"/>
             </StackPanel>
 
             <Border Grid.Column="4"
@@ -192,6 +222,10 @@
             </Grid.RowDefinitions>
 
             <Grid Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="27*"/>
+                    <ColumnDefinition Width="29*"/>
+                </Grid.ColumnDefinitions>
                 <DataGrid x:Name="eventsDataGrid"
                       ItemsSource="{Binding Events}" 
                       SelectedItem="{Binding SelectedEvent, Mode=TwoWay}"
