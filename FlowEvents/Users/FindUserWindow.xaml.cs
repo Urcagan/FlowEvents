@@ -1,18 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Linq;
-using System.Runtime.Remoting.Contexts;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 
 namespace FlowEvents
 {
@@ -31,10 +18,11 @@ namespace FlowEvents
         {
             InitializeComponent();
             //DataContext = new FindUserModel(mainViewModel);
-            _userManagerModel = userManagerModel;
+            //_userManagerModel = userManagerModel;
             
             // НЕОБХОДИМО ПЕРЕСМОТРЕТЬ НЕОБХОДИМОСТЬ ПЕРЕДАЧИ ДВУХ ПАРАМЕТРОВ ============================
-            DataContext = new FindUserModel(_userManagerModel.MainViewModel, userManagerModel);
+            //DataContext = new FindUserModel(_userManagerModel.MainViewModel, userManagerModel);
+            DataContext = new FindUserModel( userManagerModel);
         }
         
         private void BtnClose_Click(object sender, RoutedEventArgs e)

@@ -17,7 +17,7 @@ namespace FlowEvents
 {
     public class EventViewModel : INotifyPropertyChanged
     {
-        private MainViewModel _mainViewModel;
+       
         public readonly EventForView _originalEvent;
         private readonly string _connectionString;
 
@@ -151,12 +151,12 @@ namespace FlowEvents
 
 
         // Конструктор класса инициализации ViewModel для добавления события
-        public EventViewModel(MainViewModel mainViewModel)
+        public EventViewModel()
         {
-            _mainViewModel = mainViewModel;
-            _connectionString = _mainViewModel._connectionString;  //$"Data Source={_mainViewModel.appSettings.pathDB};Version=3;";
+            //_mainViewModel = mainViewModel;
+            _connectionString = Global_Var.ConnectionString; //_mainViewModel._connectionString;  
 
-            userName = _mainViewModel.UserName;
+            userName = Global_Var.UserName; //_mainViewModel.UserName;
 
             AttachFileCommand = new RelayCommand(AttachFile);
             SaveCommand = new RelayCommand(SaveNewEvent);
@@ -176,11 +176,11 @@ namespace FlowEvents
 
 
         // Конструктор класса инициализации ViewModel для РЕДАКТИРОВАНИЯ события
-        public EventViewModel(MainViewModel mainViewModel, EventForView eventToEdit)
+        //public EventViewModel(MainViewModel mainViewModel, EventForView eventToEdit)
+        public EventViewModel(EventForView eventToEdit)
         {
-            _mainViewModel = mainViewModel;
             _originalEvent = eventToEdit;
-            _connectionString = _mainViewModel._connectionString; //$"Data Source={_mainViewModel.appSettings.pathDB};Version=3;";
+            _connectionString = Global_Var.ConnectionString; //_mainViewModel._connectionString; //$"Data Source={_mainViewModel.appSettings.pathDB};Version=3;";
 
             AttachFileCommand = new RelayCommand(AttachFile);
             SaveCommand = new RelayCommand(SaveUpdatedEvents);
@@ -288,19 +288,20 @@ namespace FlowEvents
         /// </summary>
         /// <param name="filePath">Полный путь к файлу.</param>
         /// <returns>Путь к папке Attachments.</returns>
-        public string GetAttachmentsFolderPath(string filePath)
+        //public string GetAttachmentsFolderPath(string filePath)
+        //{
+        //    if (string.IsNullOrEmpty(filePath))
+        //        throw new ArgumentException("File path cannot be null or empty.", nameof(filePath));
+
+        //    string basePath = Path.GetDirectoryName(filePath);
+        //    string attachmentsFolder = "Attachments";
+
+        //    return Path.Combine(basePath, attachmentsFolder);
+        //}
+
+        public string GetAttachmentsFolderPath( DateTime eventDate)
         {
-            if (string.IsNullOrEmpty(filePath))
-                throw new ArgumentException("File path cannot be null or empty.", nameof(filePath));
-
-            string basePath = Path.GetDirectoryName(filePath);
-            string attachmentsFolder = "Attachments";
-
-            return Path.Combine(basePath, attachmentsFolder);
-        }
-
-        public string GetAttachmentsFolderPath(string filePath, DateTime eventDate)
-        {
+            string filePath = Global_Var.pathToDB;
             if (string.IsNullOrEmpty(filePath))
                 throw new ArgumentException("File path cannot be null or empty.", nameof(filePath));
 
@@ -333,7 +334,7 @@ namespace FlowEvents
                 }
 
                 // Гененрируем путь для хранения файла
-                _storagePath = GetAttachmentsFolderPath(_mainViewModel.FilePath, SelectedDateEvent);
+                _storagePath = GetAttachmentsFolderPath(SelectedDateEvent);
 
                 // Генерируем уникальное имя файла
                 string originalFileName = fileInfo.Name;

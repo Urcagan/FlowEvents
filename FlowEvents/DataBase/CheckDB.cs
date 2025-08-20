@@ -23,9 +23,9 @@ namespace FlowEvents
 
         //private string _connectionString = $"Data Source={Global_Var.pathDB};Version=3;";
 
-        public static bool DBGood()
+        public static bool DBGood(string pathDB)
         {
-            string pathDB = App.Settings.pathDB; 
+            //string pathDB = App.Settings.pathDB; 
             string verDB = App.Settings.VerDB; 
             
             // Проверяем путь к базе данных 

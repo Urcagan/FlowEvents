@@ -7,14 +7,17 @@ namespace FlowEvents
 {
     public static class Global_Var
     {
-        public static string ConnectionString; 
+        public static string ConnectionString;
+        public static string UserName;
+        public static string pathToDB;
+
+
 
         public const Int32 BUFFER_SIZE = 512; // Unmodifiable
         public static String FILE_NAME = "Output.txt"; // Modifiable
         public static readonly String CODE_PREFIX = "US-"; // Unmodifiable
 
-        //public static string pathDB = "D:\\VS_Dev\\EventFlow.db";
-        public static string pathDB;
+        
 
         public static WindowsIdentity UserId = WindowsIdentity.GetCurrent();   // статическая переменная UserId типа WindowsIdentity, которая получает текущую идентичность пользователя Windows
         public static string User_Name_Full = UserId.Name;  //Это свойство Name возвращает имя пользователя в формате, который обычно используется в Windows для идентификации пользователей.

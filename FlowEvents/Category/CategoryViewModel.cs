@@ -1,32 +1,25 @@
 ﻿using FlowEvents.Models;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Data.SQLite;
 using System.Runtime.CompilerServices;
 using System.Windows;
-using System.Windows.Documents;
-using System.Windows.Controls;
-using System.Data.Entity.Infrastructure;
 
 namespace FlowEvents
 {
     public class CategoryViewModel : INotifyPropertyChanged
     {
 
-        private MainViewModel _mainViewModel;
-        public MainViewModel MainViewModel
-        {
-            get { return _mainViewModel; }
-            set
-            {
-                _mainViewModel = value;
-            }
-        }
+        //private MainViewModel _mainViewModel;
+        //public MainViewModel MainViewModel
+        //{
+        //    get { return _mainViewModel; }
+        //    set
+        //    {
+        //        _mainViewModel = value;
+        //    }
+        //}
         private string _connectionString;
         public string ConnectionString
         {
@@ -50,9 +43,9 @@ namespace FlowEvents
         public RelayCommand DeleteCommand { get; }
         public RelayCommand UpdateCommand { get; }
 
-        public CategoryViewModel(MainViewModel mainViewModel)
+        public CategoryViewModel()
         {
-            MainViewModel = mainViewModel; 
+           // MainViewModel = mainViewModel; 
             // Инициализация команд
             AddCommand = new RelayCommand(AddCategory);
             CancelCommand = new RelayCommand(CancelEdit);
@@ -65,7 +58,7 @@ namespace FlowEvents
             //  Func<object, bool>(опционально) — метод, который проверяет, можно ли выполнить команду.
 
 
-            ConnectionString = _mainViewModel._connectionString; // $"Data Source={_mainViewModel.appSettings.pathDB};Version=3;foreign keys=true;";
+            ConnectionString = Global_Var.ConnectionString; //_mainViewModel._connectionString; // $"Data Source={_mainViewModel.appSettings.pathDB};Version=3;foreign keys=true;";
            
             IsAddButtonVisible = true; // Показать кнопку "Добавить"
             IsDeleteButtonVisible = false; // Скрыть кнопку "Удалить"

@@ -62,23 +62,14 @@ namespace FlowEvents.Settings
 
         private void OnWindowsClosing(object paramerts) // Обработчик закрытия окна настроек
         {
-            //MessageBox.Show("Закрытие окна настроек. Настройки будут сохранены.", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
-
-            //App.Settings.UpdateRepository = PathRelises; //Запись пути к репозиторию обновлений
-
             App.Settings.SaveSettingsApp();
-
-            _mainViewModel.UpdateConnectionString(PathToDB);
-            //_mainViewModel.LoadUnitsToComboBox();
-            //_mainViewModel.LoadEvents();
-            _mainViewModel.StartUP();
+                      
+            //_mainViewModel.StartUP();
 
             if (paramerts is Window window)
             {
                 window.Close();
             }
-
-
         }
 
         private void FileDialogToPathDB(object parameters)
@@ -96,20 +87,11 @@ namespace FlowEvents.Settings
                 // Обновляем путь в настройках
                 newPathDB = openFileDialog.FileName;
 
-                if (!CheckDB.CheckPathToFileDB(newPathDB)) return;   // Проверяем путь к базе данных и выходим, если он неверен
-
-                string _connectionString = $"Data Source={newPathDB};Version=3;foreign keys=true;"; //Формируем сторку подключения к БД
-
-                // Проверка версии базы данных
-                if (!CheckDB.IsDatabaseVersionCorrect(App.Settings.VerDB, _connectionString)) //проверка версии базы данных
-                {
-                    MessageBox.Show($"Версия БД не соответствует требуемой версии {App.Settings.VerDB}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-                    return;
-                }
+                if (!CheckDB.DBGood(newPathDB)) return;
+                            
+                PathToDB = newPathDB; //Вывод пути в текстовое поле окна.
 
                 App.Settings.pathDB = newPathDB;
-                PathToDB = newPathDB;
-                _mainViewModel.FilePath = newPathDB;
             }
             else
             {
@@ -119,7 +101,6 @@ namespace FlowEvents.Settings
                                  // Application.Current.Shutdown(); // Закрываем приложение
             }
         }
-
 
 
         public event PropertyChangedEventHandler PropertyChanged;

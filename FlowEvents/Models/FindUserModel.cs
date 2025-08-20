@@ -20,7 +20,6 @@ namespace FlowEvents
             set
             {
                 _connectionString = value;
-                //GetUnits();
             }
         }
 
@@ -45,14 +44,15 @@ namespace FlowEvents
         public RelayCommand AddDomainUserCommand { get; }
 
 
-        public FindUserModel(MainViewModel mainViewModel, UserManagerModel userManagerModel)
+        //public FindUserModel(MainViewModel mainViewModel, UserManagerModel userManagerModel)
+        public FindUserModel( UserManagerModel userManagerModel)
         {
-            _mainViewModel = mainViewModel;
+            //_mainViewModel = mainViewModel;
             _userManagerModel = userManagerModel;
 
             DomainName = App.Settings.DomenName; // Имя домена по умолчанию
 
-            ConnectionString = _mainViewModel._connectionString;
+            ConnectionString = Global_Var.ConnectionString; // _mainViewModel._connectionString;
 
             SearchCommand = new RelayCommand(async (param) => await LoadDomainUserAsync());
             CancelCommand = new RelayCommand(CancelSearch);

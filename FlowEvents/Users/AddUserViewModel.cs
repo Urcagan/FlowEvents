@@ -23,7 +23,7 @@ namespace FlowEvents.Users
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
-        private MainViewModel _mainViewModel;
+        //private MainViewModel _mainViewModel;
         private string _connectionString;
         private const int DefaultRoleId = 2; // ID роли "user"
 
@@ -65,10 +65,11 @@ namespace FlowEvents.Users
         public ICommand CancelCommand { get; }
 
 
-        public AddUserViewModel(MainViewModel mainViewModel, UserManagerModel userManagerModel)
+        //public AddUserViewModel(MainViewModel mainViewModel, UserManagerModel userManagerModel)
+        public AddUserViewModel(UserManagerModel userManagerModel)
         {
-            _mainViewModel = mainViewModel;
-            _connectionString = _mainViewModel._connectionString;
+            //_mainViewModel = mainViewModel;
+            _connectionString = Global_Var.ConnectionString; //_mainViewModel._connectionString;
 
             // Инициализация команд
 

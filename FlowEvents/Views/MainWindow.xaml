@@ -207,7 +207,7 @@
         <StatusBar x:Name="statusBar" DockPanel.Dock="Bottom">
             <Border BorderBrush="Black" BorderThickness="1" >
                 <TextBlock x:Name="lblToMainPath" 
-                           Text="{Binding FilePath, UpdateSourceTrigger=PropertyChanged}" 
+                           Text="{Binding CurrentDbPath, UpdateSourceTrigger=PropertyChanged}" 
                            HorizontalAlignment="Center" 
                            Margin="3 0 3 0 "/>
             </Border>

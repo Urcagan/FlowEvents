@@ -72,14 +72,14 @@ namespace FlowEvents
 
         public UserManagerModel(MainViewModel mainViewModel)
         {
-            _mainViewModel = mainViewModel;
+            //_mainViewModel = mainViewModel;
 
             OpenFindUserWindowsCommand = new RelayCommand(OpenFindUserWindows);
             DeletUserCommand = new RelayCommand(DeletUser);
             OpenAddUserWindowsCommand = new RelayCommand(OpenAddUserWindows);
 
             // Загрузка данных из базы
-            ConnectionString = _mainViewModel._connectionString;
+            ConnectionString = Global_Var.ConnectionString; //_mainViewModel._connectionString;
             LoadRoles(); // Загружаем роли при создании модели
             GetUsers();  // Загружаем пользователей
         }
@@ -102,17 +102,7 @@ namespace FlowEvents
 
         }
 
-        // Объект для размещения данных выделенной строки. При выборе строки таблицы в переменную поместятся все значения выделенной строки
-        /**   private UserModel _selectedUser;
-           public UserModel SelectedUser
-           {
-               get => _selectedUser;
-               set
-               {
-                   _selectedUser = value;
-                   OnPropertyChanged();
-               }
-           }**/
+
 
         private DataRowView _selectedUser;
         public DataRowView SelectedUser

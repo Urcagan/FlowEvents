@@ -30,16 +30,16 @@ namespace FlowEvents
             }
         }
 
-        private MainViewModel _mainViewModel;
-        public MainViewModel MainViewModel
-        {
-            get { return _mainViewModel; }
-            set 
-            { 
-                _mainViewModel = value;
+        //private MainViewModel _mainViewModel;
+        //public MainViewModel MainViewModel
+        //{
+        //    get { return _mainViewModel; }
+        //    set 
+        //    { 
+        //        _mainViewModel = value;
                 
-            }
-        }
+        //    }
+        //}
 
         // Коллекция для хранения категорий (источник данных (коллекцию))
         public ObservableCollection<Unit> Units { get; set; } = new ObservableCollection<Unit>();
@@ -53,9 +53,9 @@ namespace FlowEvents
 
         #endregion
 
-        public UnitViewModel(MainViewModel mainViewModel)
+        public UnitViewModel()
         {
-            _mainViewModel = mainViewModel;
+           // _mainViewModel = mainViewModel;
             // Инициализация команд
             AddCommand = new RelayCommand(AddUnit);
             CancelCommand = new RelayCommand(CancelEdit);
@@ -64,7 +64,7 @@ namespace FlowEvents
             UpdateCommand = new RelayCommand(UpdateUnit, CanEditOrDelete);
 
             // Загрузка данных из базы
-            ConnectionString = _mainViewModel._connectionString; //$"Data Source={_mainViewModel.appSettings.pathDB};Version=3;";
+            ConnectionString = Global_Var.ConnectionString; //_mainViewModel._connectionString; //$"Data Source={_mainViewModel.appSettings.pathDB};Version=3;";
             //GetUnits();
             IsAddButtonVisible = true; // Показать кнопку "Добавить"
             IsDeleteButtonVisible = false; // Скрыть кнопку "Удалить"

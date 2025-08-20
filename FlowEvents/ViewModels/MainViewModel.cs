@@ -30,8 +30,11 @@ namespace FlowEvents
                 _currentDbPath = value;
                 //LoadCurrentUser();  // Перезагружаем пользователя при смене БД
                 //OnPropertyChanged(nameof(GetConnectionString));
+                Global_Var.pathToDB = value;
                 Global_Var.ConnectionString = GetConnectionString();
                 LoadUserPermissions();
+
+                OnPropertyChanged(nameof(CurrentDbPath));
             }
         }
         private string _currentUsername;
@@ -74,17 +77,6 @@ namespace FlowEvents
 
         public AppSettings appSettings; // Объект параметров приложения
         public string _connectionString; // = $"Data Source={Global_Var.pathDB};Version=3;foreign keys=true;";
-
-        private string _filePath;
-        public string FilePath
-        {
-            get { return _filePath; }
-            set
-            {
-                _filePath = value;
-                OnPropertyChanged(nameof(FilePath));
-            }
-        }
 
         private DateTime _sartDate = DateTime.Now; // Значение по умолчанию
         public DateTime StartDate
@@ -185,6 +177,7 @@ namespace FlowEvents
             set
             {
                 _userName = value;
+                Global_Var.UserName = value;
                 OnPropertyChanged();
             }
         }
@@ -260,43 +253,35 @@ namespace FlowEvents
             //         appSettings = AppSettings.GetSettingsApp(); // Загружаем настройки программы из файла при запуске программы
 
             string pathDB = App.Settings.pathDB; //appSettings.pathDB;
-            //string verDB = App.Settings.VerDB; //appSettings.VerDB;
-
-            //if (!CheckDB.CheckPathToFileDB(pathDB)) return;   // Проверяем путь к базе данных и выходим, если он неверен
-
-            //_connectionString = $"Data Source={pathDB};Version=3;foreign keys=true;"; //Формируем строку подключения к БД
-
-            //// Проверка версии базы данных
-            //if (!CheckDB.IsDatabaseVersionCorrect(verDB, _connectionString))  //проверка версии базы данных
-            //{
-            //    MessageBox.Show($"Версия БД не соответствует требуемой версии {verDB}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-            //    return;
-            //}
+            
 
             //Проверка базы данных
-            if (!CheckDB.DBGood()) return;
+            if (!CheckDB.DBGood(pathDB)) return;
             _connectionString = $"Data Source={pathDB};Version=3;foreign keys=true;"; //Формируем строку подключения к БД
 
+            CurrentDbPath = pathDB; // Устанавливаем текущий путь к базе данных
 
 
             LoadUnitsToComboBox(); // Загружаем перечень установок из базы данных
-
-            FilePath = pathDB; //Выводим путь к файлу в нижную часть главного окна
                                //
                                //_currentUser = _authService.GetUser(_currentDbPath, _currentUsername);
            // _currentUser = _authService.GetUser(pathDB, "User3");
 
-            CurrentDbPath = pathDB; // Устанавливаем текущий путь к базе данных
+            
        //     CurrentUsername = Environment.UserName; // Устанавливаем текущего пользователя
             CurrentUsername = "Администратор"; // Временно устанавливаем пользователя для тестирования
         }
 
+
+        //Получаем строку подключения к БД
         private static string GetConnectionString()
         {
             string pathDB = App.Settings.pathDB;
             return $"Data Source={pathDB};Version=3;foreign keys=true;";
         }
 
+
+        //
         private void LoadCurrentUser() //Загрузка текущего пользователя 
         {
             if (string.IsNullOrEmpty(_currentDbPath) || string.IsNullOrEmpty(_currentUsername))
@@ -338,18 +323,11 @@ namespace FlowEvents
             }
         }
 
-        public void UpdateConnectionString(string newPathDB)
-        {
-            _connectionString = $"Data Source={newPathDB};Version=3;foreign keys=true;";
-            CurrentDbPath = newPathDB; // Обновляем текущий путь к базе данных
-        }
-
-
-
-
+      
         private void UnitMenuItem(object parameter)
         {
-            var unitViewModel = new UnitViewModel(this);
+            //var unitViewModel = new UnitViewModel(this);
+            var unitViewModel = new UnitViewModel();
             UnitsView unitsView = new UnitsView(unitViewModel);
             unitsView.Closed += UnitsView_Closed; // Подписываемся на событие Closed окна UnitsView
 
@@ -364,22 +342,27 @@ namespace FlowEvents
 
         private void CategoryMenuItem(object parameter)
         {
-            var categoryViewModel = new CategoryViewModel(this);
-            CategoryView categoryView = new CategoryView(categoryViewModel);
-            categoryView.Closed += CategoryView_Closed;
+            var categoryViewModel = new CategoryViewModel();
+            CategoryView categoryView = new CategoryView(categoryViewModel);       
+            
             if (categoryView.ShowDialog() == true) { }
         }
 
-        private void CategoryView_Closed(object sender, EventArgs e)
-        {
-            //LoadEvents();
-        }
 
         private void SettingsMenuItem(object parameter)
         {
             // Создаем и показываем окно настроек
             var settingsViewModel = new SettingsViewModel(this);
             SettingsWindow settingsWindow = new SettingsWindow(settingsViewModel);
+
+            // Создаем обработчик, который отвяжет себя после выполнения
+            void ClosedHandler(object sender, EventArgs e)
+            {
+                settingsWindow.Closed -= ClosedHandler; // Отвязываем
+                StartUP();
+            }
+
+            settingsWindow.Closed += ClosedHandler;
             if (settingsWindow.ShowDialog() == true) { }
         }
 
@@ -399,31 +382,41 @@ namespace FlowEvents
 
         private void EventAddBtb(object parameter)
         {
-            var eventViewModel = new EventViewModel(this);
+            //var eventViewModel = new EventViewModel(this);
+            var eventViewModel = new EventViewModel();
             EventWindow eventView = new EventWindow(eventViewModel);
 
-            eventView.Closed += EventAdd_Closed;
+            // Создаем обработчик, который отвяжет себя после выполнения
+            void ClosedHandler(object sender, EventArgs e)
+            {
+                eventView.Closed -= ClosedHandler; // Отвязываем
+                LoadEvents();
+            }
+
+            eventView.Closed += ClosedHandler;
             if (eventView.ShowDialog() == true) { }
         }
 
-        private void EventAdd_Closed(object sender, EventArgs e)
-        {
-            LoadEvents();
-        }
-
-
+        
         private void EditEvent(object parameter)
         {
             if (parameter is EventForView selectedEvent)
             {
                 // Создаем ViewModel для редактирования, передавая выбранное событие
-                var eventViewModel = new EventViewModel(this, selectedEvent);
+                var eventViewModel = new EventViewModel(selectedEvent);
 
                 // Создаем и показываем окно редактирования
                 var eventWindow = new EventWindow(eventViewModel);
 
-                eventWindow.Closed += EventAdd_Closed;
-                eventWindow.ShowDialog();
+                // Создаем обработчик, который отвяжет себя после выполнения
+                void ClosedHandler(object sender, EventArgs e)
+                {
+                    eventWindow.Closed -= ClosedHandler; // Отвязываем
+                    LoadEvents();
+                }
+
+                eventWindow.Closed += ClosedHandler;
+                if (eventWindow.ShowDialog() == true) { };
             }
         }
 
@@ -550,7 +543,7 @@ namespace FlowEvents
             List<AttachedFileForEvent> attachedFile = new List<AttachedFileForEvent>();
             try
             {
-                using (var connection = new SQLiteConnection(_connectionString))
+                using (var connection = new SQLiteConnection(Global_Var.ConnectionString)) //_connectionString
                 {
                     connection.Open();
 
@@ -587,7 +580,7 @@ namespace FlowEvents
         {
             try
             {
-                using (var connection = new SQLiteConnection(_connectionString))
+                using (var connection = new SQLiteConnection(Global_Var.ConnectionString)) //_connectionString
                 {
                     connection.Open();
 
@@ -661,7 +654,7 @@ namespace FlowEvents
         {
             var eventsDict = new Dictionary<int, EventForView>();
 
-            using (var connection = new SQLiteConnection(_connectionString))
+            using (var connection = new SQLiteConnection(Global_Var.ConnectionString)) //_connectionString
             {
                 connection.Open();
                 var command = new SQLiteCommand(queryEvent, connection);
@@ -692,7 +685,7 @@ namespace FlowEvents
                         // Если есть прикрепленный файл, добавляем его
                         if (!reader.IsDBNull(reader.GetOrdinal("FileId")))
                         {
-                            eventModel.AttachedFiles.Add(new AttachedFileModel(_connectionString) // Передаем строку подключения
+                            eventModel.AttachedFiles.Add(new AttachedFileModel(Global_Var.ConnectionString) //_connectionString // Передаем строку подключения
                             {
                                 FileId = reader.GetInt32(reader.GetOrdinal("FileId")),
                                 FileCategory = reader.GetString(reader.GetOrdinal("FileCategory")),
@@ -716,7 +709,7 @@ namespace FlowEvents
         {
             try
             {
-                using (var connection = new SQLiteConnection(_connectionString))
+                using (var connection = new SQLiteConnection(Global_Var.ConnectionString))
                 {
                     connection.Open();
                     using (SQLiteTransaction transaction = connection.BeginTransaction())

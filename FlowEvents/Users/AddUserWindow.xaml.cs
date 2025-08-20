@@ -16,7 +16,8 @@ namespace FlowEvents.Users
 
             _userManagerModel = userManagerModel;
 
-            DataContext = new AddUserViewModel(_userManagerModel.MainViewModel, userManagerModel);
+            //DataContext = new AddUserViewModel(_userManagerModel.MainViewModel, userManagerModel);
+            DataContext = new AddUserViewModel( userManagerModel);
 
             // Привязываем PasswordBox к ViewModel (так как PasswordBox не поддерживает обычную привязку)
             txtPassword.PasswordChanged += (sender, e) =>
