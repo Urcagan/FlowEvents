@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FlowEvents.ViewModels;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -22,6 +23,16 @@ namespace FlowEvents.Users
         public LoginUser()
         {
             InitializeComponent();
+            
+            LoginViewModel loginViewModel = new LoginViewModel();
+
+            loginViewModel.CloseAction = (result) =>
+            {
+                DialogResult = result;
+
+                Close();
+            };
+            DataContext = loginViewModel;
         }
 
         private void DragArea_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -32,10 +43,17 @@ namespace FlowEvents.Users
 
         private void RegisterText_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            
-            var registerWindow = new AddUserWindow();
+            UserManagerModel userManagerModel = new UserManagerModel();
+            var registerWindow = new AddUserWindow(userManagerModel);
             registerWindow.Show();
             this.Close();
         }
+
+        private void CloseButton_Click(object sender, RoutedEventArgs e)
+        {
+            DialogResult = false;
+            this.Close(); // Закрытие текущего окна
+        }
+
     }
 }

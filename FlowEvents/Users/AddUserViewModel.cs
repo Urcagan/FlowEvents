@@ -147,7 +147,7 @@ namespace FlowEvents.Users
         {
             if (window != null)
             {
-                window.DialogResult = dialogResult;
+                //window.DialogResult = dialogResult;
                 window.Close();
             }
         }

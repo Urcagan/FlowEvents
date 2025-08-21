@@ -70,7 +70,7 @@ namespace FlowEvents
         #endregion
 
 
-        public UserManagerModel(MainViewModel mainViewModel)
+        public UserManagerModel()
         {
             //_mainViewModel = mainViewModel;
 
@@ -88,7 +88,14 @@ namespace FlowEvents
         private void OpenAddUserWindows(object parameters)
         {
             AddUserWindow addUserWindow = new AddUserWindow(this);
-            addUserWindow.Closed += AddUserWindow_Closed; // Подписываемся на событие закрытия окна
+
+            void ClosedHandler(object sender, EventArgs e)
+            {
+                addUserWindow.Closed -= ClosedHandler; // Отвязываем
+                GetUsers();  // Перезагружаем установки после закрытия окна UnitsView
+            }
+
+            addUserWindow.Closed += ClosedHandler; // Подписываемся на событие закрытия окна
             if (addUserWindow.ShowDialog() == true) { }
         }
 
@@ -97,7 +104,14 @@ namespace FlowEvents
 
             //var findUserModel = new FindUserModel(_mainViewModel);
             FindUserWindow findUserWindow = new FindUserWindow(this); // Создаем дочернее окно, передавая текущую модель (this)
-            findUserWindow.Closed += FindUserWindow_Closed; // Подписываемся на событие закрытия окна
+
+            void ClosedHandler(object sender, EventArgs e)
+            {
+                findUserWindow.Closed -= ClosedHandler; // Отвязываем
+                GetUsers();  // Перезагружаем установки после закрытия окна UnitsView
+            }
+
+            findUserWindow.Closed += ClosedHandler; // Подписываемся на событие закрытия окна
             if (findUserWindow.ShowDialog() == true) { }
 
         }
@@ -153,15 +167,7 @@ namespace FlowEvents
             GetUsers();
         }
 
-        private void FindUserWindow_Closed(object sender, EventArgs e)
-        {
-            GetUsers();
-        }
-
-        private void AddUserWindow_Closed(object sender, EventArgs e)
-        {
-            GetUsers();
-        }
+               
 
         public void LoadRoles()
         {

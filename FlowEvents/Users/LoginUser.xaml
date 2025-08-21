@@ -137,16 +137,19 @@
             </StackPanel>
 
             <!-- Чекбокс "Запомнить меня" -->
+            <!--
             <CheckBox Grid.Row="4" 
                       Content="Запомнить меня"
                       Margin="30,10"
                       Foreground="#FF333333"
                       IsChecked="{Binding RememberMe}"/>
+              -->
 
             <!-- Кнопка входа -->
             <Button Grid.Row="5"
                     Content="Войти"
                     Command="{Binding LoginCommand}"
+                    CommandParameter="{Binding ElementName=txtPassword}"
                     Margin="30,10"
                     Height="40"
                     Background="#FF4285F4"
@@ -168,7 +171,7 @@
             <!-- Кнопка закрытия -->
             <Button Grid.Row="7"
                     Content="Закрыть"
-                    Command="{Binding CloseCommand}"
+                     Click="CloseButton_Click"
                     Margin="10"
                     HorizontalAlignment="Right"
                     Width="80"

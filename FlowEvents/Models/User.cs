@@ -105,6 +105,7 @@ namespace FlowEvents.Models
                 OnPropertyChanged(nameof(Salt));
             }
         }
+        public bool IsAuthenticated { get; set; }
 
         public event PropertyChangedEventHandler PropertyChanged;
 

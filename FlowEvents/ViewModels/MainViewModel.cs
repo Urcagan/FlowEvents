@@ -27,9 +27,7 @@ namespace FlowEvents
             get => _currentDbPath;
             set
             {
-                _currentDbPath = value;
-                //LoadCurrentUser();  // Перезагружаем пользователя при смене БД
-                //OnPropertyChanged(nameof(GetConnectionString));
+                _currentDbPath = value;                
                 Global_Var.pathToDB = value;
                 Global_Var.ConnectionString = GetConnectionString();
                 LoadUserPermissions();
@@ -66,10 +64,7 @@ namespace FlowEvents
         {
             if (string.IsNullOrEmpty(_currentDbPath)) return;
 
-            CurrentUserPermissions = _authService.GetUserPermissions(
-                _currentDbPath,
-                _currentUsername
-            );
+            CurrentUserPermissions = _authService.GetUserPermissions( _currentDbPath, _currentUsername);
         }
 
         
@@ -226,7 +221,7 @@ namespace FlowEvents
 
             });
 
-            User();
+          //  User();
             //    appSettings = AppSettings.GetSettingsApp(); // Загружаем настройки программы из файла при запуске программы
 
         }
@@ -329,16 +324,18 @@ namespace FlowEvents
             //var unitViewModel = new UnitViewModel(this);
             var unitViewModel = new UnitViewModel();
             UnitsView unitsView = new UnitsView(unitViewModel);
-            unitsView.Closed += UnitsView_Closed; // Подписываемся на событие Closed окна UnitsView
+
+            void ClosedHandler(object sender, EventArgs e)
+            {
+                unitsView.Closed -= ClosedHandler; // Отвязываем
+                LoadUnitsToComboBox(); // Перезагружаем установки после закрытия окна UnitsView
+            }
+
+            unitsView.Closed += ClosedHandler; // Подписываемся на событие Closed окна UnitsView
 
             if (unitsView.ShowDialog() == true) { }
         }
 
-        private void UnitsView_Closed(object sender, EventArgs e)
-        {
-            LoadUnitsToComboBox(); // Перезагружаем установки после закрытия окна UnitsView
-
-        }
 
         private void CategoryMenuItem(object parameter)
         {
@@ -368,7 +365,7 @@ namespace FlowEvents
 
         private void UserManagerMenuItem(object parameter)
         {
-            var userManagerModel = new UserManagerModel(this);
+            var userManagerModel = new UserManagerModel();
             // Создаем и показываем окно пользователей
             UserManager userManager = new UserManager(userManagerModel);
             if (userManager.ShowDialog() == true) { }
@@ -790,21 +787,21 @@ namespace FlowEvents
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
-        private void User()
-        {
-            var identity = WindowsIdentity.GetCurrent();
+        //private void User()
+        //{
+        //    var identity = WindowsIdentity.GetCurrent();
 
-            // Простые свойства
-            UserName = Environment.UserName;
-            string Domain = Environment.UserDomainName;
+        //    // Простые свойства
+        //    UserName = Environment.UserName;
+        //    string Domain = Environment.UserDomainName;
 
-            // Более детальная информация
-            string FullName = identity.Name;
-            string AuthType = identity.AuthenticationType;
-            string IsAuthenticated = identity.IsAuthenticated.ToString();
-            string IsSystem = identity.IsSystem.ToString();
-            string IsGuest = identity.IsGuest.ToString();
-        }
+        //    // Более детальная информация
+        //    string FullName = identity.Name;
+        //    string AuthType = identity.AuthenticationType;
+        //    string IsAuthenticated = identity.IsAuthenticated.ToString();
+        //    string IsSystem = identity.IsSystem.ToString();
+        //    string IsGuest = identity.IsGuest.ToString();
+        //}
 
         
 
