@@ -1,0 +1,123 @@
+﻿<Window x:Class="FlowEvents.Users.PermissionWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:FlowEvents.Users"
+        mc:Ignorable="d" 
+        Height="600" Width="900"
+        WindowStartupLocation="CenterScreen">
+
+    <Window.Resources>
+        <!-- Стили для современного интерфейса -->
+        <Style x:Key="ModernButton" TargetType="Button">
+            <Setter Property="Background" Value="#007ACC"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="10 5"/>
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+
+        <Style x:Key="HeaderText" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Margin" Value="0 0 0 10"/>
+        </Style>
+    </Window.Resources>
+    
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Заголовок -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0 0 0 20">
+            <TextBlock Text="🛡️" FontSize="24" Margin="0 0 10 0"/>
+            <TextBlock Text="Управление правами пользователей" 
+                      FontSize="20" FontWeight="Bold"/>
+        </StackPanel>
+
+        <!-- Основной контент -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*"/>
+                <ColumnDefinition Width="3*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Левая панель - Пользователи и роли -->
+            <StackPanel Grid.Column="0" Margin="0 0 10 0">
+                <TextBlock Text="Пользователи" Style="{StaticResource HeaderText}"/>
+                <ListView x:Name="UsersListView" Height="150" 
+                         SelectionMode="Single">
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Header="ID" Width="50" DisplayMemberBinding="{Binding Id}"/>
+                            <GridViewColumn Header="Имя" Width="150" DisplayMemberBinding="{Binding Name}"/>
+                            <GridViewColumn Header="Роль" Width="100" DisplayMemberBinding="{Binding RoleName}"/>
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+
+                <TextBlock Text="Роли" Style="{StaticResource HeaderText}" Margin="0 20 0 0"/>
+                <ListView x:Name="RolesListView" Height="150" 
+                         SelectionMode="Single">
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Header="ID" Width="50" DisplayMemberBinding="{Binding Id}"/>
+                            <GridViewColumn Header="Название" Width="150" DisplayMemberBinding="{Binding Name}"/>
+                            <GridViewColumn Header="Описание" Width="200" DisplayMemberBinding="{Binding Description}"/>
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+
+                <StackPanel Orientation="Horizontal" Margin="0 10 0 0">
+                    <Button x:Name="AddUserButton" Content="Добавить пользователя" 
+                           Style="{StaticResource ModernButton}"/>
+                    <Button x:Name="AddRoleButton" Content="Добавить роль" 
+                           Style="{StaticResource ModernButton}"/>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- Правая панель - Права доступа -->
+            <StackPanel Grid.Column="1">
+                <TextBlock Text="Права доступа для выбранной роли" 
+                          Style="{StaticResource HeaderText}"/>
+
+                <TextBlock x:Name="SelectedRoleText" Margin="0 0 0 10" 
+                          Text="Роль не выбрана" FontWeight="Bold" Foreground="Gray"/>
+
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Height="300">
+                    <ItemsControl x:Name="PermissionsList">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <CheckBox Content="{Binding DisplayName}" 
+                                         IsChecked="{Binding IsGranted}"
+                                         Margin="0 5 0 0"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0 15 0 0">
+                    <Button x:Name="SelectAllButton" Content="Выбрать все" 
+                           Style="{StaticResource ModernButton}" Background="#28A745"/>
+                    <Button x:Name="DeselectAllButton" Content="Снять все" 
+                           Style="{StaticResource ModernButton}" Background="#DC3545"/>
+                    <Button x:Name="SavePermissionsButton" Content="Сохранить права" 
+                           Style="{StaticResource ModernButton}" Background="#17A2B8"/>
+                </StackPanel>
+            </StackPanel>
+        </Grid>
+
+        <!-- Нижняя панель с кнопками -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0 20 0 0">
+            <Button x:Name="ApplyButton" Content="Применить" 
+                   Style="{StaticResource ModernButton}" Width="100"/>
+            <Button x:Name="CancelButton" Content="Отмена" 
+                   Style="{StaticResource ModernButton}" Background="#6C757D" Width="100"/>
+        </StackPanel>
+    </Grid>
+</Window>

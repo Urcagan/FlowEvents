@@ -263,8 +263,8 @@ namespace FlowEvents
            // _currentUser = _authService.GetUser(pathDB, "User3");
 
             
-       //     CurrentUsername = Environment.UserName; // Устанавливаем текущего пользователя
-            CurrentUsername = "Администратор"; // Временно устанавливаем пользователя для тестирования
+            CurrentUsername = Environment.UserName; // Устанавливаем текущего пользователя
+      //      CurrentUsername = "Администратор"; // Временно устанавливаем пользователя для тестирования
         }
 
 

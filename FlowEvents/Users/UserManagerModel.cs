@@ -11,9 +11,10 @@ namespace FlowEvents
     public class UserManagerModel : INotifyPropertyChanged
     {
 
-        public RelayCommand OpenFindUserWindowsCommand { get; set; }
+        public RelayCommand OpenFindUserWindowCommand { get; set; }
         public RelayCommand DeletUserCommand { get; set; }
-        public RelayCommand OpenAddUserWindowsCommand { get; set; }
+        public RelayCommand OpenAddUserWindowCommand { get; set; }
+        public RelayCommand OpenPermissionWindowCommand { get; set;}
         #region
         //public event PropertyChangedEventHandler PropertyChanged;
 
@@ -74,9 +75,10 @@ namespace FlowEvents
         {
             //_mainViewModel = mainViewModel;
 
-            OpenFindUserWindowsCommand = new RelayCommand(OpenFindUserWindows);
+            OpenFindUserWindowCommand = new RelayCommand(OpenFindUserWindows);
             DeletUserCommand = new RelayCommand(DeletUser);
-            OpenAddUserWindowsCommand = new RelayCommand(OpenAddUserWindows);
+            OpenAddUserWindowCommand = new RelayCommand(OpenAddUserWindows);
+            OpenPermissionWindowCommand = new RelayCommand(OpenPermissionWindow);
 
             // Загрузка данных из базы
             ConnectionString = Global_Var.ConnectionString; //_mainViewModel._connectionString;
@@ -85,6 +87,16 @@ namespace FlowEvents
         }
 
        
+
+        private void OpenPermissionWindow(object parametrs)
+        {
+            PermissionWindow permissionWindow = new PermissionWindow();
+            
+
+            permissionWindow.Show();
+
+        }
+
         private void OpenAddUserWindows(object parameters)
         {
             AddUserWindow addUserWindow = new AddUserWindow(this);
