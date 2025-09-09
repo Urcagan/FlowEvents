@@ -19,7 +19,7 @@ namespace FlowEvents
 {
     public class MainViewModel : INotifyPropertyChanged
     {
-        private readonly IPolicyAuthService _authService; // Сервис проверки пользователя
+        
 
         private string _currentDbPath;
         // Публичные свойства для динамического контекста
@@ -190,10 +190,9 @@ namespace FlowEvents
         public RelayCommand CheckUpdateAppCommand { get; } // Кнопка проверки обновления программы 
         public RelayCommand LoginCommand { get; }
 
-
+        private readonly IPolicyAuthService _authService; // Сервис проверки пользователя
         private readonly IEventRepository _eventRepository;
         private readonly IServiceProvider _serviceProvider;
-        private readonly IPolicyAuthService _policy
 
         //===============================================================================================================================================
 

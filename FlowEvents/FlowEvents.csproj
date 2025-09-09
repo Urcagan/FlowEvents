@@ -333,5 +333,9 @@
   <ItemGroup>
     <Resource Include="icons8-copybook-50.ico" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Services\Implementations\" />
+    <Folder Include="Services\Interface\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

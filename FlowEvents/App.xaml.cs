@@ -82,16 +82,11 @@ namespace FlowEvents
             var services = new ServiceCollection();
 
             // Регистрация репозиториев с использованием Global_Var.ConnectionString
-            services.AddSingleton<IUserRepository>(provider =>
-                new UserRepository(Global_Var.ConnectionString));
-
-
+            services.AddSingleton<IUserRepository>(provider => new UserRepository(Global_Var.ConnectionString));
 
             // Регистрация сервисов
             services.AddSingleton<IDatabaseService, DatabaseService>();
             services.AddSingleton<IPolicyAuthService, PolicyAuthService>();
-
-
 
             // Регистрация ViewModel
             //services.AddSingleton<MainViewModel>();

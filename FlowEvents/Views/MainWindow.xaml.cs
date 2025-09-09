@@ -19,7 +19,7 @@ namespace FlowEvents
 
 
         // Конструктор по умолчанию (без параметров)
-        public MainWindow()
+        public MainWindow(MainViewModel mainViewModel)
         {
             InitializeComponent();
 
@@ -28,9 +28,9 @@ namespace FlowEvents
             
 
             // Создаем MainViewModel и передаем сервис
-            _mainViewModel = new MainViewModel(IPolicyAuthService _authService, IServiceProvider serviceProvider);
+            //_mainViewModel = new MainViewModel(IPolicyAuthService _authService, IServiceProvider serviceProvider);
 
-            DataContext = _mainViewModel;
+            DataContext = mainViewModel;
 
             // Подписываемся на события загрузки и закрытия окна
             Loaded += MainWindow_Loaded;
