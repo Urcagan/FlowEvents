@@ -1,4 +1,6 @@
 ﻿using FlowEvents.Services;
+using Microsoft.Extensions.DependencyInjection;
+using System;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
@@ -12,6 +14,7 @@ namespace FlowEvents
     {
 
         private readonly IPolicyAuthService _authService;
+        private readonly IServiceProvider _serviceProvider;
         private readonly MainViewModel _mainViewModel;
 
 
@@ -21,10 +24,11 @@ namespace FlowEvents
             InitializeComponent();
 
             // Инициализация сервиса (можно вынести в DI-контейнер)
-            _authService = new PolicyAuthService();
+            //_authService = new PolicyAuthService();
+            
 
             // Создаем MainViewModel и передаем сервис
-            _mainViewModel = new MainViewModel(_authService);
+            _mainViewModel = new MainViewModel(IPolicyAuthService _authService, IServiceProvider serviceProvider);
 
             DataContext = _mainViewModel;
 

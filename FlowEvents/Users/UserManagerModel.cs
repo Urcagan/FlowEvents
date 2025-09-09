@@ -1,4 +1,6 @@
-﻿using FlowEvents.Users;
+﻿using FlowEvents.Services;
+using FlowEvents.Users;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.ComponentModel;
 using System.Data;
@@ -10,6 +12,9 @@ namespace FlowEvents
 {
     public class UserManagerModel : INotifyPropertyChanged
     {
+
+        private readonly IServiceProvider _serviceProvider;
+        private readonly IDatabaseService _databaseService;
 
         public RelayCommand OpenFindUserWindowCommand { get; set; }
         public RelayCommand DeletUserCommand { get; set; }
@@ -71,9 +76,10 @@ namespace FlowEvents
         #endregion
 
 
-        public UserManagerModel()
-        {
-            //_mainViewModel = mainViewModel;
+        public UserManagerModel(IServiceProvider serviceProvider, IDatabaseService databaseService)
+        {            
+            _serviceProvider = serviceProvider;
+            _databaseService = databaseService;
 
             OpenFindUserWindowCommand = new RelayCommand(OpenFindUserWindows);
             DeletUserCommand = new RelayCommand(DeletUser);
@@ -90,8 +96,9 @@ namespace FlowEvents
 
         private void OpenPermissionWindow(object parametrs)
         {
-            PermissionWindow permissionWindow = new PermissionWindow();
-            
+
+            //PermissionWindow permissionWindow = new PermissionWindow();
+            PermissionWindow permissionWindow = _serviceProvider.GetRequiredService<PermissionWindow>();
 
             permissionWindow.Show();
 

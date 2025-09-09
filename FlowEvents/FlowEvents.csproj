@@ -100,9 +100,13 @@
     <Compile Include="Models\Role.cs" />
     <Compile Include="Models\User.cs" />
     <Compile Include="Repositories\Interface\IEventRepository.cs" />
+    <Compile Include="Repositories\Interface\IUserRepository.cs" />
     <Compile Include="Repositories\SqliteEventRepository.cs" />
+    <Compile Include="Repositories\UserRepository.cs" />
     <Compile Include="RoleService.cs" />
+    <Compile Include="Services\DatabaseService.cs" />
     <Compile Include="Services\FileAttachmentService.cs" />
+    <Compile Include="Services\IDatabaseService.cs" />
     <Compile Include="Services\IPolicyAuthService.cs" />
     <Compile Include="Services\PolicyAuthService.cs" />
     <Compile Include="Settings\SettingsViewModel.cs" />

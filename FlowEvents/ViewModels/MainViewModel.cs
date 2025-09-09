@@ -3,6 +3,7 @@ using FlowEvents.Repositories.Interface;
 using FlowEvents.Services;
 using FlowEvents.Settings;
 using FlowEvents.Users;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -191,12 +192,15 @@ namespace FlowEvents
 
 
         private readonly IEventRepository _eventRepository;
+        private readonly IServiceProvider _serviceProvider;
+        private readonly IPolicyAuthService _policy
 
         //===============================================================================================================================================
 
-        public MainViewModel(IPolicyAuthService authService)
+        public MainViewModel(IPolicyAuthService authService, IServiceProvider serviceProvider)
         {
             _authService = authService;
+            _serviceProvider = serviceProvider;
 
 
             SettingOpenWindow = new RelayCommand(SettingsMenuItem);

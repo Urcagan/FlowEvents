@@ -8,6 +8,7 @@
         Height="600" Width="900"
         WindowStartupLocation="CenterScreen">
 
+    
     <Window.Resources>
         <!-- Стили для современного интерфейса -->
         <Style x:Key="ModernButton" TargetType="Button">
@@ -49,7 +50,7 @@
 
             <!-- Левая панель - Пользователи и роли -->
             <StackPanel Grid.Column="0" Margin="0 0 10 0">
-                <TextBlock Text="Пользователи" Style="{StaticResource HeaderText}"/>
+                <TextBlock Text="👥 Пользователи" Style="{StaticResource HeaderText}"/>
                 <ListView x:Name="UsersListView" Height="150" 
                          SelectionMode="Single">
                     <ListView.View>
