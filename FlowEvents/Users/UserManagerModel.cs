@@ -76,10 +76,8 @@ namespace FlowEvents
         #endregion
 
 
-        public UserManagerModel(IServiceProvider serviceProvider, IDatabaseService databaseService)
+        public UserManagerModel()
         {            
-            _serviceProvider = serviceProvider;
-            _databaseService = databaseService;
 
             OpenFindUserWindowCommand = new RelayCommand(OpenFindUserWindows);
             DeletUserCommand = new RelayCommand(DeletUser);

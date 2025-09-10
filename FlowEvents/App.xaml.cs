@@ -26,20 +26,14 @@ namespace FlowEvents
         // Переопределяем метод OnStartup, Внем задаем наш формат
         protected override void OnStartup(StartupEventArgs e)
         {
-            var cultureInfo = new CultureInfo("ru-RU");
-            Thread.CurrentThread.CurrentCulture = cultureInfo;
-            Thread.CurrentThread.CurrentUICulture = cultureInfo;
-            CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
-            CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
-            FrameworkElement.LanguageProperty.OverrideMetadata(typeof(FrameworkElement),
-                new FrameworkPropertyMetadata(XmlLanguage.GetLanguage(CultureInfo.CurrentCulture.IetfLanguageTag)));
+            // Настройка культуры
+            ConfigureCulture();
 
             // Загрузка конфигурации БД (должна быть выполнена до настройки сервисов)
             LoadDatabaseConfiguration();
 
             // Настройка DI контейнера
             ConfigureServices();
-
 
             base.OnStartup(e);
 
@@ -50,32 +44,11 @@ namespace FlowEvents
 
         private void LoadDatabaseConfiguration()
         {
-            // Здесь должен быть код загрузки конфигурации из файла
-            // Например:
-            // Global_Var.ConnectionString = ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
-            // Или загрузка из JSON/XML файла
-
-
+            // Здесь должен быть код загрузки конфигурации
             Global_Var.pathToDB = App.Settings.pathDB;
             Global_Var.ConnectionString = GetConnectionString();
         }
 
-
-        //private void ConfigureServices(IServiceCollection services)
-        //{
-        //    string connectionString = Global_Var.ConnectionString;
-
-        //    // Репозитории
-        //    services.AddSingleton<IUserRepository>(provider => new UserRepository(connectionString));
-        //    //services.AddSingleton<IRoleRepository>(provider => new RoleRepository(connectionString));
-
-        //    // Сервисы
-        //    services.AddSingleton<IDatabaseService, DatabaseService>();
-
-        //    // ViewModel и View
-        //    services.AddSingleton<MainViewModel>();
-        //    services.AddSingleton<MainWindow>();
-        //}
 
         private void ConfigureServices()
         {
@@ -87,12 +60,6 @@ namespace FlowEvents
             // Регистрация сервисов
             services.AddSingleton<IDatabaseService, DatabaseService>();
             services.AddSingleton<IPolicyAuthService, PolicyAuthService>();
-
-            // Регистрация ViewModel
-            //services.AddSingleton<MainViewModel>();
-
-            // Регистрация View
-            //services.AddSingleton<MainWindow>();
 
             // Регистрация ViewModels
             services.AddTransient<MainViewModel>();
@@ -106,6 +73,17 @@ namespace FlowEvents
 
             // Построение провайдера услуг
             ServiceProvider = services.BuildServiceProvider();
+        }
+
+        private void ConfigureCulture()
+        {
+            var cultureInfo = new CultureInfo("ru-RU");
+            Thread.CurrentThread.CurrentCulture = cultureInfo;
+            Thread.CurrentThread.CurrentUICulture = cultureInfo;
+            CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
+            CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
+            FrameworkElement.LanguageProperty.OverrideMetadata(typeof(FrameworkElement),
+                new FrameworkPropertyMetadata(XmlLanguage.GetLanguage(CultureInfo.CurrentCulture.IetfLanguageTag)));
         }
 
         //Получаем строку подключения к БД
