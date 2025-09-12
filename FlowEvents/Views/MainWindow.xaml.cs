@@ -11,27 +11,12 @@ namespace FlowEvents
     /// Логика взаимодействия для MainWindow.xaml
     /// </summary>
     public partial class MainWindow : Window
-    {
-
-        private readonly IPolicyAuthService _authService;
-        private readonly IServiceProvider _serviceProvider;
-        private readonly MainViewModel _mainViewModel;
-
-
+    {       
         // Конструктор по умолчанию (без параметров)
-        public MainWindow(MainViewModel mainViewModel)
+        public MainWindow()
         {
             InitializeComponent();
-
-            // Инициализация сервиса (можно вынести в DI-контейнер)
-            //_authService = new PolicyAuthService();
-            
-
-            // Создаем MainViewModel и передаем сервис
-            //_mainViewModel = new MainViewModel(IPolicyAuthService _authService, IServiceProvider serviceProvider);
-
-            DataContext = mainViewModel;
-
+                 
             // Подписываемся на события загрузки и закрытия окна
             Loaded += MainWindow_Loaded;
             Closing += MainWindow_Closing;

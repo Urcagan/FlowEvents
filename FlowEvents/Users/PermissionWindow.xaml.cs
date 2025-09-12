@@ -19,12 +19,9 @@ namespace FlowEvents.Users
     /// </summary>
     public partial class PermissionWindow : Window
     {
-
-        private readonly PermissionViewModel _viewModel;
-        public PermissionWindow(PermissionViewModel viewModel)
+        public PermissionWindow()
         {
             InitializeComponent();
-            _viewModel = viewModel;
         }
     }
 }

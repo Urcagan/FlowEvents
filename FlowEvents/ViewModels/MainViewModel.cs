@@ -191,16 +191,12 @@ namespace FlowEvents
         public RelayCommand LoginCommand { get; }
 
         private readonly IPolicyAuthService _authService; // Сервис проверки пользователя
-        private readonly IEventRepository _eventRepository;
-        private readonly IServiceProvider _serviceProvider;
 
         //===============================================================================================================================================
 
-        public MainViewModel(IPolicyAuthService authService, IServiceProvider serviceProvider)
+        public MainViewModel(IPolicyAuthService authService)
         {
             _authService = authService;
-            _serviceProvider = serviceProvider;
-
 
             SettingOpenWindow = new RelayCommand(SettingsMenuItem);
             UnitOpenWindow = new RelayCommand(UnitMenuItem);
@@ -223,10 +219,11 @@ namespace FlowEvents
                 StartDate = StartDate.AddDays(1);
 
             });
+            
 
-          //  User();
+            //  User();
             //    appSettings = AppSettings.GetSettingsApp(); // Загружаем настройки программы из файла при запуске программы
-
+            
         }
 
         // 

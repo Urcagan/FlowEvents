@@ -19,7 +19,7 @@ namespace FlowEvents
         public RelayCommand OpenFindUserWindowCommand { get; set; }
         public RelayCommand DeletUserCommand { get; set; }
         public RelayCommand OpenAddUserWindowCommand { get; set; }
-        public RelayCommand OpenPermissionWindowCommand { get; set;}
+        public RelayCommand OpenPermissionWindowCommand { get; set; }
         #region
         //public event PropertyChangedEventHandler PropertyChanged;
 
@@ -77,7 +77,7 @@ namespace FlowEvents
 
 
         public UserManagerModel()
-        {            
+        {
 
             OpenFindUserWindowCommand = new RelayCommand(OpenFindUserWindows);
             DeletUserCommand = new RelayCommand(DeletUser);
@@ -90,15 +90,33 @@ namespace FlowEvents
             GetUsers();  // Загружаем пользователей
         }
 
-       
+
 
         private void OpenPermissionWindow(object parametrs)
         {
+            //// 1. Берем ViewModel из контейнера
+            //var PermissionViewModel = _serviceProvider.GetService<ModalViewModel>();
 
-            //PermissionWindow permissionWindow = new PermissionWindow();
-            PermissionWindow permissionWindow = _serviceProvider.GetRequiredService<PermissionWindow>();
+            //// 2. Создаем окно обычным способом
+            //var modalWindow = new ModalWindow();
 
-            permissionWindow.Show();
+            //// 3. Связываем ViewModel с окном          
+            //modalWindow.DataContext = modalViewModel;
+
+
+            // 1. Берем ViewModel из контейнера
+            var PermissionViewModel = App.ServiceProvider.GetRequiredService<PermissionViewModel>();
+            //var PermissionViewModel = App.ServiceProvider.GetService<PermissionViewModel>();
+
+            // 2. Создаем окно обычным способом
+            var PermissionWindow = new PermissionWindow();
+
+            // 3. Связываем ViewModel с окном 
+            PermissionWindow.DataContext = PermissionViewModel;
+
+            // 5. Показываем модально                  
+            PermissionWindow.Owner = Application.Current.MainWindow;
+            PermissionWindow.ShowDialog();
 
         }
 
@@ -184,7 +202,7 @@ namespace FlowEvents
             GetUsers();
         }
 
-               
+
 
         public void LoadRoles()
         {
@@ -316,6 +334,6 @@ namespace FlowEvents
 
     }
 
-    
+
 
 }

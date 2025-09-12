@@ -8,7 +8,8 @@
         Title="Журнал событий" Height="750" Width="1400" >
     <!-- Loaded="Window_Loaded"> -->
     <Window.Resources>
-
+        <!--<local:InverseBooleanConverter x:Key="InverseBooleanConverter"/>-->  <!-- Регистрация конвертера в ресурсах -->
+        
         <local:PermissionsToVisibilityConverter x:Key="PermissionsToVisibilityConverter"/>
         <!-- -->
         <local:PermissionsToBoolConverter x:Key="PermissionsConverter"/>

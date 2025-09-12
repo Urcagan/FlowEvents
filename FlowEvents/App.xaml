@@ -1,11 +1,18 @@
 ﻿<Application x:Class="FlowEvents.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:FlowEvents"
-              StartupUri="Views/MainWindow.xaml" >
+             xmlns:local="clr-namespace:FlowEvents">
+    <!-- " StartupUri="Views/MainWindow.xaml" >-->
     <Application.Resources>
+       <!-- Создадим словарь ресурсов для доступа к обьявленным ресурсам во всем приложении        -->
         <ResourceDictionary>
-            <local:InverseBooleanConverter x:Key="InverseBooleanConverter"/> <!-- Регистрация конвертера в ресурсах -->
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Отдельный словарь ресурсов -->
+                <ResourceDictionary>
+                    <local:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
+                    <!-- Добавьте здесь другие глобальные конвертеры -->
+                </ResourceDictionary>
+            </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

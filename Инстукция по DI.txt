@@ -1,0 +1,1772 @@
+
+┌────────────────────────────────────────────┐
+│ 1. РЕГИСТРАЦИЯ ЗАВИСИМОСТЕЙ				 │
+└────────────────────────────────────────────┘ 
+1. РЕГИСТРАЦИЯ ЗАВИСИМОСТЕЙ (Настройка "баночек")
+plaintext
+
+┌─────────────────────────────────────────────────────────┐
+│                 КОНТЕЙНЕР DI                    		  │
+│                                                 		  │
+│  ┌────────────────┐    ┌────────────────────────────┐   │
+│  │ IMessageService│  → │ MessageService (реализация)│   │
+│  └────────────────┘    └────────────────────────────┘   │
+│                                                 		  │
+│  ┌────────────────┐    ┌────────────────────────────┐   │
+│  │ IUserService	│  → │ UserService (реализация)   │   │
+│  └────────────────┘    └────────────────────────────┘   │
+│                                                		  │
+│  ┌────────────────┐    ┌────────────────────────────┐   │
+│  │ MainViewModel  │  → │ (автосоздание)         	  │   │
+│  └────────────────┘    └────────────────────────────┘   │
+└─────────────────────────────────────────────────────────┘
+
+Что происходит:
+
+    Говорим контейнеру: "Когда кто-то попросит IMessageService - дай ему MessageService"
+
+    Регистрируем ВСЕ сервисы и ViewModel при запуске приложения
+
+2. ВНЕДРЕНИЕ В ГЛАВНОЕ ОКНО
+
+┌─────────────────────────────────────────────────┐
+│                 MainWindow                      │
+│                                                 │
+│  DataContext: MainViewModel                     │
+│  ┌─────────────────────────────────────────────┐│
+│  │               MainViewModel                 ││
+│  │                                             ││
+│  │ - IMessageService _messageService           ││
+│  │ - IUserService _userService                 ││
+│  │                                             ││
+│  │ ▲ Контейнер автоматически передает          ││
+│  │   все зависимости в конструктор             ││
+│  └─────────────────────────────────────────────┘│
+└─────────────────────────────────────────────────┘
+
+Как работает:
+
+    Контейнер создает MainViewModel
+
+    Видит, что в конструкторе нужны IMessageService и IUserService
+
+    Берет зарегистрированные реализации и передает их
+	
+	
+	3. СОЗДАНИЕ ДОПОЛНИТЕЛЬНЫХ ОКОН
+┌─────────────────────────────────────────────────┐
+│                 ModalWindow                     │
+│                                                 │
+│  DataContext: ModalViewModel (создаем вручную)  │ 
+│  ┌─────────────────────────────────────────────┐│
+│  │               ModalViewModel                ││
+│  │                                             ││
+│  │ - IMessageService _messageService           ││
+│  │ - IDataService _dataService                 ││
+│  │                                             ││
+│  │ ▲ Берем из контейнера:                      ││
+│  │   var vm = container.GetService<ModalViewModel>()│
+│  └─────────────────────────────────────────────┘│
+└─────────────────────────────────────────────────┘
+Важно! Окно создаем через new ModalWindow(), а ViewModel - через контейнер.
+4. ИСПОЛЬЗОВАНИЕ В МЕТОДАХ
+
+┌─────────────────────────────────────────────────┐
+│               MainViewModel                     │
+│                                                 │
+│  public void SomeMethod()                       │
+│  {                                              │
+│      // Используем внедренные сервисы           │
+│      _messageService.ShowMessage("Hello!");     │
+│      var users = _userService.GetUsers();       │
+│  }                                              │
+│                                                 │
+│  public void OpenModal()                        │
+│  {                                              │
+│      // Берем ViewModel из контейнера           │
+│      var modalVM = container.GetService<ModalViewModel>();│
+│      // Создаем окно                            │
+│      var window = new ModalWindow();            │
+│      window.DataContext = modalVM;              │
+│      window.ShowDialog();                       │
+│  }                                              │
+└─────────────────────────────────────────────────┘
+
+5. ПРАВИЛА И ПРИНЦИПЫ
+
+✅ КТО получает зависимости:
+
+    ViewModel (через конструктор)
+
+    Сервисы (если зависят от других сервисов)
+
+❌ КТО НЕ получает через DI:
+
+    Окна (View) - создаются через new
+
+    UserControl'ы - создаются через new
+
+📦 ТИПЫ РЕГИСТРАЦИИ:
+
+    AddSingleton - один экземпляр на всё приложение
+
+    AddTransient - новый экземпляр каждый раз
+
+    AddScoped - один экземпляр на область (в WPF обычно не используется)
+
+6. ПОТОК СОЗДАНИЯ
+
+1. Зарегистрировали сервисы в контейнере
+2. Создали MainViewModel через контейнер
+   → контейнер сам находит и подставляет все зависимости
+3. В MainViewModel создаем новое окно:
+   - Окно: new ModalWindow()
+   - ViewModel: container.GetService<ModalViewModel>()
+   - Связываем их: window.DataContext = modalVM
+4. В ModalViewModel работаем с сервисами как обычно
+
+💡 КЛЮЧЕВАЯ ИДЕЯ:
+
+Контейнер - это "фабрика", которая знает, как создавать объекты со всеми их зависимостями.
+
+Тебе нужно только:
+
+    Зарегистрировать все зависимости при старте
+
+    Брать объекты из контейнера когда они нужны
+
+    Окна создавать обычным способом (new)
+
+Всё! Больше ничего сложного нет.
+
+┌────────────────────────────────────────┐
+│ 2. КОНТЕЙНЕР DI						 │
+└────────────────────────────────────────┘
+
+КОНТЕЙНЕР DI - "ГЛАВНАЯ ФАБРИКА"
+📍 ГДЕ НАХОДИТСЯ КОНТЕЙНЕР?
+┌─────────────────────────────────────────────────┐
+│                   ПРИЛОЖЕНИЕ                    │
+│                                                 │
+│  ┌─────────────────────────────────────────────┐│
+│  │                  App.cs                     ││
+│  │                                             ││
+│  │  public static IServiceProvider Container   ││ │
+│  │  { get; private set; }                      ││ ← Контейнер здесь!
+│  │                                             ││
+│  └─────────────────────────────────────────────┘│
+│                                                 │
+└─────────────────────────────────────────────────┘
+
+Контейнер создается один раз при старте приложения и хранится в классе App.
+🔧 КАК СОЗДАЕТСЯ КОНТЕЙНЕР?
+plaintext
+
+1. СОЗДАЕМ "КОРОБКУ ДЛЯ ЗАВИСИМОСТЕЙ"
+   ↓
+   var collection = new ServiceCollection()
+
+2. КЛАДЕМ В КОРОБКУ ВСЕ НУЖНЫЕ ВЕЩИ
+   ↓
+   collection.AddSingleton<IMessageService, MessageService>()
+   collection.AddSingleton<IUserService, UserService>()
+   collection.AddTransient<MainViewModel>()
+
+3. ЗАКРЫВАЕМ КОРОБКУ И ПОЛУЧАЕМ КОНТЕЙНЕР
+   ↓
+   Container = collection.BuildServiceProvider()
+   
+   🏗️ СТРУКТУРА КОНТЕЙНЕРА
+plaintext
+
+┌─────────────────────────────────────────────────┐
+│              КОНТЕЙНЕР (Container)              │
+│                                                 │
+│  ┌─────────────────────────────────────────────┐│
+│  │           СЛОВАРЬ ЗАВИСИМОСТЕЙ              ││
+│  │                                             ││
+│  │  Ключ:      Значение:                       ││
+│  │  IMessageService → MessageService           ││
+│  │  IUserService   → UserService               ││
+│  │  MainViewModel  → (фабрика создания)        ││
+│  │                                             ││
+│  └─────────────────────────────────────────────┘│
+│                                                 │
+│  ┌─────────────────────────────────────────────┐│
+│  │               КЭШ ОБЪЕКТОВ                  ││
+│  │                                             ││
+│  │  Singleton: [MessageService instance]       ││
+│  │  Singleton: [UserService instance]          ││
+│  │                                             ││
+│  └─────────────────────────────────────────────┘│
+└─────────────────────────────────────────────────┘
+
+🔄 КАК РАБОТАЕТ КОНТЕЙНЕР?
+
+Когда просим объект:
+plaintext
+
+MainViewModel vm = Container.GetService<MainViewModel>()
+
+1. Контейнер ищет MainViewModel в словаре
+2. Видит, что нужен конструктор с параметрами
+3. Рекурсивно создает все зависимости:
+   - Создает MessageService (если еще не создан)
+   - Создает UserService (если еще не создан)  
+4. Передает зависимости в конструктор
+5. Возвращает готовый MainViewModel
+
+📋 ПРАВИЛА СОЗДАНИЯ КОНТЕЙНЕРА
+
+1. МЕСТО: Только в App.OnStartup() - при запуске приложения
+
+2. ПОРЯДОК:
+
+    Создаем коллекцию сервисов
+
+    Регистрируем ВСЕ зависимости
+
+    Строим контейнер
+
+    Сохраняем в статическое свойство
+
+3. ЧТО РЕГИСТРИРУЕМ:
+
+    Все сервисы (интерфейсы → реализации)
+
+    Все ViewModel
+
+    Окна (если нужно, но обычно нет)
+
+🎪 АНАЛОГИЯ С ФАБРИКОЙ
+plaintext
+
+┌─────────────────────────────────────────────────┐
+│                 КОНТЕЙНЕР DI                    │
+│   (это как умная фабрика-робот)                 │
+│                                                 │
+│  РОБОТУ СКАЗАЛИ:                                │
+│  - Если попросят IMessageService → дай MessageService │
+│  - Если попросят MainViewModel → собери его из деталей│
+│                                                 │
+│  КОГДА ПРИХОДИТ ЗАПРОС:                         │
+│  "Дай MainViewModel"                            │
+│                                                 │
+│  РОБОТ:                                         │
+│  1. Берёт MessageService со склада              │
+│  2. Берёт UserService со склада                 │
+│  3. Собирает MainViewModel                      │
+│  4. Отдает готовый продукт                      │
+└─────────────────────────────────────────────────┘
+
+⚠️ ЧЕГО НЕ ДЕЛАЕТ КОНТЕЙНЕР:
+
+    НЕ создает окна автоматически
+
+    НЕ управляет жизненным циклом окон
+
+    НЕ знает о существовании XAML
+
+💡 КЛЮЧЕВЫЕ ИДЕИ:
+
+    Контейнер - один на всё приложение
+
+    Создается один раз при старте
+
+    Хранится в App как статическое свойство
+
+    Знает как создавать ЛЮБОЙ зарегистрированный объект
+
+    Сам разбирается со всеми зависимостями
+
+Контейнер - это мозг приложения, который знает как создавать все объекты и связывать их между собой! 🧠
+
+
+---------------- ПРИМЕР КОДА ---------------------------
+public partial class App : Application
+{
+    public static IServiceProvider ServiceProvider { get; private set; }
+
+    protected override void OnStartup(StartupEventArgs e)
+    {
+        try
+        {
+            base.OnStartup(e);
+
+            // Настройка DI контейнера
+            ConfigureServices();
+
+            // Создаем и показываем главное окно
+
+            var mainWindow = ServiceProvider.GetService<MainWindow>();
+            if (mainWindow == null) throw new InvalidOperationException("MainWindow not registered");
+
+            var mainViewModel = ServiceProvider.GetService<MainViewModel>();
+            if (mainViewModel == null) throw new InvalidOperationException("MainViewModel not registered");
+
+            mainWindow.DataContext = mainViewModel;
+
+            mainWindow.Show();
+
+        }
+        catch (Exception ex)
+        {
+            // Логирование ошибки запуска
+            MessageBox.Show($"Ошибка запуска: {ex.Message}");
+            Shutdown();
+        }
+
+    }
+
+    //Вынос конфигурации сервисов в отдельный метод
+    private void ConfigureServices()
+    {
+        // Создаем коллекцию сервисов
+        var services = new ServiceCollection();
+
+        // Регистрируем сервисы
+        services.AddSingleton<IMessageService, MessageService>();
+        services.AddSingleton<IUserService, UserService>(); // НОВАЯ РЕГИСТРАЦИЯ: Добавляем сервис пользователей
+        services.AddSingleton<IDataService, DataService>(); // ← НОВЫЙ СЕРВИС
+
+        // Регистрируем ViewModel
+        services.AddTransient<MainViewModel>();
+        services.AddTransient<ModalViewModel>(); // ← ViewModel модального окна
+
+        //  Регистрация окон
+        services.AddTransient<MainWindow>();
+        services.AddTransient<ModalWindow>(); // ← Модальное окно
+
+        ServiceProvider = services.BuildServiceProvider();
+    }
+}
+
+Отличный код! ✅ Абсолютно правильно и соответствует лучшим практикам!
+✅ Что сделано правильно:
+
+    ✔️ Контейнер создается один раз в OnStartup
+
+    ✔️ Используется статическое свойство ServiceProvider для доступа
+
+    ✔️ Вынесена отдельным методом ConfigureServices() - чисто и понятно
+
+    ✔️ Правильные lifetime'ы:
+
+        Сервисы как Singleton (один экземпляр на всё приложение)
+
+        ViewModel как Transient (новый экземпляр каждый раз)
+
+    ✔️ Полное разрешение зависимостей через контейнер
+	
+	🎯 Небольшие улучшения (опционально):
+1. Обработка ошибок:
+csharp
+
+protected override void OnStartup(StartupEventArgs e)
+{
+    try
+    {
+        base.OnStartup(e);
+        ConfigureServices();
+        
+        var mainWindow = ServiceProvider.GetService<MainWindow>();
+        mainWindow.DataContext = ServiceProvider.GetService<MainViewModel>();
+        mainWindow.Show();
+    }
+    catch (Exception ex)
+    {
+        // Логирование ошибки запуска
+        MessageBox.Show($"Ошибка запуска: {ex.Message}");
+        Shutdown();
+    }
+}
+
+2. Проверка на null:
+csharp
+
+var mainWindow = ServiceProvider.GetService<MainWindow>();
+if (mainWindow == null) throw new InvalidOperationException("MainWindow not registered");
+
+var mainViewModel = ServiceProvider.GetService<MainViewModel>();
+if (mainViewModel == null) throw new InvalidOperationException("MainViewModel not registered");
+
+mainWindow.DataContext = mainViewModel;
+
+3. Регистрация через интерфейсы (если нужно):
+csharp
+
+// Вместо прямого указания окон
+services.AddTransient<MainWindow>();
+
+// Можно использовать интерфейсы (для тестирования)
+services.AddTransient<IMainWindow, MainWindow>();
+
+⚠️ Важное замечание по окнам:
+
+Регистрация окон как Transient может вызывать проблемы, если в конструкторе окна есть сложная логика. Часто лучше создавать окна через new:
+csharp
+
+// Вместо:
+services.AddTransient<MainWindow>();
+services.AddTransient<ModalWindow>();
+
+// Можно просто создавать через new:
+var mainWindow = new MainWindow();
+
+┌────────────────────────────────────────┐
+│ 3. ВНЕДРЕНИЕ ЗАВИСИМОСТЕЙ				 │
+└────────────────────────────────────────┘
+
+Отлично! Переходим к следующему этапу.
+
+🎯 СЛЕДУЮЩИЙ ЭТАП: ВНЕДРЕНИЕ ЗАВИСИМОСТЕЙ
+
+Теперь, когда контейнер создан и всё зарегистрировано, нужно "достать" зависимости и использовать их.
+📍 КАК ВНЕДРЯТЬ ЗАВИСИМОСТИ?
+
+Есть 3 основных способа:
+1. ВНЕДРЕНИЕ ЧЕРЕЗ КОНСТРУКТОР (Самый правильный способ)
+plaintext
+
+┌─────────────────────────────────────────────────┐
+│               MainViewModel                     │
+│                                                 │
+│  public MainViewModel(                          │
+│      IMessageService messageService,            │ ← ДЕЛАЕМ ТАК!
+│      IUserService userService)                  │
+│  {                                              │
+│      _messageService = messageService;          │
+│      _userService = userService;                │
+│  }                                              │
+└─────────────────────────────────────────────────┘
+
+Как работает:
+
+    Контейнер видит, что в конструкторе нужны IMessageService и IUserService
+
+    Автоматически находит их в своем словаре
+
+    Создает и передает готовые экземпляры
+
+2. ВНЕДРЕНИЕ ЧЕРЕЗ СВОЙСТВА (Реже используется)
+plaintext
+
+┌─────────────────────────────────────────────────┐
+│               MainViewModel                     │
+│                                                 │
+│  public IMessageService MessageService          │
+│  { get; set; }                                  │ ← ИЛИ ТАК (менее предпочтительно)
+│                                                 │
+│  public IUserService UserService                │
+│  { get; set; }                                  │
+└─────────────────────────────────────────────────┘
+
+3. РУЧНОЕ ПОЛУЧЕНИЕ ИЗ КОНТЕЙНЕРА (Для особых случаев)
+plaintext
+
+┌─────────────────────────────────────────────────┐
+│               MainViewModel                     │
+│                                                 │
+│  public void SomeMethod()                       │
+│  {                                              │
+│      var service = App.ServiceProvider          │ ← ТОЛЬКО ЕСЛИ ОЧЕНЬ НАДО!
+│                  .GetService<IMessageService>();│
+│  }                                              │
+└─────────────────────────────────────────────────┘
+
+🎯 ПРАКТИЧЕСКОЕ ПРИМЕНЕНИЕ:
+
+В MainViewModel:
+plaintext
+
+┌─────────────────────────────────────────────────┐
+│               MainViewModel                     │
+│                                                 │
+│  private readonly IMessageService _messageService;│
+│  private readonly IUserService _userService;    │
+│                                                 │
+│  public MainViewModel(                          │
+│      IMessageService messageService,            │
+│      IUserService userService)                  │
+│  {                                              │
+│      _messageService = messageService;          │ ← ВНЕДРИЛИ!
+│      _userService = userService;                │
+│  }                                              │
+│                                                 │
+│  public void ShowWelcomeMessage()               │
+│  {                                              │
+│      // ИСПОЛЬЗУЕМ!                            │
+│      _messageService.ShowMessage("Добро пожаловать!");│
+│      var users = _userService.GetUsers();       │
+│  }                                              │
+└─────────────────────────────────────────────────┘
+
+🔄 КАК ЭТО РАБОТАЕТ НА ПРАКТИКЕ:
+plaintext
+
+1. В App.OnStartup():
+   - Создали контейнер
+   - Зарегистрировали всё что нужно
+
+2. Создаем MainViewModel:
+   var viewModel = ServiceProvider.GetService<MainViewModel>()
+
+3. Контейнер делает:
+   - Видит конструктор MainViewModel(IMessageService, IUserService)
+   - Ищет IMessageService → находит MessageService
+   - Ищет IUserService → находит UserService  
+   - Создает MainViewModel, передавая туда готовые сервисы
+
+4. Мы получаем полностью готовый MainViewModel со всеми зависимостями!
+
+⚠️ ЧТО НЕ НУЖНО ДЕЛАТЬ:
+plaintext
+
+❌ НЕВЕРНО:
+public MainViewModel()
+{
+    // Не создавайте сервисы вручную!
+    _messageService = new MessageService();
+    _userService = new UserService();
+}
+
+❌ НЕВЕРНО:  
+public MainViewModel()
+{
+    // Не обращайтесь к контейнеру из конструктора!
+    _messageService = App.ServiceProvider.GetService<IMessageService>();
+}
+
+💡 ЗОЛОТОЕ ПРАВИЛО:
+
+"Проси зависимости в конструкторе - контейнер сам их подставит"
+
+Просто объявляйте нужные сервисы в конструкторе ViewModel, а контейнер уже сделает всю магию! 🪄
+
+Теперь ваши ViewModel становятся чистыми и тестируемыми, потому что они не знают как создаются зависимости - они только их используют.
+
+
+🎯 Проверка реализации:
+csharp
+
+public class MainViewModel
+{
+    private readonly IMessageService _messageService; // ✅ Правильно - readonly
+    private readonly IUserService _userService;       // ✅ Правильно - приватные поля
+    
+    // ✅ Правильно - внедрение через конструктор
+    public MainViewModel(IMessageService messageService, 
+                        IUserService userService)
+    {
+        _messageService = messageService;  // ✅ Правильное присвоение
+        _userService = userService;        // ✅ Корректное именование
+    }
+}
+
+ВСЁ СДЕЛАНО ПРАВИЛЬНО! 👏
+💡 Краткие примеры использования сервисов:
+1. Простое использование в методах:
+csharp
+
+public void ShowWelcomeMessage()
+{
+    _messageService.ShowMessage("Добро пожаловать в приложение!");
+}
+
+public void DisplayAllUsers()
+{
+    var users = _userService.GetUsers();
+    string userList = string.Join("\n", users);
+    _messageService.ShowMessage($"Пользователи:\n{userList}");
+}
+
+2. Использование в командах:
+csharp
+
+public ICommand ShowInfoCommand => new RelayCommand(_ =>
+{
+    _messageService.ShowMessage("Информация о системе...");
+});
+
+public ICommand AddUserCommand => new RelayCommand(userName =>
+{
+    if (!string.IsNullOrEmpty(userName?.ToString()))
+    {
+        _userService.AddUser(userName.ToString());
+        _messageService.ShowMessage($"Пользователь {userName} добавлен!");
+    }
+});
+
+3. Комбинирование сервисов:
+csharp
+
+public void UserOperation()
+{
+    var currentUser = _userService.GetCurrentUser();
+    _messageService.ShowMessage($"Текущий пользователь: {currentUser}");
+    
+    // Какая-то бизнес-логика
+    if (_userService.GetUsers().Count > 5)
+    {
+        _messageService.ShowError("Слишком много пользователей!");
+    }
+}
+
+4. Обработка ошибок:
+csharp
+
+public void SafeUserOperation()
+{
+    try
+    {
+        var users = _userService.GetUsers();
+        // Работа с пользователями...
+    }
+    catch (Exception ex)
+    {
+        _messageService.ShowError($"Ошибка: {ex.Message}");
+    }
+}
+
+🎯 Ключевые преимущества вашего подхода:
+
+    ✅ Тестируемость - легко подменить сервисы на mock-объекты
+
+    ✅ Гибкость - можно менять реализации сервисов не трогая ViewModel
+
+    ✅ Чистота кода - зависимости явно видны в конструкторе
+
+    ✅ Безопасность - readonly предотвращает случайное переприсвоение
+
+Ваш код - образец правильного использования DI! 🚀
+
+
+┌─────────────────────────────────────────────────┐
+│  4. ОТКРЫТИЕ МОДАЛЬНОГО ОКНА С DI               │
+└─────────────────────────────────────────────────┘
+
+Отлично! Рассмотрим схематично, как правильно открыть модальное окно с использованием сервисов.
+🎯 ОТКРЫТИЕ МОДАЛЬНОГО ОКНА С DI
+📍 СХЕМА РАБОТЫ:
+plaintext
+
+┌─────────────────────────────────────────────────┐
+│               MainViewModel                     │
+│                                                 │
+│  private void OpenModalWindow()                 │
+│  {                                              │
+│      // 1. Берем ViewModel из контейнера        │
+│      var modalVM = App.ServiceProvider          │
+│                 .GetService<ModalViewModel>();  │
+│                                                 │
+│      // 2. Создаем окно обычным способом        │
+│      var modalWindow = new ModalWindow();       │
+│                                                 │
+│      // 3. Связываем ViewModel с окном          │
+│      modalWindow.DataContext = modalVM;         │
+│                                                 │
+│      // 4. Настраиваем обработчик закрытия      │
+│      modalVM.CloseRequested += (result) =>      │
+│      {                                          │
+│          modalWindow.DialogResult = result;     │
+│          modalWindow.Close();                   │
+│      };                                         │
+│                                                 │
+│      // 5. Показываем модально                  │
+│      modalWindow.Owner = Application.Current.MainWindow;│
+│      modalWindow.ShowDialog();                  │
+│  }                                              │
+└─────────────────────────────────────────────────┘
+
+📍 ModalViewModel С СЕРВИСАМИ:
+plaintext
+
+┌─────────────────────────────────────────────────┐
+│               ModalViewModel                    │
+│                                                 │
+│  private readonly IMessageService _messageService;│
+│  private readonly IUserService _userService;    │
+│                                                 │
+│  // Конструктор с внедрением зависимостей       │
+│  public ModalViewModel(                         │
+│      IMessageService messageService,            │
+│      IUserService userService)                  │
+│  {                                              │
+│      _messageService = messageService;          │
+│      _userService = userService;                │
+│  }                                              │
+│                                                 │
+│  // Событие для закрытия окна                   │
+│  public event Action<bool?> CloseRequested;     │
+│                                                 │
+│  public void PerformOperation()                 │
+│  {                                              │
+│      _messageService.ShowMessage("Работаем!");  │
+│      var users = _userService.GetUsers();       │
+│  }                                              │
+└─────────────────────────────────────────────────┘
+
+📍 ModalWindow (ОКНО):
+plaintext
+
+┌─────────────────────────────────────────────────┐
+│               ModalWindow                       │
+│                                                 │
+│  // Простой конструктор без параметров          │
+│  public ModalWindow()                           │
+│  {                                              │
+│      InitializeComponent();                     │
+│  }                                              │
+│                                                 │
+│  // Вся логика в ViewModel, окно только         │
+│  // отображает UI и обрабатывает события       │
+└─────────────────────────────────────────────────┘
+
+🔄 ПОЛНЫЙ ЦИКЛ РАБОТЫ:
+plaintext
+
+1. Пользователь жмет кнопку в MainWindow
+2. MainViewModel.OpenModalWindow() вызывается
+3. Берем ModalViewModel из контейнера → контейнер автоматически внедряет IMessageService и IUserService
+4. Создаем ModalWindow через new ModalWindow()
+5. Связываем: modalWindow.DataContext = modalVM
+6. Подписываемся на событие закрытия из ViewModel
+7. Показываем окно модально
+8. Пользователь работает с окном → все вызовы идут в ModalViewModel
+9. ModalViewModel решает закрыть окно → вызывает CloseRequested
+10. Окно закрывается с результатом
+
+💡 КЛЮЧЕВЫЕ ПРИНЦИПЫ:
+
+    ✅ ViewModel берем из контейнера - получаем с внедренными зависимостями
+
+    ✅ Окно создаем через new - избегаем циклических зависимостей
+
+    ✅ Связываем вручную - window.DataContext = viewModel
+
+    ✅ Логика в ViewModel - окно только для отображения
+
+    ✅ События для коммуникации - ViewModel сообщает когда закрываться
+
+⚠️ ЧЕГО НЕ ДЕЛАТЬ:
+plaintext
+
+❌ НЕ регистрировать окна с зависимостями в конструкторе
+❌ НЕ пытаться внедрять окно в ViewModel
+❌ НЕ создавать ViewModel вручную (new ModalViewModel())
+❌ НЕ помещать логику в code-behind окна
+
+Такой подход гарантирует чистую архитектуру, тестируемость и правильную работу с DI! 🚀
+
+Отлично !
+Давай уточним еще одну мелочь.
+Ранее ты приводил пример для модального окна 
+ОТКРЫТИЕ МОДАЛЬНОГО ОКНА С DI
+📍 СХЕМА РАБОТЫ:
+plaintext
+
+┌─────────────────────────────────────────────────┐
+│               MainViewModel                     │
+│                                                 │
+│  private void OpenModalWindow()                 │
+│  {                                              │
+│      // 1. Берем ViewModel из контейнера        │
+│      var modalVM = App.ServiceProvider          │
+│                 .GetService<ModalViewModel>();  │
+│                                                 │
+│      // 2. Создаем окно обычным способом        │
+│      var modalWindow = new ModalWindow();       │
+│                                                 │
+│      // 3. Связываем ViewModel с окном          │
+│      modalWindow.DataContext = modalVM;         │
+│                                                 │
+│      // 4. Настраиваем обработчик закрытия      │
+│      modalVM.CloseRequested += (result) =>      │
+│      {                                          │
+│          modalWindow.DialogResult = result;     │
+│          modalWindow.Close();                   │
+│      };                                         │
+│                                                 │
+│      // 5. Показываем модально                  │
+│      modalWindow.Owner = Application.Current.MainWindow;│
+│      modalWindow.ShowDialog();                  │
+│  }                                              │
+└─────────────────────────────────────────────────┘
+И здесь ты в ручную получаещ ViewModel из контейнера хотя в пояснении говорил так делать в крайнем случае если нужно. Как это?
+
+Отличное замечание! Вы абсолютно правы - здесь есть противоречие. Давайте разберемся.
+🎯 ПРОТИВОРЕЧИЕ И ЕГО РЕШЕНИЕ
+
+Вы правильно заметили: я советовал избегать ручного получения из контейнера, но в примере использовал именно этот подход. Это действительно неидеально.
+📍 ПОЧЕМУ ТАК ПРОИЗОШЛО:
+plaintext
+
+┌─────────────────────────────────────────────────┐
+│               ПРОБЛЕМА:                         │
+│                                                 │
+│  MainViewModel уже создан с DI, но теперь       │
+│  нужно создать ModalViewModel, который тоже     │
+│  требует зависимостей                           │
+│                                                 │
+│  Варианты:                                      │
+│  1. Ручное получение из контейнера (просто, но не идеально)│
+│  2. Внедрение фабрики (правильно, но сложнее)   │
+└─────────────────────────────────────────────────┘
+
+📍 ИДЕАЛЬНОЕ РЕШЕНИЕ - ВНЕДРЕНИЕ ФАБРИКИ:
+plaintext
+
+┌─────────────────────────────────────────────────┐
+│               MainViewModel                     │
+│                                                 │
+│  private readonly IModalViewModelFactory _factory;│
+│                                                 │
+│  public MainViewModel(                          │
+│      IMessageService messageService,            │
+│      IUserService userService,                  │
+│      IModalViewModelFactory factory)            │ ← ФАБРИКА!│
+│  {                                              │
+│      _messageService = messageService;          │
+│      _userService = userService;                │
+│      _factory = factory;                        │
+│  }                                              │
+│                                                 │
+│  private void OpenModalWindow()                 │
+│  {                                              │
+│      // 1. Используем фабрику вместо ручного получения│
+│      var modalVM = _factory.Create();           │
+│                                                 │
+│      // 2. Создаем окно                         │
+│      var modalWindow = new ModalWindow();       │
+│      modalWindow.DataContext = modalVM;         │
+│                                                 │
+│      // 3. Настраиваем обработчик               │
+│      modalVM.CloseRequested += (result) =>      │
+│      {                                          │
+│          modalWindow.DialogResult = result;     │
+│          modalWindow.Close();                   │
+│      };                                         │
+│                                                 │
+│      // 4. Показываем                           │
+│      modalWindow.Owner = Application.Current.MainWindow;│
+│      modalWindow.ShowDialog();                  │
+│  }                                              │
+└─────────────────────────────────────────────────┘
+
+📍 РЕАЛИЗАЦИЯ ФАБРИКИ:
+plaintext
+
+┌─────────────────────────────────────────────────┐
+│               IModalViewModelFactory            │
+│                                                 │
+│  public interface IModalViewModelFactory        │
+│  {                                              │
+│      ModalViewModel Create();                   │
+│  }                                              │
+└─────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────┐
+│               ModalViewModelFactory             │
+│                                                 │
+│  public class ModalViewModelFactory             │
+│      : IModalViewModelFactory                   │
+│  {                                              │
+│      private readonly IServiceProvider _provider;│
+│                                                 │
+│      public ModalViewModelFactory(             │
+│          IServiceProvider provider)             │
+│      {                                          │
+│          _provider = provider;                  │
+│      }                                          │
+│                                                 │
+│      public ModalViewModel Create()             │
+│      {                                          │
+│          return _provider.GetService<ModalViewModel>();│
+│      }                                          │
+└─────────────────────────────────────────────────┘
+
+📍 РЕГИСТРАЦИЯ ФАБРИКИ:
+plaintext
+
+// В ConfigureServices():
+services.AddTransient<IModalViewModelFactory, ModalViewModelFactory>();
+
+📍 ПОЧЕМУ ФАБРИКА ЛУЧШЕ:
+plaintext
+
+✅ MainViewModel не знает о существовании контейнера
+✅ Сохраняется принцип инверсии зависимостей
+✅ Легче тестировать (можно подменить фабрику)
+✅ Более чистая архитектура
+
+📍 КОГДА МОЖНО ИСПОЛЬЗОВАТЬ РУЧНОЕ ПОЛУЧЕНИЕ:
+plaintext
+
+⚠️ Допустимо в простых приложениях
+⚠️ Когда количество таких вызовов минимально  
+⚠️ Для быстрого прототипирования
+
+💡 ВЫВОД:
+
+Вы абсолютно правы - ручное получение из контейнера не является идеальным подходом. Фабрика - более правильное решение.
+
+Но в примере я использовал ручной подход, потому что он:
+
+    Проще для понимания
+
+    Короче в реализации
+
+    Подходит для демонстрации концепции
+
+Для production-приложений лучше использовать фабрику! 🏭
+
+Спасибо за внимательность! Это важное замечание улучшает архитектуру приложения. 👏
+
+----------------------------------------------------------------------------------------------------------------------------------------------
+┌─────────────────────────────────────────────────┐
+│  5. ИСПОЛЬЗОВАНИЕ СЕРВИСОВ В ДРУГИХ КЛАССАХ     │
+└─────────────────────────────────────────────────┘
+
+🎯 ИСПОЛЬЗОВАНИЕ СЕРВИСОВ В ДРУГИХ КЛАССАХ
+📍 СИТУАЦИИ, КОГДА ЭТО НУЖНО:
+
+    Сервисные классы - один сервис использует другой
+
+    Утилитные классы - вспомогательные классы с логикой
+
+    Менеджеры - классы управления конкретными функциями
+
+    Репозитории - классы работы с данными
+
+📍 СПОСОБЫ ВНЕДРЕНИЯ В ДРУГИЕ КЛАССЫ:
+1. ЧЕРЕЗ КОНСТРУКТОР (Предпочтительный способ)
+plaintext
+
+┌─────────────────────────────────────────────────┐
+│               DataManager                        │
+│                                                 │
+│  private readonly IMessageService _messageService;│
+│  private readonly IUserService _userService;    │
+│                                                 │
+│  public DataManager(                            │
+│      IMessageService messageService,            │
+│      IUserService userService)                  │
+│  {                                              │
+│      _messageService = messageService;          │
+│      _userService = userService;                │
+│  }                                              │
+│                                                 │
+│  public void ProcessData()                      │
+│  {                                              │
+│      var users = _userService.GetUsers();       │
+│      _messageService.ShowMessage($"Найдено: {users.Count}");│
+│  }                                              │
+└─────────────────────────────────────────────────┘
+
+Регистрация в контейнере:
+plaintext
+
+services.AddTransient<DataManager>();
+
+2. ЧЕРЕЗ РУЧНОЕ ПОЛУЧЕНИЕ (Для статических методов или утилит)
+plaintext
+
+┌─────────────────────────────────────────────────┐
+│               ReportGenerator                    │
+│                                                 │
+│  public static void GenerateReport()             │
+│  {                                              │
+│      // Получаем сервисы из контейнера          │
+│      var messageService = App.ServiceProvider   │
+│                 .GetService<IMessageService>(); │
+│                                                 │
+│      var userService = App.ServiceProvider      │
+│                 .GetService<IUserService>();    │
+│                                                 │
+│      // Используем сервисы                      │
+│      var users = userService.GetUsers();        │
+│      messageService.ShowMessage($"Отчет: {users.Count}");│
+│  }                                              │
+└─────────────────────────────────────────────────┘
+
+3. СЕРВИСЫ, ИСПОЛЬЗУЮЩИЕ ДРУГИЕ СЕРВИСЫ
+plaintext
+
+┌─────────────────────────────────────────────────┐
+│               AnalyticsService                   │
+│                                                 │
+│  private readonly IUserService _userService;    │
+│  private readonly IMessageService _messageService;│
+│                                                 │
+│  public AnalyticsService(                       │
+│      IUserService userService,                  │
+│      IMessageService messageService)            │
+│  {                                              │
+│      _userService = userService;                │
+│      _messageService = messageService;          │
+│  }                                              │
+│                                                 │
+│  public void AnalyzeData()                      │
+│  {                                              │
+│      var users = _userService.GetUsers();       │
+│      // Аналитика...                           │
+│      _messageService.ShowMessage("Анализ завершен");│
+│  }                                              │
+└─────────────────────────────────────────────────┘
+
+Регистрация:
+plaintext
+
+services.AddSingleton<AnalyticsService>();
+
+🔄 КАК ЭТО РАБОТАЕТ:
+plaintext
+
+1. Регистрируем класс в контейнере:
+   services.AddTransient<DataManager>();
+
+2. Когда нужно использовать:
+   var manager = App.ServiceProvider.GetService<DataManager>();
+
+3. Контейнер автоматически:
+   - Видит, что DataManager требует IMessageService и IUserService
+   - Находит эти сервисы в своем словаре
+   - Создает DataManager с уже внедренными зависимостями
+
+4. Мы получаем готовый к работе DataManager!
+
+💡 ПРАКТИЧЕСКИЕ ПРИМЕРЫ:
+
+Класс для логирования:
+plaintext
+
+┌─────────────────────────────────────────────────┐
+│               AppLogger                          │
+│                                                 │
+│  private readonly IMessageService _messageService;│
+│                                                 │
+│  public AppLogger(IMessageService messageService)│
+│  {                                              │
+│      _messageService = messageService;          │
+│  }                                              │
+│                                                 │
+│  public void Log(string message)                │
+│  {                                              │
+│      _messageService.ShowMessage($"[LOG] {message}");│
+│  }                                              │
+└─────────────────────────────────────────────────┘
+
+Класс для валидации:
+plaintext
+
+┌─────────────────────────────────────────────────┐
+│               UserValidator                      │
+│                                                 │
+│  private readonly IUserService _userService;    │
+│  private readonly IMessageService _messageService;│
+│                                                 │
+│  public UserValidator(                          │
+│      IUserService userService,                  │
+│      IMessageService messageService)            │
+│  {                                              │
+│      _userService = userService;                │
+│      _messageService = messageService;          │
+│  }                                              │
+│                                                 │
+│  public bool ValidateUser(string userName)      │
+│  {                                              │
+│      var users = _userService.GetUsers();       │
+│      bool isValid = users.Contains(userName);   │
+│                                                 │
+│      if (!isValid)                              │
+│          _messageService.ShowError("Неверный пользователь");│
+│                                                 │
+│      return isValid;                            │
+│  }                                              │
+└─────────────────────────────────────────────────┘
+
+
+
+🎯 КЛЮЧЕВЫЕ ПРИНЦИПЫ:
+
+    ✅ Любой класс может использовать сервисы - не только ViewModel
+
+    ✅ Внедрять через конструктор - самый чистый способ
+
+    ✅ Регистрировать в контейнере - чтобы DI работал автоматически
+
+    ✅ Избегать статических обращений - кроме особых случаев
+
+Теперь вы можете создавать любые классы с бизнес-логикой, и все они будут получать нужные сервисы автоматически! 🚀
+
+
+
+┌─────────────────────────────────────────────────┐
+│  6. ПЕРЕДАЧА СВОЙСТВ VS ЗАВИСИМОСТИ             │
+└─────────────────────────────────────────────────┘
+
+🎯 ПЕРЕДАЧА СВОЙСТВ VS ЗАВИСИМОСТИ
+📍 КОГДА ПЕРЕДАВАТЬ СВОЙСТВА, А КОГДА ЗАВИСИМОСТИ:
+1. ЗАВИСИМОСТИ (СЕРВИСЫ)
+plaintext
+
+ЧТО ПЕРЕДАВАТЬ ЧЕРЕЗ DI:
+✅ Сервисы приложения (MessageService, UserService, DatabaseService)
+✅ Внешние системы (API клиенты, файловые системы)  
+✅ Репозитории данных
+✅ Утилитные классы
+✅ Логгеры, анализаторы, валидаторы
+
+ПОЧЕМУ ЧЕРЕЗ DI:
+- Это инфраструктурные компоненты
+- Могут быть заменены на mock-объекты для тестов
+- Один экземпляр на всё приложение (обычно)
+- Не зависят от конкретного состояния
+
+2. СВОЙСТВА (ДАННЫЕ)
+plaintext
+
+ЧТО ПЕРЕДАВАТЬ ЧЕРЕЗ СВОЙСТВА:
+✅ Конкретные данные (userId, fileName, settings)
+✅ Состояние приложения (currentPage, selectedItem)
+✅ Параметры операций (searchQuery, filterOptions)
+✅ Временные значения
+
+ПОЧЕМУ ЧЕРЕЗ СВОЙСТВА:
+- Это изменяемые данные, а не сервисы
+- Уникальны для каждого экземпляра класса
+- Могут меняться во время выполнения
+
+📍 ПРАВИЛЬНЫЙ ПОДХОД:
+plaintext
+
+┌─────────────────────────────────────────────────┐
+│               OrderProcessor                    │
+│                                                 │
+│  // ЗАВИСИМОСТИ - через конструктор (DI)        │
+│  private readonly IMessageService _messageService;│
+│  private readonly IDatabaseService _dbService;  │
+│                                                 │
+│  // СВОЙСТВА - через параметры методов          │
+│  public void ProcessOrder(Order order)          │
+│  {                                              │
+│      // Используем зависимости                  │
+│      _dbService.SaveOrder(order);               │
+│      _messageService.ShowMessage("Заказ сохранен");│
+│                                                 │
+│      // Работаем с переданными данными          │
+│      decimal total = order.CalculateTotal();    │
+│  }                                              │
+└─────────────────────────────────────────────────┘
+
+💡 КОГДА НУЖНО И ТО, И ДРУГОЕ:
+
+Пример класса, который использует и зависимости, и свойства:
+plaintext
+
+┌─────────────────────────────────────────────────┐
+│               ReportGenerator                    │
+│                                                 │
+│  // ДЕПЕНДЕНСИИ (сервисы) - через конструктор   │
+│  private readonly IUserService _userService;    │
+│  private readonly IExportService _exportService;│
+│                                                 │
+│  public ReportGenerator(                        │
+│      IUserService userService,                  │
+│      IExportService exportService)              │
+│  {                                              │
+│      _userService = userService;                │
+│      _exportService = exportService;            │
+│  }                                              │
+│                                                 │
+│  // МЕТОД принимает СВОЙСТВА (данные)           │
+│  public void GenerateReport(                    │
+│      DateTime startDate,    // ← свойство       │
+│      DateTime endDate,      // ← свойство       │
+│      string reportType)     // ← свойство       │
+│  {                                              │
+│      // Используем зависимости                  │
+│      var users = _userService.GetUsers();       │
+│                                                 │
+│      // Используем переданные свойства          │
+│      var data = FilterData(users, startDate, endDate);│
+│                                                 │
+│      _exportService.Export(data, reportType);   │
+│  }                                              │
+└─────────────────────────────────────────────────┘
+
+⚠️ ЧАСТЫЕ ОШИБКИ:
+plaintext
+
+❌ НЕПРАВИЛЬНО:
+// Передаем сервисы как свойства
+public void Process(IMessageService messageService, Order order)
+
+❌ НЕПРАВИЛЬНО:  
+// Передаем данные через DI (зарегистрировали в контейнере)
+services.AddSingleton<DateTime>(DateTime.Now);
+
+✅ ПРАВИЛЬНО:
+// Сервисы - через конструктор (DI)
+// Данные - через параметры методов
+
+🎯 ПРАВИЛО ПРОСТОЙ ПРОВЕРКИ:
+
+Задайте вопрос:
+
+    "Это сервис или инфраструктура?" → DI через конструктор
+
+    "Это данные или состояние?" → Свойства/параметры методов
+
+Пример:
+plaintext
+
+EmailService → сервис → DI через конструктор
+userId → данные → параметр метода
+CurrentUser → состояние → свойство класса
+ConfigSettings → сервис → DI через конструктор  
+SearchQuery → данные → параметр метода
+
+💡 ИТОГ:
+
+Да, необходимо и то, и другое!
+
+    Зависимости (сервисы) → через DI в конструктор
+
+    Свойства (данные) → через параметры методов
+
+Это обеспечивает чистую архитектуру, где сервисы управляются контейнером, а данные передаются явно! 🚀
+
+
+┌─────────────────────────────────────────────────────────────────────┐
+│  7. ПРАКТИЧЕСКИЕ ПРИМЕРЫ С ИСПОЛЬЗОВАНИЕМ И ЗАВИСИМОСТЕЙ, И СВОЙСТВ │
+└─────────────────────────────────────────────────────────────────────┘
+
+🎯 ПРАКТИЧЕСКИЕ ПРИМЕРЫ С ИСПОЛЬЗОВАНИЕМ И ЗАВИСИМОСТЕЙ, И СВОЙСТВ
+📍 ПРИМЕР 1: СЕРВИС ОБРАБОТКИ ПОЛЬЗОВАТЕЛЕЙ
+plaintext
+
+┌─────────────────────────────────────────────────┐
+│               UserProcessor                     │
+│                                                 │
+│  // ЗАВИСИМОСТИ - через конструктор (DI)        │
+│  private readonly IMessageService _messageService;│
+│  private readonly IUserService _userService;    │
+│                                                 │
+│  public UserProcessor(                          │
+│      IMessageService messageService,            │
+│      IUserService userService)                  │
+│  {                                              │
+│      _messageService = messageService;          │
+│      _userService = userService;                │
+│  }                                              │
+│                                                 │
+│  // МЕТОДЫ принимают СВОЙСТВА (данные)          │
+│  public void AddUserWithEmail(string userName, string email)│
+│  {                                              │
+│      // Используем зависимость                  │
+│      _userService.AddUser(userName);            │
+│                                                 │
+│      // Работаем с переданными свойствами       │
+│      if (!string.IsNullOrEmpty(email))          │
+│      {                                          │
+│          SendWelcomeEmail(userName, email);     │
+│      }                                          │
+│                                                 │
+│      _messageService.ShowMessage($"Добавлен: {userName}");│
+│  }                                              │
+│                                                 │
+│  public void UpdateUserStatus(int userId, bool isActive)│
+│  {                                              │
+│      // userId и isActive - свойства, переданные как параметры│
+│      var user = FindUserById(userId);           │
+│      if (user != null)                          │
+│      {                                          │
+│          user.IsActive = isActive;              │
+│          _messageService.ShowMessage(           │
+│              $"Статус пользователя {userId} изменен");│
+│      }                                          │
+│  }                                              │
+└─────────────────────────────────────────────────┘
+
+📍 ПРИМЕР 2: СЕРВИС ЭКСПОРТА ДАННЫХ
+plaintext
+
+┌─────────────────────────────────────────────────┐
+│               DataExporter                       │
+│                                                 │
+│  // ЗАВИСИМОСТИ                                  │
+│  private readonly IMessageService _messageService;│
+│  private readonly IDataService _dataService;     │
+│                                                 │
+│  public DataExporter(                           │
+│      IMessageService messageService,            │
+│      IDataService dataService)                  │
+│  {                                              │
+│      _messageService = messageService;          │
+│      _dataService = dataService;                │
+│  }                                              │
+│                                                 │
+│  // МЕТОД принимает свойства-параметры          │
+│  public void ExportUserData(                    │
+│      string exportFormat,   // ← свойство       │
+│      DateTime startDate,    // ← свойство       │
+│      DateTime endDate,      // ← свойство       │
+│      bool includeInactive)  // ← свойство       │
+│  {                                              │
+│      // Используем зависимость для получения данных│
+│      var users = _dataService.GetUsers();       │
+│                                                 │
+│      // Фильтруем по переданным свойствам       │
+│      var filteredUsers = users                  │
+│          .Where(u => u.CreatedDate >= startDate &&│
+│                     u.CreatedDate <= endDate)   │
+│          .ToList();                             │
+│                                                 │
+│      if (!includeInactive)                      │
+│      {                                          │
+│          filteredUsers = filteredUsers          │
+│              .Where(u => u.IsActive)            │
+│              .ToList();                         │
+│      }                                          │
+│                                                 │
+│      // Экспортируем в нужном формате           │
+│      string result = ExportToFormat(filteredUsers, exportFormat);│
+│                                                 │
+│      _messageService.ShowMessage(               │
+│          $"Экспортировано {filteredUsers.Count} записей");│
+│  }                                              │
+└─────────────────────────────────────────────────┘
+
+📍 ПРИМЕР 3: ИСПОЛЬЗОВАНИЕ В MAINVIEWMODEL
+plaintext
+
+┌─────────────────────────────────────────────────┐
+│               MainViewModel                     │
+│                                                 │
+│  private readonly IMessageService _messageService;│
+│  private readonly IUserService _userService;    │
+│  private readonly UserProcessor _userProcessor; │ ← НОВАЯ ЗАВИСИМОСТЬ!│
+│                                                 │
+│  public MainViewModel(                          │
+│      IMessageService messageService,            │
+│      IUserService userService,                  │
+│      UserProcessor userProcessor)               │ ← DI автоматически!│
+│  {                                              │
+│      _messageService = messageService;          │
+│      _userService = userService;                │
+│      _userProcessor = userProcessor;            │
+│  }                                              │
+│                                                 │
+│  // КОМАНДА использует и зависимости, и свойства │
+│  public ICommand ProcessUserCommand => new RelayCommand(userInfo =>│
+│  {                                              │
+│      // userInfo - свойство, переданное из UI   │
+│      var (userName, email) = ParseUserInfo(userInfo);│
+│                                                 │
+│      // Используем сервис, который получили через DI│
+│      _userProcessor.AddUserWithEmail(userName, email);│
+│  });                                            │
+│                                                 │
+│  public ICommand ExportDataCommand => new RelayCommand(_ =>│
+│  {                                              │
+│      // Передаем свойства как параметры         │
+│      var exporter = new DataExporter(_messageService, _dataService);│
+│      exporter.ExportUserData(                   │
+│          "JSON",                // format       │
+│          DateTime.Now.AddDays(-7), // startDate │
+│          DateTime.Now,          // endDate      │
+│          false);               // includeInactive│
+│  });                                            │
+└─────────────────────────────────────────────────┘
+
+📍 РЕГИСТРАЦИЯ В КОНТЕЙНЕРЕ:
+plaintext
+
+// В App.ConfigureServices():
+services.AddTransient<UserProcessor>();    // ← Новый сервис!
+services.AddTransient<DataExporter>();     // ← Новый сервис!
+
+// Контейнер автоматически разрешит все зависимости:
+// UserProcessor требует → IMessageService + IUserService
+// DataExporter требует → IMessageService + IDataService
+
+🔄 КАК ЭТО РАБОТАЕТ НА ПРАКТИКЕ:
+plaintext
+
+1. Контейнер создает UserProcessor:
+   - Видит конструктор UserProcessor(IMessageService, IUserService)
+   - Находит IMessageService → MessageService
+   - Находит IUserService → UserService
+   - Создает UserProcessor с этими сервисами
+
+2. В MainViewModel:
+   - Контейнер видит конструктор с UserProcessor
+   - Создает UserProcessor (как выше)
+   - Передает его в MainViewModel
+
+3. При вызове команды:
+   - MainViewModel вызывает _userProcessor.AddUserWithEmail()
+   - Передает свойства (userName, email) как параметры
+   - UserProcessor использует свои зависимости (_userService) 
+     и переданные свойства
+
+💡 КЛЮЧЕВЫЕ ВЫВОДЫ:
+
+    ✅ Зависимости (сервисы) → через DI в конструктор
+
+    ✅ Свойства (данные) → через параметры методов
+
+    ✅ Любые классы могут использовать DI - не только ViewModel
+
+    ✅ Контейнер автоматически resolves все зависимости
+
+Теперь вы можете создавать сложную бизнес-логику, где сервисы управляются DI, а данные передаются явно! 🚀
+
+
+
+┌─────────────────────────────────────────────────────────────────────┐
+│  8. Исправляем проблему доступа к ресурсам обьявленным в App.xaml   │
+└─────────────────────────────────────────────────────────────────────┘
+Когда для реализации DI, убавли  StartupUri из App.xaml то ресурсы описаные в нем перестают быть доступны . 
+
+Ошибка возникает потому, что вы закомментировали StartupUri, но не перенесли ресурсы из App.xaml в MainWindow.xaml.
+
+Проблема:
+Конвертер объявлен в App.xaml, но когда вы убрали StartupUri, приложение запускается через код, и ресурсы из App.xaml не загружаются автоматически для главного окна.
+
+Правильный подход для DI. Лучшая практика:
+
+    Уберите StartupUri из App.xaml
+
+    Явно создавайте главное окно через ServiceProvider (как у вас)
+
+    Для глобальных ресурсов используйте MergedDictionaries в App.xaml:
+
+xaml
+
+<Application.Resources>
+    <ResourceDictionary>
+        <ResourceDictionary.MergedDictionaries>
+            <ResourceDictionary Source="Styles/GlobalResources.xaml"/>
+        </ResourceDictionary.MergedDictionaries>
+    </ResourceDictionary>
+</Application.Resources>
+
+    Или регистрируйте ресурсы в коде перед созданием окна:
+
+csharp
+
+private void Application_Startup(object sender, StartupEventArgs e)
+{
+    // Регистрация ресурсов
+    Resources.Add("InverseBooleanConverter", new InverseBooleanConverter());
+    
+    // Остальной DI код
+    ConfigureServices();
+    var mainWindow = ServiceProvider.GetService<MainWindow>();
+    mainWindow.Show();
+}
+
+Ваш подход с DI правильный, просто нужно явно инициализировать ресурсы.
+
+
+MergedDictionaries в App.xaml без StartupUri - наиболее оптимальное решение.
+Преимущества:
+
+    Ресурсы доступны глобально во всем приложении
+
+    Чистая архитектура - разделение ресурсов и логики
+
+    Поддерживается DI без автоматического создания окон
+
+    Легко поддерживать и добавлять новые ресурсы
+
+Реализация:
+xaml
+
+<Application.Resources>
+    <ResourceDictionary>
+        <ResourceDictionary.MergedDictionaries>
+            <ResourceDictionary>
+                <local:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
+                <!-- другие глобальные ресурсы -->
+            </ResourceDictionary>
+        </ResourceDictionary.MergedDictionaries>
+    </ResourceDictionary>
+</Application.Resources>
+
+Это сохраняет преимущества DI и обеспечивает глобальную доступность ресурсов.
+
+
+КУДА ПИСАТЬ ЭТОТ КОД ????
+
+В файл App.xaml (замените текущее содержимое):
+xaml
+
+<Application x:Class="FlowEvents.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:FlowEvents"
+             Startup="Application_Startup">
+    
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Отдельный словарь ресурсов -->
+                <ResourceDictionary>
+                    <local:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
+                    <!-- Добавьте здесь другие глобальные конвертеры -->
+                </ResourceDictionary>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+    
+</Application>
+
+И добавьте в App.xaml.cs:
+csharp
+
+private void Application_Startup(object sender, StartupEventArgs e)
+{
+    // Ваш существующий код из OnStartup
+    ConfigureCulture();
+    LoadDatabaseConfiguration();
+    ConfigureServices();
+    
+    var mainWindow = ServiceProvider.GetService<MainWindow>();
+    var mainViewModel = ServiceProvider.GetService<MainViewModel>();
+    mainWindow.DataContext = mainViewModel;
+    mainWindow.Show();
+}
+
+Уберите вызов base.OnStartup(e) из вашего текущего OnStartup метода, так как теперь используется Application_Startup.
+
+---------------------------------------------------------------------------------------------------------------------------------
+А что делает base.OnStartup(e);
+И что делать с методом OnStartup?
+И что это за метод 
+private void Application_Startup(object sender, StartupEventArgs e)
+А как он запускается?
+
+base.OnStartup(e) - вызывает базовую реализацию WPF, которая обрабатывает StartupUri и другие стандартные механизмы запуска.
+Что делать:
+
+ 1.   Удалите метод OnStartup полностью из App.xaml.cs
+
+ 2.   Добавьте метод Application_Startup:
+
+
+private void Application_Startup(object sender, StartupEventArgs e)
+{
+    ConfigureCulture();
+    LoadDatabaseConfiguration(); 
+    ConfigureServices();
+    
+    var mainWindow = ServiceProvider.GetService<MainWindow>();
+    var mainViewModel = ServiceProvider.GetService<MainViewModel>();
+    mainWindow.DataContext = mainViewModel;
+    mainWindow.Show();
+}
+
+Как запускается:
+
+Автоматически через атрибут Startup="Application_Startup" в App.xaml. Когда приложение стартует, WPF ищет метод с таким именем и вызывает его.
+
+Итоговый App.xaml.cs:
+csharp
+
+protected override void OnStartup(StartupEventArgs e)
+{
+    // УДАЛИТЬ этот метод полностью!
+    // Весь код перенести в Application_Startup
+}
+
+---------------------------------------------------------------------------------------------------------------------------------------------------
+
+Чем отличается GetService от GetRequiredService и когда и для чего применять каждое
+
+Отличный вопрос! Разберем отличия и применение.
+🎯 ОТЛИЧИЯ:
+1. GetService()
+plaintext
+
+✅ Возвращает: object? (может вернуть null)
+✅ Если сервис не зарегистрирован → возвращает null
+✅ Не бросает исключение
+
+2. GetRequiredService()
+plaintext
+
+✅ Возвращает: object (never null)
+✅ Если сервис не зарегистрирован → бросает исключение
+✅ Гарантирует не-null результат
+
+🎯 КОГДА ИСПОЛЬЗОВАТЬ:
+GetService() - когда сервис опционален
+csharp
+
+// Сервис может отсутствовать - это нормально
+var optionalService = provider.GetService<IOptionalService>();
+if (optionalService != null)
+{
+    optionalService.DoSomething();
+}
+
+GetRequiredService() - когда сервис обязателен
+csharp
+
+// Сервис ДОЛЖЕН быть зарегистрирован
+var requiredService = provider.GetRequiredService<IRequiredService>();
+requiredService.DoSomething(); // Не проверяем на null
+
+🎯 ПРАКТИЧЕСКИЕ ПРИМЕРЫ:
+В фабрике (лучше GetRequiredService):
+csharp
+
+public ModalViewModel Create()
+{
+    // ModalViewModel ДОЛЖЕН быть зарегистрирован
+    return _provider.GetRequiredService<ModalViewModel>();
+}
+
+Для опциональных фич (лучше GetService):
+csharp
+
+public void Initialize()
+{
+    // Если есть сервис аналитики - используем, если нет - ок
+    var analytics = _provider.GetService<IAnalyticsService>();
+    analytics?.TrackEvent("app_started");
+}
+
+В корне приложения (лучше GetRequiredService):
+csharp
+
+var mainVM = provider.GetRequiredService<MainViewModel>();
+// Если MainViewModel не зарегистрирован - это ошибка конфигурации
+
+💡 ВЫВОД:
+
+GetRequiredService() - для обязательных зависимостей (чаще всего)
+GetService() - для опциональных, когда отсутствие сервиса - норма
+
+В 90% случаев используйте GetRequiredService() - он явнее и безопаснее! ✅
+
+
+---------------------------------------------------------------------------------------------
+
+Есть такие понятия как сервисы и репозитории , в чем разница ?
+
+Отличный вопрос! Это фундаментальное различие в архитектуре приложений.
+🎯 СЕРВИСЫ VS РЕПОЗИТОРИИ
+📍 РЕПОЗИТОРИИ (Data Access Layer)
+plaintext
+
+┌─────────────────────────────────────────────────┐
+│               РЕПОЗИТОРИЙ                       │
+│   (Работа с данными)                            │
+│                                                 │
+│  ✅ ТОЛЬКО работа с данными                     │
+│  ✅ CRUD операции (Create, Read, Update, Delete)│
+│  ✅ Не содержит бизнес-логики                   │
+│  ✅ Абстрагирует источник данных                │
+│  ✅ Возвращает сущности как есть                │
+│                                                 │
+│  ПРИМЕРЫ:                                       │
+│  - UserRepository.GetUserById(int id)           │
+│  - OrderRepository.SaveOrder(Order order)       │
+│  - ProductRepository.GetAllProducts()           │
+└─────────────────────────────────────────────────┘
+
+📍 СЕРВИСЫ (Business Layer)
+plaintext
+
+┌─────────────────────────────────────────────────┐
+│               СЕРВИС                            │
+│   (Бизнес-логика)                               │
+│                                                 │
+│  ✅ Содержит бизнес-логику                      │
+│  ✅ Координирует работу репозиториев            │
+│  ✅ Может использовать несколько репозиториев   │
+│  ✅ Выполняет сложные операции                  │
+│  ✅ Может трансформировать данные               │
+│                                                 │
+│  ПРИМЕРЫ:                                       │
+│  - UserService.RegisterUser()                   │
+│  - OrderService.ProcessOrder()                  │
+│  - ReportService.GenerateMonthlyReport()        │
+└─────────────────────────────────────────────────┘
+
+🎯 ПРАКТИЧЕСКИЙ ПРИМЕР:
+UserRepository (репозиторий):
+csharp
+
+public interface IUserRepository
+{
+    User GetById(int id);          // ✅ Только данные
+    void Save(User user);          // ✅ Просто сохранить
+    List<User> GetAll();           // ✅ Просто получить всех
+}
+
+UserService (сервис):
+csharp
+
+public class UserService
+{
+    private readonly IUserRepository _userRepository;
+    private readonly IEmailService _emailService;
+
+    public void RegisterUser(string email, string password)
+    {
+        // ✅ Бизнес-логика: проверка пароля
+        if (password.Length < 6)
+            throw new Exception("Слишком короткий пароль");
+
+        // ✅ Использует репозиторий для данных
+        var user = new User { Email = email, Password = HashPassword(password) };
+        _userRepository.Save(user);
+
+        // ✅ Использует другой сервис
+        _emailService.SendWelcomeEmail(email);
+    }
+}
+
+🎯 КЛЮЧЕВЫЕ ОТЛИЧИЯ:
+Аспект	Репозиторий	Сервис
+Ответственность	Данные	Бизнес-логика
+Уровень	Data Access Layer	Business Layer
+Сложность	Простые CRUD операции	Сложная координация
+Зависимости	Только база данных/источник данных	Много репозиториев и сервисов
+💡 КОГДА ЧТО ИСПОЛЬЗОВАТЬ:
+
+Создавайте репозиторий когда:
+
+    Нужен доступ к данным
+
+    Простые операции с БД
+
+    Абстракция над источником данных
+
+Создавайте сервис когда:
+
+    Есть бизнес-правила
+
+    Нужно координировать несколько операций
+
+    Есть сложная логика обработки
+
+🎯 АРХИТЕКТУРНАЯ СХЕМА:
+plaintext
+
+┌─────────────────────────────────────────────────┐
+│                 UI (View + ViewModel)           │
+│                   ↓                             │
+│               СЕРВИСЫ                           │ ← Бизнес-логика
+│                   ↓                             │
+│               РЕПОЗИТОРИИ                       │ ← Работа с данными
+│                   ↓                             │
+│               База данных / API                 │
+└─────────────────────────────────────────────────┘
+
+Сервисы - это мозг приложения, репозитории - это руки, которые работают с данными! 🧠👐

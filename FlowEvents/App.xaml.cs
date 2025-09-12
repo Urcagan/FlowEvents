@@ -4,13 +4,8 @@ using FlowEvents.Services;
 using FlowEvents.Users;
 using Microsoft.Extensions.DependencyInjection;
 using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Data;
 using System.Globalization;
-using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Markup;
 
@@ -21,25 +16,43 @@ namespace FlowEvents
     /// </summary>
     public partial class App : Application
     {
-        public IServiceProvider ServiceProvider { get; private set; }
+        public static IServiceProvider ServiceProvider { get; private set; }
 
         // Переопределяем метод OnStartup, Внем задаем наш формат
         protected override void OnStartup(StartupEventArgs e)
         {
-            // Настройка культуры
-            ConfigureCulture();
+            try
+            {
+                base.OnStartup(e); // Важно: без этого не загрузятся ресурсы App.xaml!
 
-            // Загрузка конфигурации БД (должна быть выполнена до настройки сервисов)
-            LoadDatabaseConfiguration();
+                // Настройка культуры
+                ConfigureCulture();
 
-            // Настройка DI контейнера
-            ConfigureServices();
+                // Загрузка конфигурации БД (должна быть выполнена до настройки сервисов)
+                LoadDatabaseConfiguration();
 
-            base.OnStartup(e);
+                // Настройка DI контейнера
+                ConfigureServices();
 
-            // Запуск главного окна
-            var mainWindow = ServiceProvider.GetRequiredService<MainWindow>();
-            mainWindow.Show();
+                // Запуск главного окна
+                                        //var mainWindow = ServiceProvider.GetRequiredService<MainWindow>();
+                var mainWindow = ServiceProvider.GetService<MainWindow>();
+                if (mainWindow == null) throw new InvalidOperationException("MainWindow not registered");
+
+                var mainViewModel = ServiceProvider.GetService<MainViewModel>();
+                if (mainViewModel == null) throw new InvalidOperationException("MainViewModel not registered");
+
+                mainWindow.DataContext = mainViewModel;
+                
+                mainWindow.Show();
+            }
+            catch (Exception ex )
+            {
+                // Логирование ошибки запуска
+                MessageBox.Show($"Ошибка запуска: {ex.Message}");
+                Shutdown();
+            }
+
         }
 
         private void LoadDatabaseConfiguration()
@@ -49,7 +62,8 @@ namespace FlowEvents
             Global_Var.ConnectionString = GetConnectionString();
         }
 
-
+        //-------------------------------------------------------------------------------------------------------------------------
+        // КОНФИГУРАЦИЯ СЕРВИСОВ 
         private void ConfigureServices()
         {
             var services = new ServiceCollection();
@@ -74,6 +88,7 @@ namespace FlowEvents
             // Построение провайдера услуг
             ServiceProvider = services.BuildServiceProvider();
         }
+        //-------------------------------------------------------------------------------------------------------------------------
 
         private void ConfigureCulture()
         {
