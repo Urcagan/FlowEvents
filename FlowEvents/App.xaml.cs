@@ -1,4 +1,5 @@
 ﻿using FlowEvents.Repositories;
+using FlowEvents.Repositories.Implementations;
 using FlowEvents.Repositories.Interface;
 using FlowEvents.Services;
 using FlowEvents.Users;
@@ -69,11 +70,17 @@ namespace FlowEvents
             var services = new ServiceCollection();
 
             // Регистрация репозиториев с использованием Global_Var.ConnectionString
+            services.AddSingleton<IPermissionRepository, PermissionRepository>();
+            services.AddSingleton<IRoleRepository>(provider => new RoleRepository(Global_Var.ConnectionString));
             services.AddSingleton<IUserRepository>(provider => new UserRepository(Global_Var.ConnectionString));
+            
+            
 
             // Регистрация сервисов
             services.AddSingleton<IDatabaseService, DatabaseService>();
             services.AddSingleton<IPolicyAuthService, PolicyAuthService>();
+            
+            
 
             // Регистрация ViewModels
             services.AddTransient<MainViewModel>();

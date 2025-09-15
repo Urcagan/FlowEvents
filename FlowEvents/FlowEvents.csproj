@@ -83,6 +83,7 @@
       <DependentUpon>CategoryView.xaml</DependentUpon>
     </Compile>
     <Compile Include="Category\CategoryViewModel.cs" />
+    <Compile Include="Converters\BooleanToVisibilityConverter.cs" />
     <Compile Include="Converters\Collapsed.cs" />
     <Compile Include="Converters\FileIconConverter.cs" />
     <Compile Include="Converters\FileSizeConverter.cs" />
@@ -99,20 +100,24 @@
     <Compile Include="Models\Permission.cs" />
     <Compile Include="Models\Role.cs" />
     <Compile Include="Models\User.cs" />
+    <Compile Include="Repositories\Implementations\PermissionRepository.cs" />
+    <Compile Include="Repositories\Implementations\RoleRepository.cs" />
     <Compile Include="Repositories\Interface\IEventRepository.cs" />
+    <Compile Include="Repositories\Interface\IPermissionRepository.cs" />
+    <Compile Include="Repositories\Interface\IRoleRepository.cs" />
     <Compile Include="Repositories\Interface\IUserRepository.cs" />
-    <Compile Include="Repositories\SqliteEventRepository.cs" />
-    <Compile Include="Repositories\UserRepository.cs" />
+    <Compile Include="Repositories\Implementations\EventRepository.cs" />
+    <Compile Include="Repositories\Implementations\UserRepository.cs" />
     <Compile Include="RoleService.cs" />
-    <Compile Include="Services\DatabaseService.cs" />
+    <Compile Include="Services\Implementations\DatabaseService.cs" />
     <Compile Include="Services\FileAttachmentService.cs" />
-    <Compile Include="Services\IDatabaseService.cs" />
-    <Compile Include="Services\IPolicyAuthService.cs" />
-    <Compile Include="Services\PolicyAuthService.cs" />
+    <Compile Include="Services\Interface\IDatabaseService.cs" />
+    <Compile Include="Services\Interface\IPolicyAuthService.cs" />
+    <Compile Include="Services\Implementations\PolicyAuthService.cs" />
     <Compile Include="Settings\SettingsViewModel.cs" />
     <Compile Include="Update.cs" />
-    <Compile Include="Users\AddUserViewModel.cs" />
-    <Compile Include="Users\AddUserWindow.xaml.cs">
+    <Compile Include="ViewModels\AddUserViewModel.cs" />
+    <Compile Include="Views\AddUserWindow.xaml.cs">
       <DependentUpon>AddUserWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Users\DomainHelper.cs" />
@@ -120,17 +125,17 @@
     <Compile Include="LoginWindow.xaml.cs">
       <DependentUpon>LoginWindow.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Users\PermissionViewModel.cs" />
-    <Compile Include="Users\PermissionWindow.xaml.cs">
+    <Compile Include="ViewModels\PermissionViewModel.cs" />
+    <Compile Include="Views\PermissionWindow.xaml.cs">
       <DependentUpon>PermissionWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="ViewModels\LoginViewModel.cs" />
     <Compile Include="ViewModels\MainViewModel.cs" />
     <Compile Include="Models\Category.cs" />
     <Compile Include="Models\Event.cs" />
-    <Compile Include="Users\DomainUserModel.cs" />
+    <Compile Include="ViewModels\DomainUserModel.cs" />
     <Compile Include="Models\FindUserModel.cs" />
-    <Compile Include="Users\FindUserWindow.xaml.cs">
+    <Compile Include="Views\FindUserWindow.xaml.cs">
       <DependentUpon>FindUserWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Models\Unit.cs" />
@@ -146,10 +151,10 @@
     <Compile Include="Users\LoginUser.xaml.cs">
       <DependentUpon>LoginUser.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Users\UserManager.xaml.cs">
+    <Compile Include="Views\UserManager.xaml.cs">
       <DependentUpon>UserManager.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Users\UserManagerModel.cs" />
+    <Compile Include="ViewModels\UserManagerModel.cs" />
     <Page Include="Category\CategoryView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -162,7 +167,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Users\PermissionWindow.xaml">
+    <Page Include="Views\PermissionWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -181,11 +186,11 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Page Include="Users\AddUserWindow.xaml">
+    <Page Include="Views\AddUserWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Users\FindUserWindow.xaml">
+    <Page Include="Views\FindUserWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -201,7 +206,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Users\UserManager.xaml">
+    <Page Include="Views\UserManager.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -333,9 +338,6 @@
   <ItemGroup>
     <Resource Include="icons8-copybook-50.ico" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Services\Implementations\" />
-    <Folder Include="Services\Interface\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

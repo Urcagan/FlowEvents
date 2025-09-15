@@ -94,16 +94,6 @@ namespace FlowEvents
 
         private void OpenPermissionWindow(object parametrs)
         {
-            //// 1. Берем ViewModel из контейнера
-            //var PermissionViewModel = _serviceProvider.GetService<ModalViewModel>();
-
-            //// 2. Создаем окно обычным способом
-            //var modalWindow = new ModalWindow();
-
-            //// 3. Связываем ViewModel с окном          
-            //modalWindow.DataContext = modalViewModel;
-
-
             // 1. Берем ViewModel из контейнера
             var PermissionViewModel = App.ServiceProvider.GetRequiredService<PermissionViewModel>();
             //var PermissionViewModel = App.ServiceProvider.GetService<PermissionViewModel>();

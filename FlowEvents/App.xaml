@@ -10,6 +10,7 @@
                 <!-- Отдельный словарь ресурсов -->
                 <ResourceDictionary>
                     <local:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
+                    <local:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
                     <!-- Добавьте здесь другие глобальные конвертеры -->
                 </ResourceDictionary>
             </ResourceDictionary.MergedDictionaries>

@@ -11,5 +11,12 @@ namespace FlowEvents.Repositories.Interface
     {
         Task<List<User>> GetAllUsersAsync();
         void UpdateConnectionString(string newConnectionString);
+
+        //--------------- Интерфейсы которые понадобятся ------------------------
+
+   //     Task<User> GetUserByIdAsync(int id);
+   //     Task AddUserAsync(User user);
+   //     Task UpdateUserAsync(User user);
+   //     Task DeleteUserAsync(int id);
     }
 }

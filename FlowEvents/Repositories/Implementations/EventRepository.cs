@@ -9,10 +9,10 @@ using System.Threading.Tasks;
 
 namespace FlowEvents.Repositories
 {
-    public class SqliteEventRepository : IEventRepository
+    public class EventRepository : IEventRepository
     {
         private readonly string _connectionString;
-        public SqliteEventRepository(string connectionString)
+        public EventRepository(string connectionString)
         {
             _connectionString = connectionString ?? throw new ArgumentNullException(nameof(connectionString));
         }

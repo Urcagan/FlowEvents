@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:FlowEvents.Users"
         mc:Ignorable="d" 
-        Height="600" Width="900"
+        Height="600" Width="1400"
         WindowStartupLocation="CenterScreen">
 
     
@@ -34,6 +34,16 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
+        <!-- Индикатор загрузки -->
+        <Border Grid.Row="0" Grid.RowSpan="3" Background="#CCFFFFFF" 
+                Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}"
+                Panel.ZIndex="1">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <ProgressBar IsIndeterminate="True" Width="200" Height="20"/>
+                <TextBlock Text="Загрузка данных..." Margin="0 10 0 0" HorizontalAlignment="Center"/>
+            </StackPanel>
+        </Border>
+        
         <!-- Заголовок -->
         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0 0 0 20">
             <TextBlock Text="🛡️" FontSize="24" Margin="0 0 10 0"/>
@@ -44,31 +54,43 @@
         <!-- Основной контент -->
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="2*"/>
                 <ColumnDefinition Width="3*"/>
+                <ColumnDefinition Width="2*"/>
             </Grid.ColumnDefinitions>
 
             <!-- Левая панель - Пользователи и роли -->
             <StackPanel Grid.Column="0" Margin="0 0 10 0">
                 <TextBlock Text="👥 Пользователи" Style="{StaticResource HeaderText}"/>
                 <ListView x:Name="UsersListView" Height="150" 
-                         SelectionMode="Single">
+                         SelectionMode="Single"
+                         ItemsSource="{Binding Users}" SelectedItem="{Binding SelectedUser}">
                     <ListView.View>
                         <GridView>
                             <GridViewColumn Header="ID" Width="50" DisplayMemberBinding="{Binding Id}"/>
-                            <GridViewColumn Header="Имя" Width="150" DisplayMemberBinding="{Binding Name}"/>
+                            <GridViewColumn Header="Логин" Width="150" DisplayMemberBinding="{Binding UserName}"/>
+                            <GridViewColumn Header="Отображаемое имя" Width="150" DisplayMemberBinding="{Binding DisplayName}"/>
                             <GridViewColumn Header="Роль" Width="100" DisplayMemberBinding="{Binding RoleName}"/>
+                            <GridViewColumn Header="Email" Width="150" DisplayMemberBinding="{Binding Email}"/>
+                            <GridViewColumn Header="Доменное имя" Width="100" DisplayMemberBinding="{Binding DomainName}"/>
+                            <GridViewColumn Header="Доступ" Width="60">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <CheckBox IsChecked="{Binding IsAllowed}" IsEnabled="False" HorizontalAlignment="Center"/>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
                         </GridView>
                     </ListView.View>
                 </ListView>
 
                 <TextBlock Text="Роли" Style="{StaticResource HeaderText}" Margin="0 20 0 0"/>
                 <ListView x:Name="RolesListView" Height="150" 
-                         SelectionMode="Single">
+                         SelectionMode="Single"
+                         ItemsSource="{Binding Roles}" SelectedItem="{Binding SelectedRole}">
                     <ListView.View>
                         <GridView>
-                            <GridViewColumn Header="ID" Width="50" DisplayMemberBinding="{Binding Id}"/>
-                            <GridViewColumn Header="Название" Width="150" DisplayMemberBinding="{Binding Name}"/>
+                            <GridViewColumn Header="ID" Width="50" DisplayMemberBinding="{Binding RoleId}"/>
+                            <GridViewColumn Header="Название" Width="150" DisplayMemberBinding="{Binding RoleName}"/>
                             <GridViewColumn Header="Описание" Width="200" DisplayMemberBinding="{Binding Description}"/>
                         </GridView>
                     </ListView.View>
@@ -88,7 +110,8 @@
                           Style="{StaticResource HeaderText}"/>
 
                 <TextBlock x:Name="SelectedRoleText" Margin="0 0 0 10" 
-                          Text="Роль не выбрана" FontWeight="Bold" Foreground="Gray"/>
+                          Text="{Binding SelectedRole.RoleName, StringFormat='Выбрана роль: {0}'}" 
+                           FontWeight="Bold" Foreground="Gray"/>
 
                 <ScrollViewer VerticalScrollBarVisibility="Auto" Height="300">
                     <ItemsControl x:Name="PermissionsList">

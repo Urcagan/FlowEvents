@@ -18,11 +18,7 @@ namespace FlowEvents.Repositories
             _connectionString = connectionString;
         }
 
-        // Метод для обновления строки подключения во время работы приложения
-        public void UpdateConnectionString(string newConnectionString)
-        {
-            _connectionString = newConnectionString;
-        }
+        
 
         public async Task<List<User>> GetAllUsersAsync()
         {
@@ -65,6 +61,15 @@ namespace FlowEvents.Repositories
             }
 
             return users;
+        }
+
+
+
+        //-------------------------------------------------------------------
+        // Метод для обновления строки подключения во время работы приложения
+        public void UpdateConnectionString(string newConnectionString)
+        {
+            _connectionString = newConnectionString;
         }
     }
 }
