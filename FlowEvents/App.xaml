@@ -11,6 +11,7 @@
                 <ResourceDictionary>
                     <local:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
                     <local:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+                    <local:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
                     <!-- Добавьте здесь другие глобальные конвертеры -->
                 </ResourceDictionary>
             </ResourceDictionary.MergedDictionaries>

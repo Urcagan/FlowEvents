@@ -70,7 +70,7 @@ namespace FlowEvents
             var services = new ServiceCollection();
 
             // Регистрация репозиториев с использованием Global_Var.ConnectionString
-            services.AddSingleton<IPermissionRepository, PermissionRepository>();
+            services.AddSingleton<IPermissionRepository>(provider => new PermissionRepository(Global_Var.ConnectionString));
             services.AddSingleton<IRoleRepository>(provider => new RoleRepository(Global_Var.ConnectionString));
             services.AddSingleton<IUserRepository>(provider => new UserRepository(Global_Var.ConnectionString));
             

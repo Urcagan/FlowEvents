@@ -8,8 +8,9 @@ namespace FlowEvents.Services
     {
         Task<List<User>> GetUsersAsync();
         Task<List<Role>> GetRolesAsync();
+        Task<List<Permission>> GetPermissionsAsync();
 
-        //Task<List<Permission>> GetPermissionsAsync();
+
         //Task<List<Permission>> GetRolePermissionsAsync(int roleId);
 
  //       Task UpdateRolePermissionsAsync(int roleId, List<int> permissionIds);

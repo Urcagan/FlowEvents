@@ -120,21 +120,20 @@ namespace FlowEvents.Users
             try
             {
                 // Имитация задержки сети (2 секунды)
-                await Task.Delay(2000);
+                await Task.Delay(1000);
 
                 var users = await _databaseService.GetUsersAsync();
 
-                // Имитация задержки сети (2 секунды)
-                await Task.Delay(2000);
-
                 var roles = await _databaseService.GetRolesAsync();
+
+               var permissions = await _databaseService.GetPermissionsAsync();
 
                 Users = new ObservableCollection<User>(users);
                 Roles = new ObservableCollection<Role>(roles);
-
+                Permissions = new ObservableCollection<Permission>(permissions);
 
                 // Заглушка для прав (в следующей итерации будем загружать из БД)
-                LoadDemoPermissions();
+                //LoadDemoPermissions();
 
             }
             finally
@@ -175,7 +174,9 @@ namespace FlowEvents.Users
             // Заглушка - в следующей итерации реализуем загрузку прав роли
             foreach (var permission in Permissions)
             {
-                permission.IsGrantedBool = (SelectedRole?.RoleId % 2 == 0); // Простая логика для демонстрации
+                //  permission.IsGrantedBool = (SelectedRole?.RoleId % 2 == 0); // Простая логика для демонстрации
+
+                permission.IsGrantedBool = (SelectedRole?.RoleId == SelectedUser.RoleId);
             }
         }
 
