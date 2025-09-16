@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:FlowEvents"
         mc:Ignorable="d"
+        WindowStartupLocation="CenterOwner"
         Title="Перечень установок" Height="450" Width="750" ResizeMode="NoResize">
 
     <Window.Resources>

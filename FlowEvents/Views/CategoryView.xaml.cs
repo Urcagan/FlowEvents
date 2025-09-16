@@ -15,18 +15,13 @@ using System.Windows.Shapes;
 namespace FlowEvents
 {
     /// <summary>
-    /// Логика взаимодействия для UnitsView.xaml
+    /// Логика взаимодействия для CategoryView.xaml
     /// </summary>
-    public partial class UnitsView : Window
+    public partial class CategoryView : Window
     {
-        public UnitsView(UnitViewModel unitViewModel)
+        public CategoryView()
         {
             InitializeComponent();
-
-            // настраивает окно для использованя UnitViewModel как DataContext.
-            //DataContext = new UnitViewModel(); // Установите DataContext
-            DataContext = unitViewModel;
         }
-
     }
 }

@@ -110,6 +110,136 @@ namespace FlowEvents.Repositories
 
 
 
+        /// <summary>
+        /// Получить перечень файлов связанных с событием
+        /// </summary>
+        /// <param name="EventId"></param>
+        /// <returns> List<AttachedFileForEvent> </returns>
+        public List<AttachedFileForEvent> GetIdFilesOnEvent(int EventId)
+        {
+            List<AttachedFileForEvent> attachedFile = new List<AttachedFileForEvent>();
+            try
+            {
+                using (var connection = new SQLiteConnection(_connectionString)) 
+                {
+                    connection.Open();
+
+                    string query = @" Select FileId, EventId, FileCategory, FileName, FilePath From AttachedFiles Where EventId = @SelectedRowId ";
+
+                    using (var command = new SQLiteCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@SelectedRowId", EventId);
+
+                        using (var reader = command.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                attachedFile.Add(new AttachedFileForEvent
+                                {
+                                    FileId = reader.GetInt32(0),
+                                    EventId = reader.GetInt32(1), // ID события с которым связан файл
+                                    FileName = reader.IsDBNull(2) ? null : reader.GetString(2), // Имя файла
+                                    FilePath = reader.IsDBNull(3) ? null : reader.GetString(3), // Путь к файлу на диске, где он хранится
+                                });
+                            }
+                        }
+                    }
+                }
+                return attachedFile;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Формирует строку SQL запроса для вывода данных в таблицу 
+        /// </summary>
+        /// <param name="selectedUnit"></param>
+        /// <param name="startDate"></param>
+        /// <param name="endDate"></param>
+        /// <returns></returns>
+        public string BuildSQLQueryEvents(Unit selectedUnit, DateTime? startDate, DateTime? endDate, bool isAllEvents)
+        {
+            var conditions = new List<string>();
+
+            // Фильтрация по установке
+            if (selectedUnit != null && selectedUnit.Id != -1)
+            {
+                string unitName = selectedUnit.UnitName.Replace("'", "''");
+                conditions.Add($"Unit LIKE '%{unitName}%'");
+            }
+
+            // Фильтрация по времени (если не выбрано "Все даты")
+            if (!isAllEvents)
+            {
+                string startDateStr = startDate?.Date.ToString("yyyy-MM-dd") ?? DateTime.MinValue.Date.ToString("yyyy-MM-dd");
+                string endDateStr = endDate?.Date.ToString("yyyy-MM-dd") ?? DateTime.MaxValue.Date.ToString("yyyy-MM-dd");
+                conditions.Add($"DateEvent BETWEEN '{startDateStr}' AND '{endDateStr}'");
+            }
+
+            // Основной запрос теперь включает LEFT JOIN к AttachedFiles
+            string query = @"SELECT e.id, e.DateEvent, e.Unit, e.OilRefining, e.Category, e.Description, e.Action, e.DateCreate, e.Creator, 
+                            af.FileId, af.FileCategory, af.FileName, af.FilePath, af.FileSize, af.FileType, af.UploadDate
+                            FROM vwEvents e LEFT JOIN AttachedFiles af ON e.id = af.EventId";
+
+            // Добавляем условия, если они есть
+            if (conditions.Count > 0)
+            {
+                query += " WHERE " + string.Join(" AND ", conditions);
+            }
+
+            return query;
+        }
+
+        /// <summary>
+        /// Удалить событие по Id
+        /// </summary>
+        /// <param name="eventId"></param>
+        /// <returns></returns>
+        public async Task<bool> DeleteEventAsync(int eventId)
+        {
+            try
+            {
+                using (var connection = new SQLiteConnection(_connectionString))
+                {
+                    await connection.OpenAsync();
+                    using (SQLiteTransaction transaction = connection.BeginTransaction())
+                    {
+                        try
+                        {
+                            await ExecuteDeleteCommandAsync(connection, "DELETE FROM Events WHERE ID = @EventId", eventId);
+                            transaction.Commit();
+                            return true;
+                        }
+                        catch (Exception)
+                        {
+                            transaction.Rollback();
+                            throw;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Логируем ошибку
+                Console.WriteLine($"Ошибка при удалении события: {ex.Message}");
+                return false;
+            }
+        }
+
+        private async Task ExecuteDeleteCommandAsync(SQLiteConnection connection, string query, int eventId)
+        {
+            using (var command = new SQLiteCommand(query, connection))
+            {
+                command.Parameters.AddWithValue("@EventId", eventId);
+                await command.ExecuteNonQueryAsync();
+            }
+        }
+
+
+
         //-------------------------------------------------------------------
         // Метод для обновления строки подключения во время работы приложения
         public void UpdateConnectionString(string newConnectionString)

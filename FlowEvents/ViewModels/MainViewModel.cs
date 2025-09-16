@@ -12,7 +12,6 @@ using System.Data.SQLite;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Security.Principal;
 using System.Windows;
 
 namespace FlowEvents
@@ -51,7 +50,6 @@ namespace FlowEvents
                 Global_Var.pathToDB = value;
                 Global_Var.ConnectionString = GetConnectionString();
                 LoadUserPermissions();
-
                 OnPropertyChanged(nameof(CurrentDbPath));
             }
         }
@@ -137,7 +135,6 @@ namespace FlowEvents
             {
                 if (_selectedEvent == value)
                     return; // Не обновлять, если значение не изменилось
-                Console.WriteLine($"SelectedEvent changed from {_selectedEvent?.Id} to {value?.Id}");
                 _selectedEvent = value;
                 OnPropertyChanged(nameof(SelectedEvent));
                 OnPropertyChanged(nameof(SelectedEventCollection)); // Критически важно!
@@ -165,12 +162,9 @@ namespace FlowEvents
             }
         }
 
-
         public ObservableCollection<EventForView> Events { get; set; } = new ObservableCollection<EventForView>(); // Коллекция для записей журнала (автоматически уведомляет об изменениях)
 
-
-
-        //=======================================================================
+          //=======================================================================
         public RelayCommand SettingOpenWindow { get; }
         public RelayCommand UnitOpenWindow { get; }
         public RelayCommand CategoryOpenWindow { get; }
@@ -209,10 +203,7 @@ namespace FlowEvents
             {
                 EndDate = EndDate.AddDays(1);
                 StartDate = StartDate.AddDays(1);
-
             });
-
-
 
             //  User();
             //    appSettings = AppSettings.GetSettingsApp(); // Загружаем настройки программы из файла при запуске программы
@@ -242,7 +233,7 @@ namespace FlowEvents
 
         private void UpdateQuery()
         {
-            QueryEvent = BuildSQLQueryEvents(SelectedUnit, IsAllEvents ? null : (DateTime?)StartDate, IsAllEvents ? null : (DateTime?)EndDate, IsAllEvents);
+            QueryEvent = _eventRepository.BuildSQLQueryEvents(SelectedUnit, IsAllEvents ? null : (DateTime?)StartDate, IsAllEvents ? null : (DateTime?)EndDate, IsAllEvents);
         }
 
         // Метод загрузки прав из БД
@@ -253,7 +244,7 @@ namespace FlowEvents
             CurrentUserPermissions = _authService.GetUserPermissions(_currentDbPath, _currentUsername);
         }
 
-        // 
+        
         public IEnumerable<AttachedFileModel> MonitoringFiles =>
                 SelectedEvent?.AttachedFiles?
                     .Where(f => f.FileCategory?.Contains("monitoring") == true)
@@ -296,13 +287,11 @@ namespace FlowEvents
             Units.Insert(0, new Unit { Id = -1, UnitName = "Все" });
 
             // Загружаем перечень установок из базы данных
-            //      GetUnitFromDatabase();
             var unitsFromDb = _eventRepository.GetUnitFromDatabase();
             foreach (var unit in unitsFromDb)
             {
                 Units.Add(unit);
             }
-
             SelectedUnit = Units.FirstOrDefault();
         }
 
@@ -327,9 +316,17 @@ namespace FlowEvents
 
         private void UnitMenuItem(object parameter)
         {
-            //var unitViewModel = new UnitViewModel(this);
-            var unitViewModel = new UnitViewModel();
-            UnitsView unitsView = new UnitsView(unitViewModel);
+            // 1. Берем ViewModel из контейнера
+            var unitViewModel = App.ServiceProvider.GetRequiredService<UnitViewModel>();
+
+            // 2. Создаем окно обычным способом
+            var unitsView = new UnitsView();
+
+            // 3. Связываем ViewModel с окном 
+            unitsView.DataContext = unitViewModel;
+
+            // 5. Показываем модально                  
+            unitsView.Owner = Application.Current.MainWindow; //будет дочерним окном относительно главного окна приложения.
 
             void ClosedHandler(object sender, EventArgs e)
             {
@@ -345,8 +342,17 @@ namespace FlowEvents
 
         private void CategoryMenuItem(object parameter)
         {
-            var categoryViewModel = new CategoryViewModel();
-            CategoryView categoryView = new CategoryView(categoryViewModel);
+            // 1. Берем ViewModel из контейнера
+            var categoryViewModel = App.ServiceProvider.GetRequiredService<CategoryViewModel>();
+
+            // 2. Создаем окно обычным способом
+            var categoryView = new CategoryView();
+
+            // 3. Связываем ViewModel с окном 
+            categoryView.DataContext = categoryViewModel;
+
+            // 5. Показываем модально                  
+            categoryView.Owner = Application.Current.MainWindow;
 
             if (categoryView.ShowDialog() == true) { }
         }
@@ -367,6 +373,7 @@ namespace FlowEvents
             //SettingsWindow.Owner = Application.Current.MainWindow;
             //SettingsWindow.ShowDialog();
 
+            // Создаем обработчик, который отвяжет себя после выполнения
             void ClosedHandler(object sender, EventArgs e)
             {
                 SettingsWindow.Closed -= ClosedHandler; // Отвязываем
@@ -408,7 +415,6 @@ namespace FlowEvents
 
         private void EventAddBtb(object parameter)
         {
-            //var eventViewModel = new EventViewModel(this);
             var eventViewModel = new EventViewModel();
             EventWindow eventView = new EventWindow(eventViewModel);
 
@@ -457,21 +463,6 @@ namespace FlowEvents
         }
 
 
-        private void RemoveEventById(int id) // Удаление события из коллекции по ID
-        {
-            if (Events == null || Events.Count == 0) return;
-
-            for (int i = 0; i < Events.Count; i++)
-            {
-                if (Events[i].Id == id)
-                {
-                    Events.RemoveAt(i);
-                    return; // Выходим после удаления
-                }
-            }
-        }
-
-
         // Удаление события
         private void DeletEvent(object parameter)
         {
@@ -489,14 +480,13 @@ namespace FlowEvents
                 if (confirm != MessageBoxResult.Yes) return;
 
                 // 1. Получаем пепречень файлов связанных с этим событием
-                listAttachedFIles = GetIdFilesOnEvent(eventId);
+                listAttachedFIles = _eventRepository.GetIdFilesOnEvent(eventId);
 
                 // 2. Удаляем Файлы связанные с событием
                 DeleteFiles(listAttachedFIles);
 
                 // 3. Удалям записи о событии из БД (таблица Events) Записи о файлах удаляются автоматически каскадом
                 DeleteEventFromDB(eventId);
-
             }
         }
 
@@ -555,218 +545,39 @@ namespace FlowEvents
                 //Обрабатываем ошибки
                 MessageBox.Show("Ошибка: " + ex.Message, "Обработка ошибки", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-
         }
 
-
-        //------------------------------------------------------------------------------------------------------
-        //Запросы к базе данных
-        //------------------------------------------------------------------------------------------------------
-
-        //Получить перечень файлов связанных с событием
-        private List<AttachedFileForEvent> GetIdFilesOnEvent(int EventId)
+        private async void DeleteEventFromDB(int eventId)
         {
-            List<AttachedFileForEvent> attachedFile = new List<AttachedFileForEvent>();
             try
             {
-                using (var connection = new SQLiteConnection(Global_Var.ConnectionString)) //_connectionString
+                bool success = await _eventRepository.DeleteEventAsync(eventId);
+
+                if (success)
                 {
-                    connection.Open();
-
-                    string query = @" Select FileId, EventId, FileCategory, FileName, FilePath From AttachedFiles Where EventId = @SelectedRowId ";
-
-                    using (var command = new SQLiteCommand(query, connection))
-                    {
-                        command.Parameters.AddWithValue("@SelectedRowId", EventId);
-
-                        using (var reader = command.ExecuteReader())
-                        {
-                            while (reader.Read())
-                            {
-                                attachedFile.Add(new AttachedFileForEvent
-                                {
-                                    FileId = reader.GetInt32(0),
-                                    EventId = reader.GetInt32(1), // ID события с которым связан файл
-                                    FileName = reader.IsDBNull(2) ? null : reader.GetString(2), // Имя файла
-                                    FilePath = reader.IsDBNull(3) ? null : reader.GetString(3), // Путь к файлу на диске, где он хранится
-                                });
-                            }
-                        }
-                    }
+                    RemoveEventById(eventId); // Удаляем из UI только после успешной транзакции
                 }
-                return attachedFile;
-            }
-            catch (Exception)
-            {
-                throw;
-            }
-        }
-
-        //private void GetUnitFromDatabase() //Загрузка перечня установок из ДБ
-        //{
-        //    try
-        //    {
-        //        using (var connection = new SQLiteConnection(Global_Var.ConnectionString)) //_connectionString
-        //        {
-        //            connection.Open();
-
-        //            string query = @" Select id, Unit, Description From Units ";
-
-        //            using (var command = new SQLiteCommand(query, connection))
-        //            using (var reader = command.ExecuteReader())
-        //            {
-        //                while (reader.Read())
-        //                {
-        //                    Units.Add(new Unit
-        //                    {
-        //                        Id = reader.GetInt32(0),
-        //                        UnitName = reader.GetString(1),
-        //                        Description = reader.IsDBNull(2) ? null : reader.GetString(2)
-        //                    });
-        //                }
-        //            }
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        MessageBox.Show($"Ошибка загрузки данных: {ex.Message}");
-        //    }
-        //}
-
-
-        /// <summary>
-        /// Формирует строку SQL запроса для вывода данных в таблицу 
-        /// </summary>
-        /// <param name="selectedUnit"></param>
-        /// <param name="startDate"></param>
-        /// <param name="endDate"></param>
-        /// <returns></returns>
-        public string BuildSQLQueryEvents(Unit selectedUnit, DateTime? startDate, DateTime? endDate, bool isAllEvents)
-        {
-            var conditions = new List<string>();
-
-            // Фильтрация по установке
-            if (selectedUnit != null && selectedUnit.Id != -1)
-            {
-                string unitName = selectedUnit.UnitName.Replace("'", "''");
-                conditions.Add($"Unit LIKE '%{unitName}%'");
-            }
-
-            // Фильтрация по времени (если не выбрано "Все даты")
-            if (!isAllEvents)
-            {
-                string startDateStr = startDate?.Date.ToString("yyyy-MM-dd") ?? DateTime.MinValue.Date.ToString("yyyy-MM-dd");
-                string endDateStr = endDate?.Date.ToString("yyyy-MM-dd") ?? DateTime.MaxValue.Date.ToString("yyyy-MM-dd");
-                conditions.Add($"DateEvent BETWEEN '{startDateStr}' AND '{endDateStr}'");
-            }
-
-            // Основной запрос теперь включает LEFT JOIN к AttachedFiles
-            string query = @"SELECT e.id, e.DateEvent, e.Unit, e.OilRefining, e.Category, e.Description, e.Action, e.DateCreate, e.Creator, 
-                            af.FileId, af.FileCategory, af.FileName, af.FilePath, af.FileSize, af.FileType, af.UploadDate
-                            FROM vwEvents e LEFT JOIN AttachedFiles af ON e.id = af.EventId";
-
-            // Добавляем условия, если они есть
-            if (conditions.Count > 0)
-            {
-                query += " WHERE " + string.Join(" AND ", conditions);
-            }
-
-            return query;
-        }
-
-
-        // Метод для получения событий из базы данных
-        //public List<EventForView> GetEvents(string queryEvent)
-        //{
-        //    var eventsDict = new Dictionary<int, EventForView>();
-
-        //    using (var connection = new SQLiteConnection(Global_Var.ConnectionString)) //_connectionString
-        //    {
-        //        connection.Open();
-        //        var command = new SQLiteCommand(queryEvent, connection);
-        //        using (var reader = command.ExecuteReader())
-        //        {
-        //            while (reader.Read())
-        //            {
-        //                int eventId = reader.GetInt32(reader.GetOrdinal("id"));
-
-        //                // Если события еще нет в словаре, добавляем его
-        //                if (!eventsDict.TryGetValue(eventId, out var eventModel))
-        //                {
-        //                    eventModel = new EventForView
-        //                    {
-        //                        Id = eventId,
-        //                        DateEventString = reader.GetString(reader.GetOrdinal("DateEvent")),
-        //                        Unit = reader.GetString(reader.GetOrdinal("Unit")),
-        //                        OilRefining = reader.IsDBNull(reader.GetOrdinal("OilRefining")) ? null : reader.GetString(reader.GetOrdinal("OilRefining")),
-        //                        Category = reader.GetString(reader.GetOrdinal("Category")),
-        //                        Description = reader.IsDBNull(reader.GetOrdinal("Description")) ? null : reader.GetString(reader.GetOrdinal("Description")),
-        //                        Action = reader.IsDBNull(reader.GetOrdinal("Action")) ? null : reader.GetString(reader.GetOrdinal("Action")),
-        //                        DateCreate = reader.GetString(reader.GetOrdinal("DateCreate")),
-        //                        Creator = reader.GetString(reader.GetOrdinal("Creator"))
-        //                    };
-        //                    eventsDict[eventId] = eventModel;
-        //                }
-
-        //                // Если есть прикрепленный файл, добавляем его
-        //                if (!reader.IsDBNull(reader.GetOrdinal("FileId")))
-        //                {
-        //                    eventModel.AttachedFiles.Add(new AttachedFileModel(Global_Var.ConnectionString) //_connectionString // Передаем строку подключения
-        //                    {
-        //                        FileId = reader.GetInt32(reader.GetOrdinal("FileId")),
-        //                        FileCategory = reader.GetString(reader.GetOrdinal("FileCategory")),
-        //                        FileName = reader.GetString(reader.GetOrdinal("FileName")),
-        //                        FilePath = reader.GetString(reader.GetOrdinal("FilePath")),
-        //                        FileSize = reader.GetInt64(reader.GetOrdinal("FileSize")),
-        //                        FileType = reader.GetString(reader.GetOrdinal("FileType")),
-        //                        UploadDate = DateTime.Parse(reader.GetString(reader.GetOrdinal("UploadDate")))
-        //                    });
-        //                }
-        //            }
-        //        }
-        //    }
-
-        //    return eventsDict.Values.ToList();
-        //}
-
-
-
-        private void DeleteEventFromDB(int eventId)
-        {
-            try
-            {
-                using (var connection = new SQLiteConnection(Global_Var.ConnectionString))
+                else
                 {
-                    connection.Open();
-                    using (SQLiteTransaction transaction = connection.BeginTransaction())
-                    {
-                        try
-                        {
-                            ExecuteDeleteCommand(connection, "DELETE FROM Events WHERE ID = @EventId", eventId);
-
-                            // ExecuteDeleteCommand(connection, "DELETE FROM EventUnits WHERE EventID = @EventId", eventId);
-
-                            transaction.Commit();
-
-                            RemoveEventById(eventId); // Удаляем из UI только после успешной транзакции
-
-                        }
-                        catch (Exception ex)
-                        {
-                            // В случае ошибки откатить транзакцию
-                            transaction.Rollback();
-                            MessageBox.Show($"Не удалось удалении событие {ex.Message}");
-                        }
-                    }
+                    MessageBox.Show("Не удалось удалить событие");
                 }
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Ошибка базы данных: {ex.Message}");
             }
-
         }
 
+        private void RemoveEventById(int id)
+        {
+            if (Events == null || Events.Count == 0) return;
+
+            var eventToRemove = Events.FirstOrDefault(e => e.Id == id);
+            if (eventToRemove != null)
+            {
+                Events.Remove(eventToRemove);
+            }
+        }
 
 
         //====================================================================================================
@@ -815,24 +626,6 @@ namespace FlowEvents
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
-
-        //private void User()
-        //{
-        //    var identity = WindowsIdentity.GetCurrent();
-
-        //    // Простые свойства
-        //    UserName = Environment.UserName;
-        //    string Domain = Environment.UserDomainName;
-
-        //    // Более детальная информация
-        //    string FullName = identity.Name;
-        //    string AuthType = identity.AuthenticationType;
-        //    string IsAuthenticated = identity.IsAuthenticated.ToString();
-        //    string IsSystem = identity.IsSystem.ToString();
-        //    string IsGuest = identity.IsGuest.ToString();
-        //}
-
-
 
     }
 

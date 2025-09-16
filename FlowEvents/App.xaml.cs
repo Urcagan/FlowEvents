@@ -75,8 +75,9 @@ namespace FlowEvents
             services.AddSingleton<IRoleRepository>(provider => new RoleRepository(Global_Var.ConnectionString));
             services.AddSingleton<IUserRepository>(provider => new UserRepository(Global_Var.ConnectionString));
             services.AddSingleton<IEventRepository>(provider => new  EventRepository(Global_Var.ConnectionString));
-            
-            
+            services.AddSingleton<ICategoryRepository>(provider => new CategoryRepository(Global_Var.ConnectionString));
+
+
 
             // Регистрация сервисов
             services.AddSingleton<IDatabaseService, DatabaseService>();
@@ -89,6 +90,8 @@ namespace FlowEvents
             services.AddTransient<SettingsViewModel>();
             services.AddTransient<UserManagerModel>();
             services.AddTransient<PermissionViewModel>();
+            services.AddTransient<UnitViewModel>();
+            services.AddTransient<CategoryViewModel>();
 
             // Регистрация окон
             services.AddTransient<MainWindow>();

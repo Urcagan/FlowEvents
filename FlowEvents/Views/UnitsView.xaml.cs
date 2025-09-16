@@ -15,15 +15,14 @@ using System.Windows.Shapes;
 namespace FlowEvents
 {
     /// <summary>
-    /// Логика взаимодействия для CategoryView.xaml
+    /// Логика взаимодействия для UnitsView.xaml
     /// </summary>
-    public partial class CategoryView : Window
+    public partial class UnitsView : Window
     {
-        public CategoryView(CategoryViewModel categoryViewModel)
+        public UnitsView()
         {
             InitializeComponent();
-
-            DataContext = categoryViewModel; // Установить DataContext
         }
+
     }
 }

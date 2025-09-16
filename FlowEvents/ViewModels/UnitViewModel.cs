@@ -1,40 +1,37 @@
 ﻿using FlowEvents.Models;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Data;
 using System.Data.SQLite;
+using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text;
+using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
+using System.Xml.Linq;
 
 namespace FlowEvents
 {
-    public class CategoryViewModel : INotifyPropertyChanged
+    public class UnitViewModel : INotifyPropertyChanged
     {
-
-        //private MainViewModel _mainViewModel;
-        //public MainViewModel MainViewModel
-        //{
-        //    get { return _mainViewModel; }
-        //    set
-        //    {
-        //        _mainViewModel = value;
-        //    }
-        //}
+        #region
         private string _connectionString;
         public string ConnectionString
         {
             get { return _connectionString; }
-            set 
+            set
             {
                 _connectionString = value;
-                // Загрузка данных из базы
-                LoadCategories();
+               // OnPropertyChanged(nameof(ConnectionString));
+                GetUnits();
             }
         }
-        //private string _connectionString = "Data Source=G:\\VS Dev\\FlowEvents\\FlowEvents.db;Version=3;foreign keys=true;";
 
         // Коллекция для хранения категорий (источник данных (коллекцию))
-        public ObservableCollection<Category> Categories { get; set; } = new ObservableCollection<Category>();
+        public ObservableCollection<Unit> Units { get; set; } = new ObservableCollection<Unit>();
 
         // Команды для добавления, редактирования и удаления
         public RelayCommand AddCommand { get; }
@@ -43,173 +40,181 @@ namespace FlowEvents
         public RelayCommand DeleteCommand { get; }
         public RelayCommand UpdateCommand { get; }
 
-        public CategoryViewModel()
+        #endregion
+
+        public UnitViewModel()
         {
-           // MainViewModel = mainViewModel; 
             // Инициализация команд
-            AddCommand = new RelayCommand(AddCategory);
+            AddCommand = new RelayCommand(AddUnit);
             CancelCommand = new RelayCommand(CancelEdit);
-            SaveCommand = new RelayCommand(SaveNewCategory);
-            DeleteCommand = new RelayCommand(DeleteCategory, CanEditOrDelete);
-            UpdateCommand = new RelayCommand(UpdateCategoty, CanEditOrDelete);
-            //Как работает RelayCommand?
-            //Он принимает два делегата:
-            //  Action<object> — метод, который выполняется при вызове команды.
-            //  Func<object, bool>(опционально) — метод, который проверяет, можно ли выполнить команду.
+            SaveCommand = new RelayCommand(SaveNewUnit);
+            DeleteCommand = new RelayCommand(DeleteUnit, CanEditOrDelete);
+            UpdateCommand = new RelayCommand(UpdateUnit, CanEditOrDelete);
 
-
-            ConnectionString = Global_Var.ConnectionString; //_mainViewModel._connectionString; // $"Data Source={_mainViewModel.appSettings.pathDB};Version=3;foreign keys=true;";
-           
+            // Загрузка данных из базы
+            ConnectionString = Global_Var.ConnectionString; //_mainViewModel._connectionString; //$"Data Source={_mainViewModel.appSettings.pathDB};Version=3;";
+            //GetUnits();
             IsAddButtonVisible = true; // Показать кнопку "Добавить"
             IsDeleteButtonVisible = false; // Скрыть кнопку "Удалить"
         }
 
 
-        // Загрузка категорий из базы данных
-        private void LoadCategories()
+        // Метод для загрузки данных из таблицы Units
+        private void GetUnits()
         {
             try
             {
                 using (var connection = new SQLiteConnection(_connectionString))
                 {
                     connection.Open();
-                    var command = new SQLiteCommand("SELECT id, Name, Description, Colour FROM Category", connection);
+                    var command = new SQLiteCommand("SELECT * FROM Units", connection);
                     using (var reader = command.ExecuteReader())
                     {
                         int idIndex = reader.GetOrdinal("id");
-                        int nameIndex = reader.GetOrdinal("Name");
+                        int unitIndex = reader.GetOrdinal("Unit");
                         int descriptionIndex = reader.GetOrdinal("Description");
-                        int colourIndex = reader.GetOrdinal("Colour");
 
                         while (reader.Read())
                         {
-                            var category = new Category
+                            var unit = new Unit
                             {
                                 Id = reader.GetInt32(idIndex),
-                                Name = reader.GetString(nameIndex),
-                                Description = reader.IsDBNull(descriptionIndex) ? null : reader.GetString(descriptionIndex),
-                                Colour = reader.IsDBNull(colourIndex) ? null : reader.GetString(colourIndex)
+                                UnitName = reader.GetString(unitIndex),
+                                Description = reader.IsDBNull(descriptionIndex) ? null : reader.GetString(descriptionIndex)
                             };
-                            Categories.Add(category);
+                            Units.Add(unit);
                         }
                     }
                 }
             }
+            catch (SQLiteException ex)
+            {
+                // Обработка ошибок, связанных с SQLite
+                MessageBox.Show($"Ошибка базы данных: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка данных: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                // Обработка всех остальных ошибок
+                MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
         //Сохранение в БД новой категории
-        private void SaveNewCategory(object parameter)
+        private void SaveNewUnit(object parameter)
         {
             // Проверка на пустое значение
-            if (string.IsNullOrWhiteSpace(Name))
+            if (string.IsNullOrWhiteSpace(Unit))
             {
                 ShowError("Название обязательно для заполнения!");
+                // ClearField(NameTextBox);
                 return;
             }
 
             // Проверка на уникальность
-            if (!IsCategoryNameUnique(Name))
+            if (!IsUnitUnique(Unit))
             {
                 ShowError("Категория с таким именем уже существует!");
+                // ClearField(NameTextBox);
                 return;
             }
 
-            // Объект для новой категории
-            var newCategory = new Category
+            // Создание экземпляра для хранения нового Юнита
+            var newUnit = new Unit
             {
-                Name = Name,
-                Description = Description,
-                Colour = Colour
+                UnitName = Unit,
+                Description = Description
             };
+
+            // Сохранение в базу
             try
             {
                 using (var connection = new SQLiteConnection(_connectionString))
                 {
                     connection.Open();
                     var command = new SQLiteCommand(
-                        "INSERT INTO Category (Name, Description, Colour) " +
-                        "VALUES (@Name, @Description, @Colour)",
+                        "INSERT INTO Units (Unit, Description) " +
+                        "VALUES (@Unit, @Description)",
                         connection);
-                    command.Parameters.AddWithValue("@Name", newCategory.Name);
-                    command.Parameters.AddWithValue("@Description",
-                            string.IsNullOrEmpty(newCategory.Description) ? DBNull.Value : (object)newCategory.Description);
-                    command.Parameters.AddWithValue("@Colour",
-                            string.IsNullOrEmpty(newCategory.Colour) ? DBNull.Value : (object)newCategory.Colour);
+
+                    command.Parameters.AddWithValue("@Unit", newUnit.UnitName);
+                    command.Parameters.AddWithValue("@Description", string.IsNullOrEmpty(newUnit.Description) ? DBNull.Value : (object)newUnit.Description);
                     command.ExecuteNonQuery();
 
                     long newId = connection.LastInsertRowId; // Получаем ID новой записи
-                    newCategory.Id = (int)newId; // Присваиваем ID новой записи объекту newUnit
+                    newUnit.Id = (int)newId; // Присваиваем ID новой записи объекту newUnit
                 }
+
                 // Обновление списка
-                Categories.Add(newCategory);
-                //SelectedCategory = newCategory;
+                Units.Add(newUnit);
+                //SelectedUnit = newUnit;
+            }
+            catch (SQLiteException ex)
+            {
+                // Обработка ошибок, связанных с SQLite
+                MessageBox.Show($"Ошибка базы данных: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка данных: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                // Обработка всех остальных ошибок
+                MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-            CancelEdit(null);
+            CancelEdit(null); //Очищаем и закрываем поле редактирования
         }
 
-        // Обновление 
-        private void UpdateCategoty(object parameter)
+        //Обновление записи
+        private void UpdateUnit(object obj)
         {
-            if (SelectedCategory == null) return;
+            if (SelectedUnit == null) return;
 
-            //Проверка на пустое значение
-            if (string.IsNullOrWhiteSpace(Name))
+            // Проверка на пустое значение
+            if (string.IsNullOrWhiteSpace(Unit))
             {
                 ShowError("Название обязательно для заполнения!");
                 return;
             }
 
-            //// Проверка на уникальность
-            //if (!IsCategoryNameUnique(Name))
-            //{
-            //    ShowError("Категория с таким именем уже существует!");
-            //    return;
-            //}
 
             // Обновляем данные выбранной записи
-            SelectedCategory.Name = Name;
-            SelectedCategory.Description = Description;
-            SelectedCategory.Colour = Colour;
+            SelectedUnit.UnitName = Unit;
+            SelectedUnit.Description = Description;
 
             try
             {
+                // Обновление в базе данных
                 using (var connection = new SQLiteConnection(_connectionString))
                 {
                     connection.Open();
                     var command = new SQLiteCommand(
-                        "UPDATE Category SET Name = @Name, Description = @Description, Colour = @Colour WHERE Id = @Id",
+                        "UPDATE Units SET Unit = @Unit, Description = @Description WHERE Id = @Id",
                         connection);
-                    command.Parameters.AddWithValue("@Name", SelectedCategory.Name);
-                    command.Parameters.AddWithValue("@Description", SelectedCategory.Description);
-                    command.Parameters.AddWithValue("@Colour", SelectedCategory.Colour);
-                    command.Parameters.AddWithValue("@Id", SelectedCategory.Id);
+                    command.Parameters.AddWithValue("@Unit", SelectedUnit.UnitName);
+                    command.Parameters.AddWithValue("@Description", SelectedUnit.Description);
+                    command.Parameters.AddWithValue("@Id", SelectedUnit.Id);
                     command.ExecuteNonQuery();
                 }
-                OnPropertyChanged(nameof(SelectedCategory)); // Уведомляем об изменении свойств
+                OnPropertyChanged(nameof(SelectedUnit)); // Уведомляем об изменении свойств
+            }
+            catch (SQLiteException ex)
+            {
+                // Обработка ошибок, связанных с SQLite
+                MessageBox.Show($"Ошибка базы данных: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка данных: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                // Обработка всех остальных ошибок
+                MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-            SelectedCategory = null; // Снимаем выделение строки
+            SelectedUnit = null; // Снимаем выделение строки
             CancelEdit(null); //Очищаем и закрываем поле редактирования
         }
 
         // Удаление категории
-        private void DeleteCategory(object parameter)
+        private void DeleteUnit(object parameter)
         {
-            if (SelectedCategory == null) return;
+            if (SelectedUnit == null) return;
 
             var confirm = MessageBox.Show(
-                $"Вы уверены, что хотите удалить категорию {SelectedCategory.Name} ?",
+                $"Вы уверены, что хотите удалить объект {SelectedUnit.UnitName} ?",
                 "Подтверждение",
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Question);
@@ -220,18 +225,18 @@ namespace FlowEvents
                 using (var connection = new SQLiteConnection(_connectionString))
                 {
                     connection.Open();
-
-                    var command = new SQLiteCommand("DELETE FROM Category WHERE Id = @Id", connection);
-                    command.Parameters.AddWithValue("@Id", SelectedCategory.Id);
+                    var command = new SQLiteCommand("DELETE FROM Units WHERE Id = @Id", connection);
+                    command.Parameters.AddWithValue("@Id", SelectedUnit.Id);
                     command.ExecuteNonQuery();
                 }
-                Categories.Remove(SelectedCategory);
+
+                Units.Remove(SelectedUnit);
             }
-            catch(SQLiteException ex) when (ex.ResultCode == SQLiteErrorCode.Constraint)
+            catch (SQLiteException ex) when (ex.ResultCode == SQLiteErrorCode.Constraint)
             {
                 // На случай, если FOREIGN_KEY сработал 
                 MessageBox.Show(
-                    "Невозможно удалить категорию: она используется в записях событий !",
+                    "Невозможно удалить объект: он используется в записях событий !",
                     "Ошибка",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
@@ -239,8 +244,8 @@ namespace FlowEvents
             catch (Exception ex)
             {
                 MessageBox.Show(
-                    $"Ошибка при удалении: {ex.Message}", "Ошибка", 
-                    MessageBoxButton.OK, 
+                    $"Ошибка при удалении: {ex.Message}", "Ошибка",
+                    MessageBoxButton.OK,
                     MessageBoxImage.Error);
             }
             CancelEdit(null); //Очищаем и закрываем поле редактирования
@@ -251,41 +256,46 @@ namespace FlowEvents
         // Вспомогательные методы
 
         // Открытия доступа к полям ввода новой категории
-        private void AddCategory(object parameter)
+        private void AddUnit(object parameter)
         {
             // Очистите поля ввода (если нужно)
-            Name = string.Empty;
+            Unit = string.Empty;
             Description = string.Empty;
-            Colour = string.Empty;
 
             IsEditPanelVisible = true; //показываем панель редактирования
+
             // Управление видимостью кнопок
             IsCreateButtonVisible = true;  // Показать кнопку "Создать"
             IsUpdateButtonVisible = false; // Скрыть кнопку "Обновить"
             IsAddButtonVisible = false; // Скрыть кнопку "Добавить"
-            SelectedCategory = null; // Снимаем выделение строки
+            SelectedUnit = null; // Снимаем выделение строки
         }
 
-        // Проверка ктегории на уникальность
-        private bool IsCategoryNameUnique(string name)
+        // Проверка на уникальность
+        private bool IsUnitUnique(string name)
         {
             try
             {
                 using (var connection = new SQLiteConnection(_connectionString))
                 {
                     connection.Open();
-                    var command = new SQLiteCommand("SELECT COUNT(*) FROM Category WHERE Name = @Name", connection);
+                    var command = new SQLiteCommand("SELECT COUNT(*) FROM Units WHERE Unit = @Name", connection);
                     command.Parameters.AddWithValue("@Name", name);
                     return Convert.ToInt32(command.ExecuteScalar()) == 0;
                 }
             }
-            catch (Exception ex)
+            catch (SQLiteException ex)
             {
-
-                MessageBox.Show($"Ошибка данных: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                // Обработка ошибок, связанных с SQLite
+                MessageBox.Show($"Ошибка базы данных: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return false;
             }
-
+            catch (Exception ex)
+            {
+                // Обработка всех остальных ошибок
+                MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                return false;
+            }
         }
 
 
@@ -306,38 +316,38 @@ namespace FlowEvents
         // Закрытие доступа к полям ввода данных
         private void CancelEdit(object parameter)
         {
-            // Очистите поля ввода (если нужно)
-            Name = string.Empty;
+            // Очистите поля ввода
+            Unit = string.Empty;
             Description = string.Empty;
-            Colour = string.Empty;
             IsEditPanelVisible = false; // Скрыть панель редактирования
-            SelectedCategory = null; // Снимаем выделение строки
+            SelectedUnit = null; // Снимаем выделение строки
             IsAddButtonVisible = true; // Показать кнопку "Добавить"
         }
 
         // Проверка, можно ли редактировать или удалять
         private bool CanEditOrDelete(object parameter)
         {
-            return SelectedCategory != null;
+            return SelectedUnit != null;
         }
 
-        //====================================================================================================
+
+        //===============================================================================================================================================
         //Поля, Переменный, Свойства
 
         //----------------------------------------
         // свойства для привязки к полям ввода и редактирования данных.
-        private string _name;
-        public string Name
+        private string _unit;
+        public string Unit
         {
-            get => _name;
+            get => _unit;
             set
             {
-                if (_name != value)
+                if (_unit != value)
                 {
-                    _name = value;
+                    _unit = value;
                     OnPropertyChanged();
 
-                    // Очищаем ошибку при изменении текста
+                    // Очищаем поле с текстом ошибки при изменении текста
                     ClearError();
                 }
             }
@@ -346,7 +356,7 @@ namespace FlowEvents
         private string _description;
         public string Description
         {
-            get { return _description; }
+            get => _description;
             set
             {
                 _description = value;
@@ -354,34 +364,23 @@ namespace FlowEvents
             }
         }
 
-        private string _colour;
-        public string Colour
-        {
-            get { return _colour; }
-            set
-            {
-                _colour = value;
-                OnPropertyChanged();
-            }
-        }
 
         // Объект для размещения данных выделенной строки. При выборе строки таблицы в переменную поместятся все значения выделенной строки
-        private Category _selectedCategory;
-        public Category SelectedCategory
+        private Unit _selectedUnit;
+        public Unit SelectedUnit
         {
-            get => _selectedCategory;
+            get => _selectedUnit;
             set
             {
-                _selectedCategory = value;
+                _selectedUnit = value;
                 OnPropertyChanged();
 
                 // В случае если выбрана какая либо строка , то загружаем данные этой троки в поля для редактирования и отображаем окно редактирования
-                if (_selectedCategory != null)
+                if (_selectedUnit != null)
                 {
                     // Заполните поля данными выбранной категории
-                    Name = _selectedCategory.Name;
-                    Description = _selectedCategory.Description;
-                    Colour = _selectedCategory.Colour;
+                    Unit = _selectedUnit.UnitName;
+                    Description = _selectedUnit.Description;
 
                     // Покажите правую панель
                     IsEditPanelVisible = true;
@@ -401,7 +400,7 @@ namespace FlowEvents
         }
 
         // Свойство содержащее состояния видимости окна редактиорвания 
-        private bool _isEditPanelVisible; // поле состояния видимости окна редактиорвания
+        private bool _isEditPanelVisible;
         public bool IsEditPanelVisible
         {
             get { return _isEditPanelVisible; }
@@ -489,16 +488,14 @@ namespace FlowEvents
         }
 
 
-
         // Реализация INotifyPropertyChanged
         // Событие, которое уведомляет об изменении свойства
         public event PropertyChangedEventHandler PropertyChanged;
-
-        // Метод для генерации события
         protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
+
 
     }
 }
