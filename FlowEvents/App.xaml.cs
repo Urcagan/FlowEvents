@@ -2,6 +2,7 @@
 using FlowEvents.Repositories.Implementations;
 using FlowEvents.Repositories.Interface;
 using FlowEvents.Services;
+using FlowEvents.Settings;
 using FlowEvents.Users;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -73,6 +74,7 @@ namespace FlowEvents
             services.AddSingleton<IPermissionRepository>(provider => new PermissionRepository(Global_Var.ConnectionString));
             services.AddSingleton<IRoleRepository>(provider => new RoleRepository(Global_Var.ConnectionString));
             services.AddSingleton<IUserRepository>(provider => new UserRepository(Global_Var.ConnectionString));
+            services.AddSingleton<IEventRepository>(provider => new  EventRepository(Global_Var.ConnectionString));
             
             
 
@@ -84,6 +86,7 @@ namespace FlowEvents
 
             // Регистрация ViewModels
             services.AddTransient<MainViewModel>();
+            services.AddTransient<SettingsViewModel>();
             services.AddTransient<UserManagerModel>();
             services.AddTransient<PermissionViewModel>();
 

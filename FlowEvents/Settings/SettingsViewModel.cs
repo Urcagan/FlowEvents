@@ -1,4 +1,5 @@
-﻿using Microsoft.Win32;
+﻿using FlowEvents.Services;
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -14,7 +15,7 @@ namespace FlowEvents.Settings
 {
     public class SettingsViewModel : INotifyPropertyChanged
     {
-        internal MainViewModel _mainViewModel;
+        private readonly IDatabaseService _databaseService;
 
         private string _pathToDB ;
         public string PathToDB
@@ -49,9 +50,10 @@ namespace FlowEvents.Settings
         public RelayCommand SetPathDBCommand { get; }
         public RelayCommand WindowClossingCommand { get; }
 
-        public SettingsViewModel( MainViewModel mainViewModel)
+        public SettingsViewModel(IDatabaseService databaseService )
         {
-            _mainViewModel = mainViewModel;
+            _databaseService = databaseService;
+          
             PathToDB = App.Settings.pathDB;
             PathRelises = App.Settings.UpdateRepository;
 

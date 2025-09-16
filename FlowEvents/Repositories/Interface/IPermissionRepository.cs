@@ -11,8 +11,11 @@ namespace FlowEvents.Repositories.Interface
     {
         Task<List<Permission>> GetAllPermissionsAsync();
         Task<List<Permission>> GetPermissionsByRoleIdAsync(int roleId);
-   //     Task GrantPermissionAsync(int roleId, int permissionId);
-   //     Task RevokePermissionAsync(int roleId, int permissionId);
-   //     Task UpdateRolePermissionsAsync(int roleId, List<int> permissionIds);
+
+        //     Task GrantPermissionAsync(int roleId, int permissionId);
+        //     Task RevokePermissionAsync(int roleId, int permissionId);
+        //     Task UpdateRolePermissionsAsync(int roleId, List<int> permissionIds);
+
+        void UpdateConnectionString(string newConnectionString);
     }
 }

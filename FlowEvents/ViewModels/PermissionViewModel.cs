@@ -171,6 +171,7 @@ namespace FlowEvents.Users
         // Загрузка прав к выбранной роли
         private void LoadRolePermissions()
         {
+            int roleUser = SelectedUser.RoleId;
             // Заглушка - в следующей итерации реализуем загрузку прав роли
             foreach (var permission in Permissions)
             {

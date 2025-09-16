@@ -58,5 +58,13 @@ namespace FlowEvents.Repositories.Implementations
         {
             throw new NotImplementedException();
         }
+
+
+        //-------------------------------------------------------------------
+        // Метод для обновления строки подключения во время работы приложения
+        public void UpdateConnectionString(string newConnectionString)
+        {
+            _connectionString = newConnectionString;
+        }
     }
 }

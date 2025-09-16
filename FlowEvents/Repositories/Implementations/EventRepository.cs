@@ -2,16 +2,18 @@
 using FlowEvents.Repositories.Interface;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Data.SQLite;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace FlowEvents.Repositories
 {
     public class EventRepository : IEventRepository
     {
-        private readonly string _connectionString;
+        private string _connectionString;
         public EventRepository(string connectionString)
         {
             _connectionString = connectionString ?? throw new ArgumentNullException(nameof(connectionString));
@@ -71,6 +73,48 @@ namespace FlowEvents.Repositories
             return eventsDict.Values.ToList();
         }
 
+        //Загрузка перечня установок из ДБ
+        public ObservableCollection<Unit> GetUnitFromDatabase()
+        {
+            var units = new ObservableCollection<Unit>();
 
+            try
+            {
+                using (var connection = new SQLiteConnection(_connectionString)) //_connectionString
+                {
+                    connection.Open();
+
+                    string query = @" Select id, Unit, Description From Units ";
+
+                    using (var command = new SQLiteCommand(query, connection))
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            units.Add(new Unit
+                            {
+                                Id = reader.GetInt32(0),
+                                UnitName = reader.GetString(1),
+                                Description = reader.IsDBNull(2) ? null : reader.GetString(2)
+                            });
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка загрузки данных: {ex.Message}");
+            }
+            return units;
+        }
+
+
+
+        //-------------------------------------------------------------------
+        // Метод для обновления строки подключения во время работы приложения
+        public void UpdateConnectionString(string newConnectionString)
+        {
+            _connectionString = newConnectionString;
+        }
     }
 }

@@ -13,21 +13,10 @@ namespace FlowEvents
     /// </summary>
     public partial class SettingsWindow : Window
     {
-        private readonly MainViewModel _mainViewModel;
-        private readonly SettingsViewModel _settingsViewModel;
-
-        private string _pathDB;
-        private string newPathDB;
-        private string _pathRelises;
-
-        public SettingsWindow(SettingsViewModel settingsViewModel)
+        public SettingsWindow()
         {
             InitializeComponent();
-            DataContext = settingsViewModel; // Устанавливаем контекст данных для привязки
-            _mainViewModel = settingsViewModel._mainViewModel; 
-
-            _pathDB = App.Settings.pathDB;
-            _pathRelises = App.Settings.UpdateRepository;
+         
         }
 
        

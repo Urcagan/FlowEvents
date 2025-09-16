@@ -19,16 +19,35 @@ namespace FlowEvents
 {
     public class MainViewModel : INotifyPropertyChanged
     {
-        
+        //-------------------------
+        //      Зависимости        |
+        //-------------------------
+        private readonly IPolicyAuthService _authService; // Сервис проверки пользователя
+        private readonly IEventRepository _eventRepository; //Сервис работы с Event
+
+        //-----------------------------------------------------------------------------------
 
         private string _currentDbPath;
-        // Публичные свойства для динамического контекста
+        private string _currentUsername;
+        private List<string> _currentUserPermissions = new List<string>();
+        private User _currentUser;  // Кэш пользователя (опционально)
+        private DateTime _sartDate = DateTime.Now; // Значение по умолчанию
+        private DateTime _endDate = DateTime.Now; // Значение по умолчанию
+        private Unit _selectedUnit;
+        private bool _isAllEvents;
+        private string _queryEvent; // Для хранения Запроса получения Events 
+        private EventForView _selectedEvent; // Выбранное событие в таблице
+        private string _userName;
+        private ObservableCollection<Unit> _units { get; set; } = new ObservableCollection<Unit>();
+
+        public AppSettings appSettings; // Объект параметров приложения
+        public string _connectionString; // Строка подключения
         public string CurrentDbPath
         {
             get => _currentDbPath;
             set
             {
-                _currentDbPath = value;                
+                _currentDbPath = value;
                 Global_Var.pathToDB = value;
                 Global_Var.ConnectionString = GetConnectionString();
                 LoadUserPermissions();
@@ -36,7 +55,6 @@ namespace FlowEvents
                 OnPropertyChanged(nameof(CurrentDbPath));
             }
         }
-        private string _currentUsername;
         public string CurrentUsername
         {
             get => _currentUsername;
@@ -48,8 +66,6 @@ namespace FlowEvents
                 LoadUserPermissions();
             }
         }
-
-        private List<string> _currentUserPermissions = new List<string>();
         public List<string> CurrentUserPermissions // Публичное свойство для привязки в XAML
         {
             get => _currentUserPermissions;
@@ -59,22 +75,6 @@ namespace FlowEvents
                 OnPropertyChanged(nameof(CurrentUserPermissions));
             }
         }
-
-        // Метод загрузки прав из БД
-        private void LoadUserPermissions()
-        {
-            if (string.IsNullOrEmpty(_currentDbPath)) return;
-
-            CurrentUserPermissions = _authService.GetUserPermissions( _currentDbPath, _currentUsername);
-        }
-
-        
-        private User _currentUser;  // Кэш пользователя (опционально)
-
-        public AppSettings appSettings; // Объект параметров приложения
-        public string _connectionString; // = $"Data Source={Global_Var.pathDB};Version=3;foreign keys=true;";
-
-        private DateTime _sartDate = DateTime.Now; // Значение по умолчанию
         public DateTime StartDate
         {
             get => _sartDate;
@@ -88,8 +88,6 @@ namespace FlowEvents
                 }
             }
         }
-
-        private DateTime _endDate = DateTime.Now; // Значение по умолчанию
         public DateTime EndDate
         {
             get => _endDate;
@@ -103,8 +101,6 @@ namespace FlowEvents
                 }
             }
         }
-
-        private Unit _selectedUnit;
         public Unit SelectedUnit
         {
             get => _selectedUnit;
@@ -115,8 +111,6 @@ namespace FlowEvents
                 UpdateQuery();
             }
         }
-
-        private bool _isAllEvents;
         public bool IsAllEvents
         {
             get => _isAllEvents;
@@ -127,8 +121,6 @@ namespace FlowEvents
                 UpdateQuery();
             }
         }
-
-        private string _queryEvent; // Для хранения Запроса получения Events 
         public string QueryEvent
         {
             get => _queryEvent;
@@ -138,18 +130,6 @@ namespace FlowEvents
                 LoadEvents();
             }
         }
-
-        private void UpdateQuery()
-        {
-            QueryEvent = BuildSQLQueryEvents(SelectedUnit, IsAllEvents ? null : (DateTime?)StartDate, IsAllEvents ? null : (DateTime?)EndDate, IsAllEvents);
-        }
-
-        public ObservableCollection<Unit> Units { get; set; } = new ObservableCollection<Unit>();
-
-        // Коллекция для записей журнала (автоматически уведомляет об изменениях)
-        public ObservableCollection<EventForView> Events { get; set; } = new ObservableCollection<EventForView>();
-
-        private EventForView _selectedEvent; // Выбранное событие в таблице
         public EventForView SelectedEvent
         {
             get => _selectedEvent;
@@ -165,8 +145,6 @@ namespace FlowEvents
                 OnPropertyChanged(nameof(DocumentFiles));
             }
         }
-
-        private string _userName;
         public string UserName
         {
             get => _userName;
@@ -177,7 +155,22 @@ namespace FlowEvents
                 OnPropertyChanged();
             }
         }
+        public ObservableCollection<Unit> Units
+        {
+            get => _units;
+            set
+            {
+                _units = value;
+                OnPropertyChanged(nameof(Units)); // Реализуйте INotifyPropertyChanged
+            }
+        }
 
+
+        public ObservableCollection<EventForView> Events { get; set; } = new ObservableCollection<EventForView>(); // Коллекция для записей журнала (автоматически уведомляет об изменениях)
+
+
+
+        //=======================================================================
         public RelayCommand SettingOpenWindow { get; }
         public RelayCommand UnitOpenWindow { get; }
         public RelayCommand CategoryOpenWindow { get; }
@@ -190,13 +183,12 @@ namespace FlowEvents
         public RelayCommand CheckUpdateAppCommand { get; } // Кнопка проверки обновления программы 
         public RelayCommand LoginCommand { get; }
 
-        private readonly IPolicyAuthService _authService; // Сервис проверки пользователя
-
         //===============================================================================================================================================
 
-        public MainViewModel(IPolicyAuthService authService)
+        public MainViewModel(IPolicyAuthService authService, IEventRepository eventRepository)
         {
             _authService = authService;
+            _eventRepository = eventRepository;
 
             SettingOpenWindow = new RelayCommand(SettingsMenuItem);
             UnitOpenWindow = new RelayCommand(UnitMenuItem);
@@ -219,36 +211,18 @@ namespace FlowEvents
                 StartDate = StartDate.AddDays(1);
 
             });
-            
+
+
 
             //  User();
             //    appSettings = AppSettings.GetSettingsApp(); // Загружаем настройки программы из файла при запуске программы
-            
+
         }
-
-        // 
-        public IEnumerable<AttachedFileModel> MonitoringFiles =>
-            SelectedEvent?.AttachedFiles?
-                .Where(f => f.FileCategory?.Contains("monitoring") == true)
-        ?? Enumerable.Empty<AttachedFileModel>();
-
-        public IEnumerable<AttachedFileModel> DocumentFiles =>
-            SelectedEvent?.AttachedFiles?
-                .Where(f => f.FileCategory?.Contains("document") == true)
-        ?? Enumerable.Empty<AttachedFileModel>();
-
-        // 
-        public ObservableCollection<EventForView> SelectedEventCollection =>
-            SelectedEvent == null
-                ? new ObservableCollection<EventForView>()
-                : new ObservableCollection<EventForView> { SelectedEvent };
 
         public void StartUP()
         {
             //         appSettings = AppSettings.GetSettingsApp(); // Загружаем настройки программы из файла при запуске программы
-
             string pathDB = App.Settings.pathDB; //appSettings.pathDB;
-            
 
             //Проверка базы данных
             if (!CheckDB.DBGood(pathDB)) return;
@@ -256,16 +230,44 @@ namespace FlowEvents
 
             CurrentDbPath = pathDB; // Устанавливаем текущий путь к базе данных
 
-
             LoadUnitsToComboBox(); // Загружаем перечень установок из базы данных
-                               //
-                               //_currentUser = _authService.GetUser(_currentDbPath, _currentUsername);
-           // _currentUser = _authService.GetUser(pathDB, "User3");
+                                   //
+                                   //_currentUser = _authService.GetUser(_currentDbPath, _currentUsername);
+                                   // _currentUser = _authService.GetUser(pathDB, "User3");
 
-            
             CurrentUsername = Environment.UserName; // Устанавливаем текущего пользователя
-      //      CurrentUsername = "Администратор"; // Временно устанавливаем пользователя для тестирования
+                                                    //      CurrentUsername = "Администратор"; // Временно устанавливаем пользователя для тестирования
         }
+
+
+        private void UpdateQuery()
+        {
+            QueryEvent = BuildSQLQueryEvents(SelectedUnit, IsAllEvents ? null : (DateTime?)StartDate, IsAllEvents ? null : (DateTime?)EndDate, IsAllEvents);
+        }
+
+        // Метод загрузки прав из БД
+        private void LoadUserPermissions()
+        {
+            if (string.IsNullOrEmpty(_currentDbPath)) return;
+
+            CurrentUserPermissions = _authService.GetUserPermissions(_currentDbPath, _currentUsername);
+        }
+
+        // 
+        public IEnumerable<AttachedFileModel> MonitoringFiles =>
+                SelectedEvent?.AttachedFiles?
+                    .Where(f => f.FileCategory?.Contains("monitoring") == true)
+                    ?? Enumerable.Empty<AttachedFileModel>();
+
+        public IEnumerable<AttachedFileModel> DocumentFiles =>
+                SelectedEvent?.AttachedFiles?
+                    .Where(f => f.FileCategory?.Contains("document") == true)
+                    ?? Enumerable.Empty<AttachedFileModel>();
+
+        public ObservableCollection<EventForView> SelectedEventCollection =>
+                SelectedEvent == null
+                    ? new ObservableCollection<EventForView>()
+                    : new ObservableCollection<EventForView> { SelectedEvent };
 
 
         //Получаем строку подключения к БД
@@ -284,7 +286,6 @@ namespace FlowEvents
                 _currentUser = null;
                 return;
             }
-
             _currentUser = _authService.GetUser(_currentDbPath, _currentUsername);
         }
 
@@ -293,23 +294,28 @@ namespace FlowEvents
         {
             Units.Clear();
             Units.Insert(0, new Unit { Id = -1, UnitName = "Все" });
+
             // Загружаем перечень установок из базы данных
-            GetUnitFromDatabase();
+            //      GetUnitFromDatabase();
+            var unitsFromDb = _eventRepository.GetUnitFromDatabase();
+            foreach (var unit in unitsFromDb)
+            {
+                Units.Add(unit);
+            }
+
             SelectedUnit = Units.FirstOrDefault();
         }
-
-        // ------------------------------------------------------------------------------------------------------
 
 
         // Метод для загрузки данных из базы
         public void LoadEvents()
         {
-
             Events.Clear();
 
             // Получаем данные из базы
             if (QueryEvent == null) return;
-            var eventsFromDb = GetEvents(QueryEvent);
+            //var eventsFromDb = GetEvents(QueryEvent);
+            var eventsFromDb = _eventRepository.GetEvents(QueryEvent);
 
             // Добавляем данные в коллекцию
             foreach (var eventModel in eventsFromDb)
@@ -318,7 +324,7 @@ namespace FlowEvents
             }
         }
 
-      
+
         private void UnitMenuItem(object parameter)
         {
             //var unitViewModel = new UnitViewModel(this);
@@ -340,27 +346,50 @@ namespace FlowEvents
         private void CategoryMenuItem(object parameter)
         {
             var categoryViewModel = new CategoryViewModel();
-            CategoryView categoryView = new CategoryView(categoryViewModel);       
-            
+            CategoryView categoryView = new CategoryView(categoryViewModel);
+
             if (categoryView.ShowDialog() == true) { }
         }
 
 
         private void SettingsMenuItem(object parameter)
         {
-            // Создаем и показываем окно настроек
-            var settingsViewModel = new SettingsViewModel(this);
-            SettingsWindow settingsWindow = new SettingsWindow(settingsViewModel);
+            // 1. Берем ViewModel из контейнера
+            var SettingsViewModel = App.ServiceProvider.GetRequiredService<SettingsViewModel>();
 
-            // Создаем обработчик, который отвяжет себя после выполнения
+            // 2. Создаем окно обычным способом
+            var SettingsWindow = new SettingsWindow();
+
+            // 3. Связываем ViewModel с окном 
+            SettingsWindow.DataContext = SettingsViewModel;
+
+            // 5. Показываем модально                  
+            //SettingsWindow.Owner = Application.Current.MainWindow;
+            //SettingsWindow.ShowDialog();
+
             void ClosedHandler(object sender, EventArgs e)
             {
-                settingsWindow.Closed -= ClosedHandler; // Отвязываем
+                SettingsWindow.Closed -= ClosedHandler; // Отвязываем
                 StartUP();
             }
 
-            settingsWindow.Closed += ClosedHandler;
-            if (settingsWindow.ShowDialog() == true) { }
+            SettingsWindow.Closed += ClosedHandler;
+            if (SettingsWindow.ShowDialog() == true) { }
+
+            // Создаем и показываем окно настроек
+            //         var settingsViewModel = new SettingsViewModel(this);
+            //         SettingsWindow settingsWindow = new SettingsWindow(settingsViewModel);
+
+            // Создаем обработчик, который отвяжет себя после выполнения
+            //         void ClosedHandler(object sender, EventArgs e)
+            //         {
+            //             settingsWindow.Closed -= ClosedHandler; // Отвязываем
+            //              StartUP();
+            //         }
+
+            //         settingsWindow.Closed += ClosedHandler;
+            //         if (settingsWindow.ShowDialog() == true) { }
+
         }
 
         private void UserManagerMenuItem(object parameter)
@@ -374,7 +403,7 @@ namespace FlowEvents
         private void Login(object parameter)
         {
             LoginUser loginUser = new LoginUser();
-            if(loginUser.ShowDialog() == true) { }
+            if (loginUser.ShowDialog() == true) { }
         }
 
         private void EventAddBtb(object parameter)
@@ -394,7 +423,7 @@ namespace FlowEvents
             if (eventView.ShowDialog() == true) { }
         }
 
-        
+
         private void EditEvent(object parameter)
         {
             if (parameter is EventForView selectedEvent)
@@ -512,10 +541,10 @@ namespace FlowEvents
         }
 
         //Проверка обновления программы
-        private void CheckUpdateApp(object parameter) 
+        private void CheckUpdateApp(object parameter)
         {
             MessageBox.Show("Проверка обновлений");
-                        
+
             try
             {
                 string repositoryPath = App.Settings.UpdateRepository; //Получаем из конфигурации путь к файлу с параметрами обновления приложения
@@ -526,7 +555,7 @@ namespace FlowEvents
                 //Обрабатываем ошибки
                 MessageBox.Show("Ошибка: " + ex.Message, "Обработка ошибки", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-            
+
         }
 
 
@@ -573,36 +602,36 @@ namespace FlowEvents
             }
         }
 
-        private void GetUnitFromDatabase() //Загрузка перечня установок из ДБ
-        {
-            try
-            {
-                using (var connection = new SQLiteConnection(Global_Var.ConnectionString)) //_connectionString
-                {
-                    connection.Open();
+        //private void GetUnitFromDatabase() //Загрузка перечня установок из ДБ
+        //{
+        //    try
+        //    {
+        //        using (var connection = new SQLiteConnection(Global_Var.ConnectionString)) //_connectionString
+        //        {
+        //            connection.Open();
 
-                    string query = @" Select id, Unit, Description From Units ";
+        //            string query = @" Select id, Unit, Description From Units ";
 
-                    using (var command = new SQLiteCommand(query, connection))
-                    using (var reader = command.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            Units.Add(new Unit
-                            {
-                                Id = reader.GetInt32(0),
-                                UnitName = reader.GetString(1),
-                                Description = reader.IsDBNull(2) ? null : reader.GetString(2)
-                            });
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Ошибка загрузки данных: {ex.Message}");
-            }
-        }
+        //            using (var command = new SQLiteCommand(query, connection))
+        //            using (var reader = command.ExecuteReader())
+        //            {
+        //                while (reader.Read())
+        //                {
+        //                    Units.Add(new Unit
+        //                    {
+        //                        Id = reader.GetInt32(0),
+        //                        UnitName = reader.GetString(1),
+        //                        Description = reader.IsDBNull(2) ? null : reader.GetString(2)
+        //                    });
+        //                }
+        //            }
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        MessageBox.Show($"Ошибка загрузки данных: {ex.Message}");
+        //    }
+        //}
 
 
         /// <summary>
@@ -647,58 +676,58 @@ namespace FlowEvents
 
 
         // Метод для получения событий из базы данных
-        public List<EventForView> GetEvents(string queryEvent)
-        {
-            var eventsDict = new Dictionary<int, EventForView>();
+        //public List<EventForView> GetEvents(string queryEvent)
+        //{
+        //    var eventsDict = new Dictionary<int, EventForView>();
 
-            using (var connection = new SQLiteConnection(Global_Var.ConnectionString)) //_connectionString
-            {
-                connection.Open();
-                var command = new SQLiteCommand(queryEvent, connection);
-                using (var reader = command.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        int eventId = reader.GetInt32(reader.GetOrdinal("id"));
+        //    using (var connection = new SQLiteConnection(Global_Var.ConnectionString)) //_connectionString
+        //    {
+        //        connection.Open();
+        //        var command = new SQLiteCommand(queryEvent, connection);
+        //        using (var reader = command.ExecuteReader())
+        //        {
+        //            while (reader.Read())
+        //            {
+        //                int eventId = reader.GetInt32(reader.GetOrdinal("id"));
 
-                        // Если события еще нет в словаре, добавляем его
-                        if (!eventsDict.TryGetValue(eventId, out var eventModel))
-                        {
-                            eventModel = new EventForView
-                            {
-                                Id = eventId,
-                                DateEventString = reader.GetString(reader.GetOrdinal("DateEvent")),
-                                Unit = reader.GetString(reader.GetOrdinal("Unit")),
-                                OilRefining = reader.IsDBNull(reader.GetOrdinal("OilRefining")) ? null : reader.GetString(reader.GetOrdinal("OilRefining")),
-                                Category = reader.GetString(reader.GetOrdinal("Category")),
-                                Description = reader.IsDBNull(reader.GetOrdinal("Description")) ? null : reader.GetString(reader.GetOrdinal("Description")),
-                                Action = reader.IsDBNull(reader.GetOrdinal("Action")) ? null : reader.GetString(reader.GetOrdinal("Action")),
-                                DateCreate = reader.GetString(reader.GetOrdinal("DateCreate")),
-                                Creator = reader.GetString(reader.GetOrdinal("Creator"))
-                            };
-                            eventsDict[eventId] = eventModel;
-                        }
+        //                // Если события еще нет в словаре, добавляем его
+        //                if (!eventsDict.TryGetValue(eventId, out var eventModel))
+        //                {
+        //                    eventModel = new EventForView
+        //                    {
+        //                        Id = eventId,
+        //                        DateEventString = reader.GetString(reader.GetOrdinal("DateEvent")),
+        //                        Unit = reader.GetString(reader.GetOrdinal("Unit")),
+        //                        OilRefining = reader.IsDBNull(reader.GetOrdinal("OilRefining")) ? null : reader.GetString(reader.GetOrdinal("OilRefining")),
+        //                        Category = reader.GetString(reader.GetOrdinal("Category")),
+        //                        Description = reader.IsDBNull(reader.GetOrdinal("Description")) ? null : reader.GetString(reader.GetOrdinal("Description")),
+        //                        Action = reader.IsDBNull(reader.GetOrdinal("Action")) ? null : reader.GetString(reader.GetOrdinal("Action")),
+        //                        DateCreate = reader.GetString(reader.GetOrdinal("DateCreate")),
+        //                        Creator = reader.GetString(reader.GetOrdinal("Creator"))
+        //                    };
+        //                    eventsDict[eventId] = eventModel;
+        //                }
 
-                        // Если есть прикрепленный файл, добавляем его
-                        if (!reader.IsDBNull(reader.GetOrdinal("FileId")))
-                        {
-                            eventModel.AttachedFiles.Add(new AttachedFileModel(Global_Var.ConnectionString) //_connectionString // Передаем строку подключения
-                            {
-                                FileId = reader.GetInt32(reader.GetOrdinal("FileId")),
-                                FileCategory = reader.GetString(reader.GetOrdinal("FileCategory")),
-                                FileName = reader.GetString(reader.GetOrdinal("FileName")),
-                                FilePath = reader.GetString(reader.GetOrdinal("FilePath")),
-                                FileSize = reader.GetInt64(reader.GetOrdinal("FileSize")),
-                                FileType = reader.GetString(reader.GetOrdinal("FileType")),
-                                UploadDate = DateTime.Parse(reader.GetString(reader.GetOrdinal("UploadDate")))
-                            });
-                        }
-                    }
-                }
-            }
+        //                // Если есть прикрепленный файл, добавляем его
+        //                if (!reader.IsDBNull(reader.GetOrdinal("FileId")))
+        //                {
+        //                    eventModel.AttachedFiles.Add(new AttachedFileModel(Global_Var.ConnectionString) //_connectionString // Передаем строку подключения
+        //                    {
+        //                        FileId = reader.GetInt32(reader.GetOrdinal("FileId")),
+        //                        FileCategory = reader.GetString(reader.GetOrdinal("FileCategory")),
+        //                        FileName = reader.GetString(reader.GetOrdinal("FileName")),
+        //                        FilePath = reader.GetString(reader.GetOrdinal("FilePath")),
+        //                        FileSize = reader.GetInt64(reader.GetOrdinal("FileSize")),
+        //                        FileType = reader.GetString(reader.GetOrdinal("FileType")),
+        //                        UploadDate = DateTime.Parse(reader.GetString(reader.GetOrdinal("UploadDate")))
+        //                    });
+        //                }
+        //            }
+        //        }
+        //    }
 
-            return eventsDict.Values.ToList();
-        }
+        //    return eventsDict.Values.ToList();
+        //}
 
 
 
@@ -803,7 +832,7 @@ namespace FlowEvents
         //    string IsGuest = identity.IsGuest.ToString();
         //}
 
-        
+
 
     }
 
