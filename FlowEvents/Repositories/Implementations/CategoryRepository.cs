@@ -61,6 +61,37 @@ namespace FlowEvents.Repositories.Implementations
         }
 
 
+        public async Task<ObservableCollection<Category>> GetAllCategoriesAsync()
+        {
+            using (var connection = new SQLiteConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+                var command = new SQLiteCommand("SELECT id, Name, Description, Colour FROM Category", connection);
+
+                using (var reader = await command.ExecuteReaderAsync())
+                {
+                    var categories = new ObservableCollection<Category>();
+
+                    int idIndex = reader.GetOrdinal("id");
+                    int nameIndex = reader.GetOrdinal("Name");
+                    int descriptionIndex = reader.GetOrdinal("Description");
+                    int colourIndex = reader.GetOrdinal("Colour");
+
+                    while (await reader.ReadAsync())
+                    {
+                        categories.Add(new Category
+                        {
+                            Id = reader.GetInt32(idIndex),
+                            Name = reader.GetString(nameIndex),
+                            Description = reader.IsDBNull(descriptionIndex) ? null : reader.GetString(descriptionIndex),
+                            Colour = reader.IsDBNull(colourIndex) ? null : reader.GetString(colourIndex)
+                        });
+                    }
+                    return categories;
+                }
+            }
+        }
+
         //-------------------------------------------------------------------
         // Метод для обновления строки подключения во время работы приложения
         public void UpdateConnectionString(string newConnectionString)

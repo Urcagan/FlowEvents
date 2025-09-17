@@ -5,6 +5,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Data.SQLite;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using System.Windows;
 
 namespace FlowEvents
@@ -56,13 +57,32 @@ namespace FlowEvents
 
             ConnectionString = Global_Var.ConnectionString; //_mainViewModel._connectionString; // $"Data Source={_mainViewModel.appSettings.pathDB};Version=3;foreign keys=true;";
 
-            Categories.Clear();
-            Categories = _categoryRepository.LoadCategories();
+            //Categories.Clear();
+            //Categories = _categoryRepository.LoadCategories();
+            LoadCategoriesAsync();
 
             IsAddButtonVisible = true; // Показать кнопку "Добавить"
             IsDeleteButtonVisible = false; // Скрыть кнопку "Удалить"
         }
 
+
+        // Загрузка категорий при инициализации
+        private async Task LoadCategoriesAsync()
+        {
+            try
+            {
+                var categories = await _categoryRepository.GetAllCategoriesAsync();
+                Categories.Clear();
+                foreach (var category in categories)
+                {
+                    Categories.Add(category);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка загрузки категорий: {ex.Message}");
+            }
+        }
 
         // Загрузка категорий из базы данных
         //private void LoadCategories()
@@ -101,8 +121,8 @@ namespace FlowEvents
         //}
 
         //Сохранение в БД новой категории
-      
-        
+
+
         private void SaveNewCategory(object parameter)
         {
             // Проверка на пустое значение

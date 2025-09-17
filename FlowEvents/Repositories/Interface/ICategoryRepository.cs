@@ -13,6 +13,8 @@ namespace FlowEvents.Repositories.Interface
 
         ObservableCollection<Category> LoadCategories(); // Загрузка категорий из базы данных
 
+        Task<ObservableCollection<Category>> GetAllCategoriesAsync();
+
         void UpdateConnectionString(string newConnectionString);
     }
 }
