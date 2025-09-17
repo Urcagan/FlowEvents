@@ -92,6 +92,59 @@ namespace FlowEvents.Repositories.Implementations
             }
         }
 
+        //Сохранение в БД новой категории
+        public async Task<Category> CreateCategoryAsync(Category category)  
+        {
+            using (var connection = new SQLiteConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+
+                var command = new SQLiteCommand(
+                    "INSERT INTO Category (Name, Description, Colour) " +
+                    "VALUES (@Name, @Description, @Colour); " +
+                    "SELECT last_insert_rowid();",
+                    connection);
+
+                command.Parameters.AddWithValue("@Name", category.Name);
+                command.Parameters.AddWithValue("@Description",
+                    string.IsNullOrEmpty(category.Description) ? DBNull.Value : (object)category.Description);
+                command.Parameters.AddWithValue("@Colour",
+                    string.IsNullOrEmpty(category.Colour) ? DBNull.Value : (object)category.Colour);
+
+                var newId = (long)await command.ExecuteScalarAsync();
+                category.Id = (int)newId;
+
+                return category;
+            }
+        }
+
+
+        // Проверка ктегории на уникальность
+        public async Task<bool> IsCategoryNameUniqueAsync(string name, int? excludeId = null)
+        {
+            using (var connection = new SQLiteConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+
+                var query = "SELECT COUNT(*) FROM Category WHERE Name = @Name";
+                if (excludeId.HasValue)
+                {
+                    query += " AND Id != @ExcludeId";
+                }
+
+                var command = new SQLiteCommand(query, connection);
+                command.Parameters.AddWithValue("@Name", name);
+
+                if (excludeId.HasValue)
+                {
+                    command.Parameters.AddWithValue("@ExcludeId", excludeId.Value);
+                }
+
+                var count = (long)await command.ExecuteScalarAsync();
+                return count == 0;
+            }
+        }
+
         //-------------------------------------------------------------------
         // Метод для обновления строки подключения во время работы приложения
         public void UpdateConnectionString(string newConnectionString)

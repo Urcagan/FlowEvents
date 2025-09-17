@@ -36,7 +36,7 @@ namespace FlowEvents.Users
         {
             get => _roles;
             set
-            { 
+            {
                 _roles = value;
                 OnPropertyChanged(nameof(Roles));
             }
@@ -72,7 +72,7 @@ namespace FlowEvents.Users
             get => _selectedRole;
             set
             {
-               _selectedRole = value;
+                _selectedRole = value;
                 if (value != null)
                 {
                     // Загрузка прав для выбранной роли
@@ -126,14 +126,11 @@ namespace FlowEvents.Users
 
                 var roles = await _databaseService.GetRolesAsync();
 
-               var permissions = await _databaseService.GetPermissionsAsync();
+                var permissions = await _databaseService.GetPermissionsAsync();
 
                 Users = new ObservableCollection<User>(users);
                 Roles = new ObservableCollection<Role>(roles);
                 Permissions = new ObservableCollection<Permission>(permissions);
-
-                // Заглушка для прав (в следующей итерации будем загружать из БД)
-                //LoadDemoPermissions();
 
             }
             finally
@@ -142,21 +139,6 @@ namespace FlowEvents.Users
             }
         }
 
-
-
-
-
-        private void LoadDemoPermissions()
-        {
-            // Временная заглушка - в следующей итерации загрузим из БД
-            Permissions = new ObservableCollection<Permission>
-            {
-                new Permission { PermissionId = 1, PermissionName = "ReadData", Description = "Чтение данных", IsGrantedBool = false },
-                new Permission { PermissionId = 2, PermissionName = "WriteData", Description = "Запись данных", IsGrantedBool = false },
-                new Permission { PermissionId = 3, PermissionName = "DeleteData", Description = "Удаление данных", IsGrantedBool = false },
-                new Permission { PermissionId = 4, PermissionName = "ManageUsers", Description = "Управление пользователями", IsGrantedBool = false }
-            };
-        }
 
         // Загрузка прав для выбранного пользователя
         private void LoadUserPermissions()

@@ -15,6 +15,10 @@ namespace FlowEvents.Repositories.Interface
 
         Task<ObservableCollection<Category>> GetAllCategoriesAsync();
 
+        Task<Category> CreateCategoryAsync(Category category); //Сохранение в БД новой категории
+
+        Task<bool> IsCategoryNameUniqueAsync(string name, int? excludeId = null); // // Проверка ктегории на уникальность
+
         void UpdateConnectionString(string newConnectionString);
     }
 }

@@ -4,6 +4,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Data.SQLite;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
@@ -14,7 +15,18 @@ namespace FlowEvents
     {
         private readonly ICategoryRepository _categoryRepository;
 
+        private bool _isSaving;
+        public bool IsSaving
+        {
+            get => _isSaving;
+            set
+            {
+                _isSaving = value;
+            } 
+        }
+
         private string _connectionString;
+
         public string ConnectionString
         {
             get { return _connectionString; }
@@ -46,7 +58,8 @@ namespace FlowEvents
             // Инициализация команд
             AddCommand = new RelayCommand(AddCategory);
             CancelCommand = new RelayCommand(CancelEdit);
-            SaveCommand = new RelayCommand(SaveNewCategory);
+       //     SaveCommand = new RelayCommand(SaveNewCategory);
+            SaveCommand = new RelayCommand(async (object param) => await SaveNewCategoryAsync(), (param) => !string.IsNullOrWhiteSpace(Name));
             DeleteCommand = new RelayCommand(DeleteCategory, CanEditOrDelete);
             UpdateCommand = new RelayCommand(UpdateCategoty, CanEditOrDelete);
             //Как работает RelayCommand?
@@ -57,123 +70,91 @@ namespace FlowEvents
 
             ConnectionString = Global_Var.ConnectionString; //_mainViewModel._connectionString; // $"Data Source={_mainViewModel.appSettings.pathDB};Version=3;foreign keys=true;";
 
-            //Categories.Clear();
-            //Categories = _categoryRepository.LoadCategories();
-            LoadCategoriesAsync();
+            Categories.Clear();
+            // Автоматическая загрузка при создании
+            _ = InitializeAsync(); // Асинхронная загрузка категорий
 
             IsAddButtonVisible = true; // Показать кнопку "Добавить"
             IsDeleteButtonVisible = false; // Скрыть кнопку "Удалить"
         }
 
+        private async Task InitializeAsync()
+        {
+            try
+            {
+                await LoadCategoriesAsync();
+            }
+            catch (Exception ex)
+            {
+                // Логирование ошибки
+                Debug.WriteLine($"Ошибка инициализации: {ex.Message}");
+            }
+        }
 
         // Загрузка категорий при инициализации
         private async Task LoadCategoriesAsync()
         {
             try
             {
-                var categories = await _categoryRepository.GetAllCategoriesAsync();
-                Categories.Clear();
-                foreach (var category in categories)
-                {
-                    Categories.Add(category);
-                }
+                Categories = await _categoryRepository.GetAllCategoriesAsync();
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Ошибка загрузки категорий: {ex.Message}");
+                Categories = new ObservableCollection<Category>(); // На случай ошибки
             }
         }
 
-        // Загрузка категорий из базы данных
-        //private void LoadCategories()
-        //{
-        //    try
-        //    {
-        //        using (var connection = new SQLiteConnection(_connectionString))
-        //        {
-        //            connection.Open();
-        //            var command = new SQLiteCommand("SELECT id, Name, Description, Colour FROM Category", connection);
-        //            using (var reader = command.ExecuteReader())
-        //            {
-        //                int idIndex = reader.GetOrdinal("id");
-        //                int nameIndex = reader.GetOrdinal("Name");
-        //                int descriptionIndex = reader.GetOrdinal("Description");
-        //                int colourIndex = reader.GetOrdinal("Colour");
 
-        //                while (reader.Read())
-        //                {
-        //                    var category = new Category
-        //                    {
-        //                        Id = reader.GetInt32(idIndex),
-        //                        Name = reader.GetString(nameIndex),
-        //                        Description = reader.IsDBNull(descriptionIndex) ? null : reader.GetString(descriptionIndex),
-        //                        Colour = reader.IsDBNull(colourIndex) ? null : reader.GetString(colourIndex)
-        //                    };
-        //                    Categories.Add(category);
-        //                }
-        //            }
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        MessageBox.Show($"Ошибка данных: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-        //    }
-        //}
 
         //Сохранение в БД новой категории
 
-
-        private void SaveNewCategory(object parameter)
+        private async Task SaveNewCategoryAsync()
         {
             // Проверка на пустое значение
             if (string.IsNullOrWhiteSpace(Name))
             {
-                ShowError("Название обязательно для заполнения!");
+                ShowErrorMes("Название обязательно для заполнения!");
                 return;
             }
 
-            // Проверка на уникальность
-            if (!IsCategoryNameUnique(Name))
-            {
-                ShowError("Категория с таким именем уже существует!");
-                return;
-            }
-
-            // Объект для новой категории
-            var newCategory = new Category
-            {
-                Name = Name,
-                Description = Description,
-                Colour = Colour
-            };
+            IsSaving = true;
+            
             try
             {
-                using (var connection = new SQLiteConnection(_connectionString))
+                // Проверка на уникальность через репозиторий
+                if (!await _categoryRepository.IsCategoryNameUniqueAsync(Name))
                 {
-                    connection.Open();
-                    var command = new SQLiteCommand(
-                        "INSERT INTO Category (Name, Description, Colour) " +
-                        "VALUES (@Name, @Description, @Colour)",
-                        connection);
-                    command.Parameters.AddWithValue("@Name", newCategory.Name);
-                    command.Parameters.AddWithValue("@Description",
-                            string.IsNullOrEmpty(newCategory.Description) ? DBNull.Value : (object)newCategory.Description);
-                    command.Parameters.AddWithValue("@Colour",
-                            string.IsNullOrEmpty(newCategory.Colour) ? DBNull.Value : (object)newCategory.Colour);
-                    command.ExecuteNonQuery();
-
-                    long newId = connection.LastInsertRowId; // Получаем ID новой записи
-                    newCategory.Id = (int)newId; // Присваиваем ID новой записи объекту newUnit
+                    ShowErrorMes("Категория с таким именем уже существует!");
+                    return;
                 }
-                // Обновление списка
-                Categories.Add(newCategory);
-                //SelectedCategory = newCategory;
+
+                // Объект для новой категории
+                var newCategory = new Category
+                {
+                    Name = Name,
+                    Description = Description,
+                    Colour = Colour
+                };
+
+                // Сохранение через репозиторий
+                var savedCategory = await _categoryRepository.CreateCategoryAsync(newCategory);
+
+                // Обновление списка в UI
+                Categories.Add(savedCategory);
+                // SelectedCategory = savedCategory;
+                
+                CancelEdit(null); // Сбрасываем форму
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка данных: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                ShowErrorMes($"Ошибка данных: {ex.Message}");
             }
-            CancelEdit(null);
+            finally
+            {
+                IsSaving = false;
+            }
+            
         }
 
         // Обновление 
@@ -218,7 +199,8 @@ namespace FlowEvents
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка данных: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+               // MessageBox.Show($"Ошибка данных: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                ShowErrorMes($"Ошибка данных: {ex.Message}");
             }
             SelectedCategory = null; // Снимаем выделение строки
             CancelEdit(null); //Очищаем и закрываем поле редактирования
@@ -312,6 +294,12 @@ namespace FlowEvents
 
         // ===================================================================================================
         // Методы для отображения ошибки и очистки поля с текстом ошибки.
+
+        private void ShowErrorMes(string message) // Метод отображение ошибки в виде сообщения
+        {
+            MessageBox.Show(message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+
         private void ShowError(string errorMessage)
         {
             ErrorText = errorMessage;
