@@ -20,7 +20,11 @@ namespace FlowEvents.Repositories
         }
 
 
-        // Метод для получения событий из базы данных
+        /// <summary>
+        /// Метод для получения событий из базы данных
+        /// </summary>
+        /// <param name="queryEvent"></param>
+        /// <returns></returns>
         public List<EventForView> GetEvents(string queryEvent)
         {
             var eventsDict = new Dictionary<int, EventForView>();
@@ -48,7 +52,7 @@ namespace FlowEvents.Repositories
                                 Description = reader.IsDBNull(reader.GetOrdinal("Description")) ? null : reader.GetString(reader.GetOrdinal("Description")),
                                 Action = reader.IsDBNull(reader.GetOrdinal("Action")) ? null : reader.GetString(reader.GetOrdinal("Action")),
                                 DateCreate = reader.GetString(reader.GetOrdinal("DateCreate")),
-                                Creator = reader.GetString(reader.GetOrdinal("Creator"))
+                                Creator = reader.IsDBNull(reader.GetOrdinal("Creator")) ? null : reader.GetString(reader.GetOrdinal("Creator"))
                             };
                             eventsDict[eventId] = eventModel;
                         }
@@ -73,7 +77,10 @@ namespace FlowEvents.Repositories
             return eventsDict.Values.ToList();
         }
 
-        //Загрузка перечня установок из ДБ
+        /// <summary>
+        /// Загрузка перечня установок из ДБ
+        /// </summary>
+        /// <returns></returns>
         public ObservableCollection<Unit> GetUnitFromDatabase()
         {
             var units = new ObservableCollection<Unit>();
@@ -241,7 +248,11 @@ namespace FlowEvents.Repositories
 
 
         //-------------------------------------------------------------------
-        // Метод для обновления строки подключения во время работы приложения
+        /// <summary>
+        /// Метод для обновления строки подключения во время работы приложения
+        /// </summary>
+        /// <param name="newConnectionString"> Строка с нового подключения </param>
+        //-------------------------------------------------------------------
         public void UpdateConnectionString(string newConnectionString)
         {
             _connectionString = newConnectionString;

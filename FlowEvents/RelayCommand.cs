@@ -32,12 +32,24 @@ namespace FlowEvents
             _canExecute = canExecute;
         }
 
+        // Конструкторы для команд без параметра
+        public RelayCommand(Action execute, Func<bool> canExecute = null)
+            : this(_ => execute(), _ => canExecute?.Invoke() ?? true)
+        {
+        }
+
 
         // Конструктор для асинхронных команд
         public RelayCommand(Func<object, Task> executeAsync, Func<object, bool> canExecute = null)
         {
             _executeAsync = executeAsync ?? throw new ArgumentNullException(nameof(executeAsync));
             _canExecute = canExecute;
+        }
+
+        // Конструктор для асинхронных команд  без параметра
+        public RelayCommand(Func<Task> executeAsync, Func<bool> canExecute = null)
+        : this(_ => executeAsync(), _ => canExecute?.Invoke() ?? true)
+        {
         }
 
         //2 может ли нажатся кнопка true или false
@@ -80,6 +92,15 @@ namespace FlowEvents
             add { CommandManager.RequerySuggested += value; }
             remove { CommandManager.RequerySuggested -= value; }
         }
+
+        // это метод, который вручную запускает проверку возможности выполнения команды.
+        // Это механизм уведомления WPF о том, что условия выполнения команды изменились.
+        public void RaiseCanExecuteChanged()
+        {
+            CommandManager.InvalidateRequerySuggested();
+        }
+
+
 
     }
 }

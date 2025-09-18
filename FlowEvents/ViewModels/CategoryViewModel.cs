@@ -14,33 +14,125 @@ namespace FlowEvents
     public class CategoryViewModel : INotifyPropertyChanged
     {
         private readonly ICategoryRepository _categoryRepository;
-
         private bool _isSaving;
+        private bool _isDeleting;
+        private bool _isLoading;
+        private bool _visibleBar;
+        private string _name;
+        private string _description;
+        private string _colour;
+        private Category _selectedCategory; // Данные выделенной строки.
+
+
+
         public bool IsSaving
         {
             get => _isSaving;
             set
             {
                 _isSaving = value;
-            } 
-        }
+                VisibleBar = value;
+                OnPropertyChanged();
+                // UpdateCanExecute();
+                // SaveCommand.RaiseCanExecuteChanged(); // ✅ Обновит кнопку
 
-        private string _connectionString;
-
-        public string ConnectionString
-        {
-            get { return _connectionString; }
-            set
-            {
-                _connectionString = value;
-                // Загрузка данных из базы
-       //         LoadCategories();
             }
         }
-        //private string _connectionString = "Data Source=G:\\VS Dev\\FlowEvents\\FlowEvents.db;Version=3;foreign keys=true;";
+
+        public bool IsDeleting
+        {
+            get => _isDeleting;
+            set
+            {
+                _isDeleting = value;
+                VisibleBar = value;
+                OnPropertyChanged();
+                // UpdateCanExecute();
+
+            }
+        }
+        public bool IsLoading
+        {
+            get => _isLoading;
+            set
+            {
+                _isLoading = value;
+                VisibleBar = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public bool VisibleBar
+        {
+            get => _visibleBar;
+            set
+            {
+                _visibleBar = value;
+                OnPropertyChanged();
+            }
+        }
+
+
+        public string Name
+        {
+            get => _name;
+            set
+            {
+                if (_name != value)
+                {
+                    _name = value;
+                    OnPropertyChanged();
+                    // Очищаем ошибку при изменении текста
+                    ClearError();
+                }
+            }
+        }
+
+        public string Description
+        {
+            get { return _description; }
+            set
+            {
+                _description = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public string Colour
+        {
+            get { return _colour; }
+            set
+            {
+                _colour = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public Category SelectedCategory
+        {
+            get => _selectedCategory;
+            set
+            {
+                _selectedCategory = value;
+                OnPropertyChanged();
+                LoadPropertiesSelectedRow(); // Загружаем данные этой cтроки в поля для редактирования и отображаем окно редактирования
+            }
+        }
+
+
 
         // Коллекция для хранения категорий (источник данных (коллекцию))
-        public ObservableCollection<Category> Categories { get; set; } = new ObservableCollection<Category>();
+        private ObservableCollection<Category>_categories { get; set; } = new ObservableCollection<Category>();
+
+        public ObservableCollection<Category> Categories
+        {
+            get => _categories;
+            set
+            {
+                _categories = value;
+                OnPropertyChanged(nameof(Categories));
+            }
+        }
 
         // Команды для добавления, редактирования и удаления
         public RelayCommand AddCommand { get; }
@@ -58,21 +150,19 @@ namespace FlowEvents
             // Инициализация команд
             AddCommand = new RelayCommand(AddCategory);
             CancelCommand = new RelayCommand(CancelEdit);
-       //     SaveCommand = new RelayCommand(SaveNewCategory);
-            SaveCommand = new RelayCommand(async (object param) => await SaveNewCategoryAsync(), (param) => !string.IsNullOrWhiteSpace(Name));
-            DeleteCommand = new RelayCommand(DeleteCategory, CanEditOrDelete);
-            UpdateCommand = new RelayCommand(UpdateCategoty, CanEditOrDelete);
+            SaveCommand = new RelayCommand(async () => await SaveNewCategoryAsync(), () => !string.IsNullOrWhiteSpace(Name));
+            DeleteCommand = new RelayCommand(async () => await DeleteCategoryAsync(), () => CanExecuteDelete());
+            UpdateCommand = new RelayCommand(async () => await UpdateCategoryAsync(), CanExecuteUpdate);
+
             //Как работает RelayCommand?
             //Он принимает два делегата:
             //  Action<object> — метод, который выполняется при вызове команды.
             //  Func<object, bool>(опционально) — метод, который проверяет, можно ли выполнить команду.
 
 
-            ConnectionString = Global_Var.ConnectionString; //_mainViewModel._connectionString; // $"Data Source={_mainViewModel.appSettings.pathDB};Version=3;foreign keys=true;";
-
             Categories.Clear();
             // Автоматическая загрузка при создании
-            _ = InitializeAsync(); // Асинхронная загрузка категорий
+            _ = InitializeAsync(); // Асинхронная загрузка данных из БД
 
             IsAddButtonVisible = true; // Показать кнопку "Добавить"
             IsDeleteButtonVisible = false; // Скрыть кнопку "Удалить"
@@ -91,9 +181,14 @@ namespace FlowEvents
             }
         }
 
+
         // Загрузка категорий при инициализации
         private async Task LoadCategoriesAsync()
         {
+            IsLoading = true;
+
+            await Task.Delay(500); // Имитация задержки сети (2 секунды)
+
             try
             {
                 Categories = await _categoryRepository.GetAllCategoriesAsync();
@@ -103,12 +198,14 @@ namespace FlowEvents
                 MessageBox.Show($"Ошибка загрузки категорий: {ex.Message}");
                 Categories = new ObservableCollection<Category>(); // На случай ошибки
             }
+            finally
+            {
+                IsLoading = false;
+            }
         }
 
 
-
         //Сохранение в БД новой категории
-
         private async Task SaveNewCategoryAsync()
         {
             // Проверка на пустое значение
@@ -119,7 +216,10 @@ namespace FlowEvents
             }
 
             IsSaving = true;
+
             
+            await Task.Delay(500); // Имитация задержки сети (2 секунды)
+
             try
             {
                 // Проверка на уникальность через репозиторий
@@ -143,8 +243,10 @@ namespace FlowEvents
                 // Обновление списка в UI
                 Categories.Add(savedCategory);
                 // SelectedCategory = savedCategory;
-                
-                CancelEdit(null); // Сбрасываем форму
+
+                CancelEdit(); // Сбрасываем форму
+
+
             }
             catch (Exception ex)
             {
@@ -154,104 +256,120 @@ namespace FlowEvents
             {
                 IsSaving = false;
             }
-            
+
         }
 
-        // Обновление 
-        private void UpdateCategoty(object parameter)
+
+        /// Обновление категории
+        private async Task UpdateCategoryAsync()
         {
             if (SelectedCategory == null) return;
 
-            //Проверка на пустое значение
+            // Проверка на пустое значение
             if (string.IsNullOrWhiteSpace(Name))
             {
                 ShowError("Название обязательно для заполнения!");
                 return;
             }
 
-            //// Проверка на уникальность
-            //if (!IsCategoryNameUnique(Name))
-            //{
-            //    ShowError("Категория с таким именем уже существует!");
-            //    return;
-            //}
+            // Проверка на уникальность (исключая текущую категорию)
+            if (!await _categoryRepository.IsCategoryNameUniqueAsync(Name, SelectedCategory.Id))
+            {
+                ShowError("Категория с таким именем уже существует!");
+                return;
+            }
 
-            // Обновляем данные выбранной записи
-            SelectedCategory.Name = Name;
-            SelectedCategory.Description = Description;
-            SelectedCategory.Colour = Colour;
+            IsSaving = true;
+
+            await Task.Delay(500); // Имитация задержки сети
 
             try
             {
-                using (var connection = new SQLiteConnection(_connectionString))
+                // Обновляем данные выбранной записи
+                SelectedCategory.Name = Name;
+                SelectedCategory.Description = Description;
+                SelectedCategory.Colour = Colour;
+
+                // Сохраняем через репозиторий
+                var updatedCategory = await _categoryRepository.UpdateCategoryAsync(SelectedCategory);
+
+                // Обновляем UI
+                var index = Categories.IndexOf(SelectedCategory);
+                if (index >= 0)
                 {
-                    connection.Open();
-                    var command = new SQLiteCommand(
-                        "UPDATE Category SET Name = @Name, Description = @Description, Colour = @Colour WHERE Id = @Id",
-                        connection);
-                    command.Parameters.AddWithValue("@Name", SelectedCategory.Name);
-                    command.Parameters.AddWithValue("@Description", SelectedCategory.Description);
-                    command.Parameters.AddWithValue("@Colour", SelectedCategory.Colour);
-                    command.Parameters.AddWithValue("@Id", SelectedCategory.Id);
-                    command.ExecuteNonQuery();
+                    Categories[index] = updatedCategory;
                 }
+
                 OnPropertyChanged(nameof(SelectedCategory)); // Уведомляем об изменении свойств
+                ShowSuccess("Категория успешно обновлена!");
             }
             catch (Exception ex)
             {
-               // MessageBox.Show($"Ошибка данных: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-                ShowErrorMes($"Ошибка данных: {ex.Message}");
+                ShowError($"Ошибка данных: {ex.Message}");
             }
-            SelectedCategory = null; // Снимаем выделение строки
-            CancelEdit(null); //Очищаем и закрываем поле редактирования
+            finally
+            {
+                IsSaving = false;
+            }
+
+            SelectedCategory = null; // Снимаем выделение
+            CancelEdit(); // Очищаем форму
         }
 
+
         // Удаление категории
-        private void DeleteCategory(object parameter)
+        private async Task DeleteCategoryAsync()
         {
             if (SelectedCategory == null) return;
 
             var confirm = MessageBox.Show(
-                $"Вы уверены, что хотите удалить категорию {SelectedCategory.Name} ?",
-                "Подтверждение",
+                $"Вы уверены, что хотите удалить категорию '{SelectedCategory.Name}'?",
+                "Подтверждение удаления",
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Question);
+
             if (confirm != MessageBoxResult.Yes) return;
+
+            IsDeleting = true;
+
+            await Task.Delay(500); // Имитация задержки сети (2 секунды)
 
             try
             {
-                using (var connection = new SQLiteConnection(_connectionString))
-                {
-                    connection.Open();
+                // Вызываем метод репозитория (возвращает bool)
+                var success = await _categoryRepository.DeleteCategoryAsync(SelectedCategory.Id);
 
-                    var command = new SQLiteCommand("DELETE FROM Category WHERE Id = @Id", connection);
-                    command.Parameters.AddWithValue("@Id", SelectedCategory.Id);
-                    command.ExecuteNonQuery();
+                if (success)
+                {
+                    string _name = SelectedCategory.Name;
+                    Categories.Remove(SelectedCategory);
+                    ShowSuccess($"Категория '{_name}' успешно удалена!");
                 }
-                Categories.Remove(SelectedCategory);
+                else
+                {
+                    ShowError("Категория не найдена или уже была удалена.");
+                }
+            }
+            catch (InvalidOperationException ex) when (ex.Message.Contains("используется"))
+            {
+                ShowErrorMes($"Невозможно удалить категорию: она используется в записях событий!");
             }
             catch (SQLiteException ex) when (ex.ResultCode == SQLiteErrorCode.Constraint)
             {
-                // На случай, если FOREIGN_KEY сработал 
-                MessageBox.Show(
-                    "Невозможно удалить категорию: она используется в записях событий !",
-                    "Ошибка",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                ShowErrorMes($"Невозможно удалить категорию: она используется в других записях!");
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
-                    $"Ошибка при удалении: {ex.Message}", "Ошибка",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                ShowErrorMes($"Ошибка при удалении: {ex.Message}");
             }
-            CancelEdit(null); //Очищаем и закрываем поле редактирования
+            finally
+            {
+                IsDeleting = false;
+            }
+
+            CancelEdit();
         }
 
-
-        // ===================================================================================================
-        // Вспомогательные методы
 
         // Открытия доступа к полям ввода новой категории
         private void AddCategory(object parameter)
@@ -269,27 +387,6 @@ namespace FlowEvents
             SelectedCategory = null; // Снимаем выделение строки
         }
 
-        // Проверка ктегории на уникальность
-        private bool IsCategoryNameUnique(string name)
-        {
-            try
-            {
-                using (var connection = new SQLiteConnection(_connectionString))
-                {
-                    connection.Open();
-                    var command = new SQLiteCommand("SELECT COUNT(*) FROM Category WHERE Name = @Name", connection);
-                    command.Parameters.AddWithValue("@Name", name);
-                    return Convert.ToInt32(command.ExecuteScalar()) == 0;
-                }
-            }
-            catch (Exception ex)
-            {
-
-                MessageBox.Show($"Ошибка данных: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-                return false;
-            }
-
-        }
 
 
         // ===================================================================================================
@@ -298,6 +395,10 @@ namespace FlowEvents
         private void ShowErrorMes(string message) // Метод отображение ошибки в виде сообщения
         {
             MessageBox.Show(message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        private void ShowSuccess(string message)
+        {
+            MessageBox.Show(message, "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         private void ShowError(string errorMessage)
@@ -313,7 +414,7 @@ namespace FlowEvents
         }
 
         // Закрытие доступа к полям ввода данных
-        private void CancelEdit(object parameter)
+        private void CancelEdit()
         {
             // Очистите поля ввода (если нужно)
             Name = string.Empty;
@@ -330,82 +431,53 @@ namespace FlowEvents
             return SelectedCategory != null;
         }
 
-        //====================================================================================================
-        //Поля, Переменный, Свойства
-
-        //----------------------------------------
-        // свойства для привязки к полям ввода и редактирования данных.
-        private string _name;
-        public string Name
+        private bool CanExecuteSave()
         {
-            get => _name;
-            set
-            {
-                if (_name != value)
-                {
-                    _name = value;
-                    OnPropertyChanged();
-
-                    // Очищаем ошибку при изменении текста
-                    ClearError();
-                }
-            }
+            return !IsSaving && !string.IsNullOrWhiteSpace(Name);
         }
 
-        private string _description;
-        public string Description
+        private bool CanExecuteUpdate()
         {
-            get { return _description; }
-            set
-            {
-                _description = value;
-                OnPropertyChanged();
-            }
+            return !IsSaving && SelectedCategory != null && !string.IsNullOrWhiteSpace(Name);
         }
 
-        private string _colour;
-        public string Colour
+        private bool CanExecuteDelete()
         {
-            get { return _colour; }
-            set
-            {
-                _colour = value;
-                OnPropertyChanged();
-            }
+            return !IsDeleting && SelectedCategory != null;
         }
 
-        // Объект для размещения данных выделенной строки. При выборе строки таблицы в переменную поместятся все значения выделенной строки
-        private Category _selectedCategory;
-        public Category SelectedCategory
+        private void UpdateCanExecute()
         {
-            get => _selectedCategory;
-            set
+            ((RelayCommand)DeleteCommand)?.RaiseCanExecuteChanged();
+            ((RelayCommand)SaveCommand)?.RaiseCanExecuteChanged();
+            ((RelayCommand)UpdateCommand)?.RaiseCanExecuteChanged();
+        }
+
+
+        // Загрузить данные выделенной строки в поля редактирования
+        private void LoadPropertiesSelectedRow()
+        {
+            // В случае если выбрана какая либо строка , то загружаем данные этой cтроки в поля для редактирования и отображаем окно редактирования
+            if (_selectedCategory != null)
             {
-                _selectedCategory = value;
-                OnPropertyChanged();
+                // Заполните поля данными выбранной категории
+                Name = _selectedCategory.Name;
+                Description = _selectedCategory.Description;
+                Colour = _selectedCategory.Colour;
 
-                // В случае если выбрана какая либо строка , то загружаем данные этой троки в поля для редактирования и отображаем окно редактирования
-                if (_selectedCategory != null)
-                {
-                    // Заполните поля данными выбранной категории
-                    Name = _selectedCategory.Name;
-                    Description = _selectedCategory.Description;
-                    Colour = _selectedCategory.Colour;
+                // Покажите правую панель
+                IsEditPanelVisible = true;
 
-                    // Покажите правую панель
-                    IsEditPanelVisible = true;
-
-                    // Управление видимостью кнопок
-                    IsCreateButtonVisible = false; // Скрыть кнопку "Создать"
-                    IsUpdateButtonVisible = true;  // Показать кнопку "Обновить"
-                    IsAddButtonVisible = false; // Скрыть кнопку "Добавить"
-                    IsDeleteButtonVisible = true; // Показать кнопку "Удалить"
-                }
-                else
-                {
-                    // Если строка не выбрана, скрываем кнопку "Удалить"
-                    IsDeleteButtonVisible = false;
-                }
+                // Управление видимостью кнопок
+                IsCreateButtonVisible = false; // Скрыть кнопку "Создать"
+                IsUpdateButtonVisible = true;  // Показать кнопку "Обновить"
+                IsAddButtonVisible = false; // Скрыть кнопку "Добавить"
+                IsDeleteButtonVisible = true; // Показать кнопку "Удалить"
+            }
+            else
+            {
+                // Если строка не выбрана, скрываем кнопку "Удалить"
+                IsDeleteButtonVisible = false;
             }
         }
 

@@ -80,7 +80,9 @@
     </ApplicationDefinition>
     <Compile Include="App.cs" />
     <Compile Include="Repositories\Implementations\CategoryRepository.cs" />
+    <Compile Include="Repositories\Implementations\UnitRepository.cs" />
     <Compile Include="Repositories\Interface\ICategoryRepository.cs" />
+    <Compile Include="Repositories\Interface\IUnitRepository.cs" />
     <Compile Include="Views\CategoryView.xaml.cs">
       <DependentUpon>CategoryView.xaml</DependentUpon>
     </Compile>

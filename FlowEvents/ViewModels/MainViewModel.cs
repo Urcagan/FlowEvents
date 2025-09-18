@@ -314,7 +314,8 @@ namespace FlowEvents
         }
 
 
-        private void UnitMenuItem(object parameter)
+        // Вызов окна Объектов
+        private void UnitMenuItem()
         {
             // 1. Берем ViewModel из контейнера
             var unitViewModel = App.ServiceProvider.GetRequiredService<UnitViewModel>();

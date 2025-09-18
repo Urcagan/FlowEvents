@@ -10,15 +10,15 @@ namespace FlowEvents.Repositories.Interface
 {
     public interface ICategoryRepository
     {
-
-        ObservableCollection<Category> LoadCategories(); // Загрузка категорий из базы данных
-
-        Task<ObservableCollection<Category>> GetAllCategoriesAsync();
-
-        Task<Category> CreateCategoryAsync(Category category); //Сохранение в БД новой категории
-
-        Task<bool> IsCategoryNameUniqueAsync(string name, int? excludeId = null); // // Проверка ктегории на уникальность
+        Task<Category> CreateCategoryAsync(Category category); //Сохранение новой категории
+        Task<Category> UpdateCategoryAsync(Category category); // Обновление существующей категории
+        Task<bool> DeleteCategoryAsync(int categoryId); // Удаление категории
+        Task<bool> IsCategoryNameUniqueAsync(string name, int? excludeId = null); // // Проверка ктегорию на уникальность
+        Task<ObservableCollection<Category>> GetAllCategoriesAsync(); // Получить все категории 
+           
 
         void UpdateConnectionString(string newConnectionString);
+
+
     }
 }

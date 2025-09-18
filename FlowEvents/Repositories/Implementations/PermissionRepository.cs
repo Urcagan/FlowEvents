@@ -61,7 +61,11 @@ namespace FlowEvents.Repositories.Implementations
 
 
         //-------------------------------------------------------------------
-        // Метод для обновления строки подключения во время работы приложения
+        /// <summary>
+        /// Метод для обновления строки подключения во время работы приложения
+        /// </summary>
+        /// <param name="newConnectionString"> Строка с нового подключения </param>
+        //-------------------------------------------------------------------
         public void UpdateConnectionString(string newConnectionString)
         {
             _connectionString = newConnectionString;

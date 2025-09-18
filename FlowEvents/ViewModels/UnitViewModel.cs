@@ -1,10 +1,13 @@
 ﻿using FlowEvents.Models;
+using FlowEvents.Repositories.Implementations;
+using FlowEvents.Repositories.Interface;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Data;
 using System.Data.SQLite;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -18,6 +21,15 @@ namespace FlowEvents
     public class UnitViewModel : INotifyPropertyChanged
     {
         #region
+        private readonly IUnitRepository _unitRepository;
+        private bool _isSaving;
+        private bool _isDeleting;
+        private bool _isLoading;
+        private bool _visibleBar;
+
+        private ObservableCollection<Unit> _units { get; set; } = new ObservableCollection<Unit>();
+
+
         private string _connectionString;
         public string ConnectionString
         {
@@ -25,13 +37,66 @@ namespace FlowEvents
             set
             {
                 _connectionString = value;
-               // OnPropertyChanged(nameof(ConnectionString));
-                GetUnits();
+                // OnPropertyChanged(nameof(ConnectionString));
+               // GetUnits();
             }
         }
 
-        // Коллекция для хранения категорий (источник данных (коллекцию))
-        public ObservableCollection<Unit> Units { get; set; } = new ObservableCollection<Unit>();
+        public bool IsSaving
+        {
+            get => _isSaving;
+            set
+            {
+                _isSaving = value;
+                VisibleBar = value;
+                OnPropertyChanged();
+                // UpdateCanExecute();
+                // SaveCommand.RaiseCanExecuteChanged(); // ✅ Обновит кнопку
+            }
+        }
+
+        public bool IsDeleting
+        {
+            get => _isDeleting;
+            set
+            {
+                _isDeleting = value;
+                VisibleBar = value;
+                OnPropertyChanged();
+                // UpdateCanExecute();
+            }
+        }
+        public bool IsLoading
+        {
+            get => _isLoading;
+            set
+            {
+                _isLoading = value;
+                VisibleBar = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public bool VisibleBar
+        {
+            get => _visibleBar;
+            set
+            {
+                _visibleBar = value;
+                OnPropertyChanged();
+            }
+        }
+        
+
+        public ObservableCollection<Unit> Units // Коллекция для хранения категорий (источник данных (коллекцию))
+        {
+            get => _units;
+            set
+            {
+                _units = value;
+                OnPropertyChanged(nameof(Units));
+            }
+        }
 
         // Команды для добавления, редактирования и удаления
         public RelayCommand AddCommand { get; }
@@ -42,8 +107,11 @@ namespace FlowEvents
 
         #endregion
 
-        public UnitViewModel()
+        public UnitViewModel(IUnitRepository unitRepository)
         {
+            _unitRepository = unitRepository;
+
+
             // Инициализация команд
             AddCommand = new RelayCommand(AddUnit);
             CancelCommand = new RelayCommand(CancelEdit);
@@ -53,51 +121,51 @@ namespace FlowEvents
 
             // Загрузка данных из базы
             ConnectionString = Global_Var.ConnectionString; //_mainViewModel._connectionString; //$"Data Source={_mainViewModel.appSettings.pathDB};Version=3;";
-            //GetUnits();
+
+            _ = InitializeAsync(); // Асинхронная загрузка данных из БД
+
             IsAddButtonVisible = true; // Показать кнопку "Добавить"
             IsDeleteButtonVisible = false; // Скрыть кнопку "Удалить"
         }
 
 
-        // Метод для загрузки данных из таблицы Units
-        private void GetUnits()
+        private async Task InitializeAsync()
         {
             try
             {
-                using (var connection = new SQLiteConnection(_connectionString))
-                {
-                    connection.Open();
-                    var command = new SQLiteCommand("SELECT * FROM Units", connection);
-                    using (var reader = command.ExecuteReader())
-                    {
-                        int idIndex = reader.GetOrdinal("id");
-                        int unitIndex = reader.GetOrdinal("Unit");
-                        int descriptionIndex = reader.GetOrdinal("Description");
-
-                        while (reader.Read())
-                        {
-                            var unit = new Unit
-                            {
-                                Id = reader.GetInt32(idIndex),
-                                UnitName = reader.GetString(unitIndex),
-                                Description = reader.IsDBNull(descriptionIndex) ? null : reader.GetString(descriptionIndex)
-                            };
-                            Units.Add(unit);
-                        }
-                    }
-                }
-            }
-            catch (SQLiteException ex)
-            {
-                // Обработка ошибок, связанных с SQLite
-                MessageBox.Show($"Ошибка базы данных: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                await LoadUnitsAsync();
             }
             catch (Exception ex)
             {
-                // Обработка всех остальных ошибок
-                MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                // Логирование ошибки
+                Debug.WriteLine($"Ошибка инициализации: {ex.Message}");
             }
         }
+
+        // Метод для загрузки данных из таблицы Units
+
+        private async Task LoadUnitsAsync()
+        {
+            IsLoading = true;
+
+            await Task.Delay(500); // Имитация задержки сети (2 секунды)
+
+            try
+            {
+                Units = await _unitRepository.GetAllUnitsAsync();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка загрузки : {ex.Message}");
+                Units = new ObservableCollection<Unit>(); // На случай ошибки
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+
 
         //Сохранение в БД новой категории
         private void SaveNewUnit(object parameter)
