@@ -63,15 +63,12 @@ namespace FlowEvents.Repositories.Implementations
             using (var connection = new SQLiteConnection(_connectionString))
             {
                 await connection.OpenAsync();
-
                 var command = new SQLiteCommand("UPDATE Category SET Name = @Name, Description = @Description, Colour = @Colour WHERE Id = @Id", connection);
                 command.Parameters.AddWithValue("@Name", category.Name);
                 command.Parameters.AddWithValue("@Description", string.IsNullOrEmpty(category.Description) ? DBNull.Value : (object)category.Description);
                 command.Parameters.AddWithValue("@Colour", string.IsNullOrEmpty(category.Colour) ? DBNull.Value : (object)category.Colour);
                 command.Parameters.AddWithValue("@Id", category.Id);
-
                 await command.ExecuteNonQueryAsync();
-
                 return category; // Возвращаем обновленную категорию
             }
         }
@@ -82,29 +79,28 @@ namespace FlowEvents.Repositories.Implementations
         /// <param name="categoryId"></param>
         /// <returns></returns>
         public async Task<bool> DeleteCategoryAsync(int categoryId)
-    {
-        try
         {
-            using (var connection = new SQLiteConnection(_connectionString))
+            try
             {
-                await connection.OpenAsync();
-                
-                var command = new SQLiteCommand("DELETE FROM Category WHERE Id = @Id", connection);
-                command.Parameters.AddWithValue("@Id", categoryId);
-                
-                var rowsAffected = await command.ExecuteNonQueryAsync();
-                return rowsAffected > 0; // true если удалено, false если нет
+                using (var connection = new SQLiteConnection(_connectionString))
+                {
+                    await connection.OpenAsync();
+                    var command = new SQLiteCommand("DELETE FROM Category WHERE Id = @Id", connection);
+                    command.Parameters.AddWithValue("@Id", categoryId);
+
+                    var rowsAffected = await command.ExecuteNonQueryAsync();
+                    return rowsAffected > 0; // true если удалено, false если нет
+                }
+            }
+            catch (SQLiteException ex) when (ex.ResultCode == SQLiteErrorCode.Constraint)
+            {
+                // Пробрасываем специальное исключение для ограничений FOREIGN KEY
+                throw new InvalidOperationException("Категория используется в записях событий", ex);
             }
         }
-        catch (SQLiteException ex) when (ex.ResultCode == SQLiteErrorCode.Constraint)
-        {
-            // Пробрасываем специальное исключение для ограничений FOREIGN KEY
-            throw new InvalidOperationException("Категория используется в записях событий", ex);
-        }
-    }
 
 
-        
+
 
         //-------------------------
         /// <summary>

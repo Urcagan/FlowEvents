@@ -151,8 +151,9 @@ namespace FlowEvents
             AddCommand = new RelayCommand(AddCategory);
             CancelCommand = new RelayCommand(CancelEdit);
             SaveCommand = new RelayCommand(async () => await SaveNewCategoryAsync(), () => !string.IsNullOrWhiteSpace(Name));
-            DeleteCommand = new RelayCommand(async () => await DeleteCategoryAsync(), () => CanExecuteDelete());
             UpdateCommand = new RelayCommand(async () => await UpdateCategoryAsync(), CanExecuteUpdate);
+            DeleteCommand = new RelayCommand(async () => await DeleteCategoryAsync(), () => CanExecuteDelete());
+            
 
             //Как работает RelayCommand?
             //Он принимает два делегата:
@@ -347,7 +348,7 @@ namespace FlowEvents
                 }
                 else
                 {
-                    ShowError("Категория не найдена или уже была удалена.");
+                    ShowErrorMes("Категория не найдена или уже была удалена.");
                 }
             }
             catch (InvalidOperationException ex) when (ex.Message.Contains("используется"))

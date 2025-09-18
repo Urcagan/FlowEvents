@@ -1,13 +1,9 @@
 ﻿using FlowEvents.Models;
 using FlowEvents.Repositories.Interface;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Data.SQLite;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using System.Windows;
 
 namespace FlowEvents.Repositories.Implementations
 {
@@ -25,15 +21,15 @@ namespace FlowEvents.Repositories.Implementations
             using (var connection = new SQLiteConnection(_connectionString))
             {
                 await connection.OpenAsync();
-                
+
                 var command = new SQLiteCommand(
                     "INSERT INTO Units (Unit, Description) " +
-                    "VALUES (@Unit, @Description)",
+                    "VALUES (@Unit, @Description); " +
+                    "SELECT last_insert_rowid();",
                     connection);
 
                 command.Parameters.AddWithValue("@Unit", unit.UnitName);
                 command.Parameters.AddWithValue("@Description", string.IsNullOrEmpty(unit.Description) ? DBNull.Value : (object)unit.Description);
-                command.ExecuteNonQuery();
 
                 var newId = (long)await command.ExecuteScalarAsync(); // Получаем ID новой записи
                 unit.Id = (int)newId; // Присваиваем ID новой записи объекту newUnit
@@ -42,14 +38,47 @@ namespace FlowEvents.Repositories.Implementations
             }
         }
 
+        //----------------------------------
+        //    Обновление в базе данных 
+        //----------------------------------
         public async Task<Unit> UpdateUnitAsync(Unit unit)
-        {
-            throw new NotImplementedException();
+        {            
+            using (var connection = new SQLiteConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+                var command = new SQLiteCommand(
+                    "UPDATE Units SET Unit = @Unit, Description = @Description WHERE Id = @Id",
+                    connection);
+                command.Parameters.AddWithValue("@Unit", unit.UnitName);
+                command.Parameters.AddWithValue("@Description", unit.Description);
+                command.Parameters.AddWithValue("@Id", unit.Id);
+                await command.ExecuteNonQueryAsync();
+                return unit;
+            }
         }
 
+        //Удаление
         public async Task<bool> DeleteUnitAsync(int unitId)
         {
-            throw new NotImplementedException();
+            try
+            {
+                using (var connection = new SQLiteConnection(_connectionString))
+                {
+                    await connection.OpenAsync();
+
+                    var command = new SQLiteCommand("DELETE FROM Units WHERE Id = @Id", connection);
+                    command.Parameters.AddWithValue("@Id", unitId);
+
+                    var rowsAffected = await command.ExecuteNonQueryAsync();
+                    return rowsAffected > 0; // true если удалено, false если нет
+                }
+            }
+            catch (SQLiteException ex) when (ex.ResultCode == SQLiteErrorCode.Constraint)
+            {
+                // Пробрасываем специальное исключение для ограничений FOREIGN KEY
+                throw new InvalidOperationException("Объект используется в записях событий", ex);
+            }
+            
         }
 
 
@@ -85,11 +114,39 @@ namespace FlowEvents.Repositories.Implementations
             }
         }
 
-        public async Task<bool> IsUnitNameUniqueAsync(string name, int? excludeId = null)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="excludeId"></param>
+        /// <returns></returns>
+        public async Task<bool> IsUnitNameUniqueAsync(string unit, int? excludeId = null)
         {
-            throw new NotImplementedException();
-        }
 
+            using (var connection = new SQLiteConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+
+                var query = "SELECT COUNT(*) FROM Units WHERE Unit = @Unit";
+                if (excludeId.HasValue)
+                {
+                    query += " AND Id != @ExcludeId";
+                }
+
+                var command = new SQLiteCommand(query, connection);
+                command.Parameters.AddWithValue("@Unit", unit);
+
+                if (excludeId.HasValue)
+                {
+                    command.Parameters.AddWithValue("@ExcludeId", excludeId.Value);
+                }
+
+                var count = (long)await command.ExecuteScalarAsync();
+                return count == 0;
+            }
+
+
+        }
 
 
 

@@ -1,9 +1,5 @@
 ﻿using FlowEvents.Models;
-using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace FlowEvents.Repositories.Interface
@@ -18,7 +14,5 @@ namespace FlowEvents.Repositories.Interface
            
 
         void UpdateConnectionString(string newConnectionString);
-
-
     }
 }

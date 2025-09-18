@@ -124,9 +124,6 @@
                          Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}"
                          Margin="10" Width="200" />
 
-                <TextBlock x:Name="ErrorTextBlock" Foreground="Red" 
-                           Text="{Binding ErrorText}"
-                           Visibility="{Binding IsErrorTextVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
 
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                     <!-- Кнопка "Создать" -->

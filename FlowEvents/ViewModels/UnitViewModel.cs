@@ -115,9 +115,10 @@ namespace FlowEvents
             // Инициализация команд
             AddCommand = new RelayCommand(AddUnit);
             CancelCommand = new RelayCommand(CancelEdit);
-            SaveCommand = new RelayCommand(SaveNewUnit);
-            DeleteCommand = new RelayCommand(DeleteUnit, CanEditOrDelete);
-            UpdateCommand = new RelayCommand(UpdateUnit, CanEditOrDelete);
+            SaveCommand = new RelayCommand( async () => await SaveNewUnitAsync(), () => CanExecuteSave());
+            UpdateCommand = new RelayCommand(async () => await UpdateAsync(), () => CanExecuteUpdate());
+            DeleteCommand = new RelayCommand(async () => await DeleteUnitAsync(), () =>  CanExecuteDelete());
+            
 
             // Загрузка данных из базы
             ConnectionString = Global_Var.ConnectionString; //_mainViewModel._connectionString; //$"Data Source={_mainViewModel.appSettings.pathDB};Version=3;";
@@ -143,7 +144,6 @@ namespace FlowEvents
         }
 
         // Метод для загрузки данных из таблицы Units
-
         private async Task LoadUnitsAsync()
         {
             IsLoading = true;
@@ -166,118 +166,112 @@ namespace FlowEvents
         }
 
 
-
         //Сохранение в БД новой категории
-        private void SaveNewUnit(object parameter)
+        private async Task SaveNewUnitAsync()
         {
             // Проверка на пустое значение
-            if (string.IsNullOrWhiteSpace(Unit))
+              if (string.IsNullOrWhiteSpace(Unit))
             {
-                ShowError("Название обязательно для заполнения!");
+                ShowErrorMes("Название обязательно для заполнения!");
                 // ClearField(NameTextBox);
                 return;
             }
+            IsSaving = true;
 
-            // Проверка на уникальность
-            if (!IsUnitUnique(Unit))
-            {
-                ShowError("Категория с таким именем уже существует!");
-                // ClearField(NameTextBox);
-                return;
-            }
+            await Task.Delay(500); // Имитация задержки сети (2 секунды)
 
-            // Создание экземпляра для хранения нового Юнита
-            var newUnit = new Unit
-            {
-                UnitName = Unit,
-                Description = Description
-            };
-
-            // Сохранение в базу
             try
             {
-                using (var connection = new SQLiteConnection(_connectionString))
+                if (!await _unitRepository.IsUnitNameUniqueAsync(Unit)) // Проверка на уникальность
                 {
-                    connection.Open();
-                    var command = new SQLiteCommand(
-                        "INSERT INTO Units (Unit, Description) " +
-                        "VALUES (@Unit, @Description)",
-                        connection);
-
-                    command.Parameters.AddWithValue("@Unit", newUnit.UnitName);
-                    command.Parameters.AddWithValue("@Description", string.IsNullOrEmpty(newUnit.Description) ? DBNull.Value : (object)newUnit.Description);
-                    command.ExecuteNonQuery();
-
-                    long newId = connection.LastInsertRowId; // Получаем ID новой записи
-                    newUnit.Id = (int)newId; // Присваиваем ID новой записи объекту newUnit
+                    ShowErrorMes("Объект с таким именем уже существует!");
+                    return;
                 }
 
-                // Обновление списка
-                Units.Add(newUnit);
-                //SelectedUnit = newUnit;
-            }
-            catch (SQLiteException ex)
-            {
-                // Обработка ошибок, связанных с SQLite
-                MessageBox.Show($"Ошибка базы данных: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                // Создание экземпляра для хранения нового Юнита
+                var newUnit = new Unit
+                {
+                    UnitName = Unit,
+                    Description = Description
+                };
+
+                var savedUnit = await _unitRepository.CreateUnitAsync(newUnit);
+                                
+                Units.Add(savedUnit); // Обновление списка в UI
+
+                CancelEdit();
             }
             catch (Exception ex)
             {
-                // Обработка всех остальных ошибок
-                MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                ShowErrorMes($"Ошибка данных: {ex.Message}");
             }
-            CancelEdit(null); //Очищаем и закрываем поле редактирования
+            finally
+            {
+                IsSaving = false;
+            }
         }
 
+
+     
+
         //Обновление записи
-        private void UpdateUnit(object obj)
+
+        private async Task UpdateAsync()
         {
             if (SelectedUnit == null) return;
 
             // Проверка на пустое значение
             if (string.IsNullOrWhiteSpace(Unit))
             {
-                ShowError("Название обязательно для заполнения!");
+                ShowErrorMes("Название обязательно для заполнения!");
                 return;
             }
 
+            // Проверка на уникальность (исключая текущую категорию)
+            if (!await _unitRepository.IsUnitNameUniqueAsync(Unit, SelectedUnit.Id))
+            {
+                ShowErrorMes("Объект с таким именем уже существует!");
+                return;
+            }
 
-            // Обновляем данные выбранной записи
-            SelectedUnit.UnitName = Unit;
-            SelectedUnit.Description = Description;
+            IsSaving = true;
+            await Task.Delay(500); // Имитация задержки сети
 
             try
             {
-                // Обновление в базе данных
-                using (var connection = new SQLiteConnection(_connectionString))
+                // Обновляем данные выбранной записи
+                SelectedUnit.UnitName = Unit;
+                SelectedUnit.Description = Description;
+
+                // Сохраняем через репозиторий
+                var updatedUnit = await _unitRepository.UpdateUnitAsync(SelectedUnit);
+
+                // Обновляем UI
+                var index = Units.IndexOf(SelectedUnit);
+                if (index >= 0)
                 {
-                    connection.Open();
-                    var command = new SQLiteCommand(
-                        "UPDATE Units SET Unit = @Unit, Description = @Description WHERE Id = @Id",
-                        connection);
-                    command.Parameters.AddWithValue("@Unit", SelectedUnit.UnitName);
-                    command.Parameters.AddWithValue("@Description", SelectedUnit.Description);
-                    command.Parameters.AddWithValue("@Id", SelectedUnit.Id);
-                    command.ExecuteNonQuery();
+                    Units[index] = updatedUnit;
                 }
+
                 OnPropertyChanged(nameof(SelectedUnit)); // Уведомляем об изменении свойств
-            }
-            catch (SQLiteException ex)
-            {
-                // Обработка ошибок, связанных с SQLite
-                MessageBox.Show($"Ошибка базы данных: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                ShowSuccess("Категория успешно обновлена!");
             }
             catch (Exception ex)
             {
-                // Обработка всех остальных ошибок
-                MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                ShowErrorMes($"Ошибка данных: {ex.Message}");
+            }
+            finally
+            {
+                IsSaving = false;
             }
             SelectedUnit = null; // Снимаем выделение строки
-            CancelEdit(null); //Очищаем и закрываем поле редактирования
+            CancelEdit(); //Очищаем и закрываем поле редактирования
         }
 
+       
+
         // Удаление категории
-        private void DeleteUnit(object parameter)
+        private async Task DeleteUnitAsync()
         {
             if (SelectedUnit == null) return;
 
@@ -288,35 +282,44 @@ namespace FlowEvents
                 MessageBoxImage.Question);
             if (confirm != MessageBoxResult.Yes) return;
 
+            IsDeleting = true;
+
+            await Task.Delay(500); // Имитация задержки сети (2 секунды)
+            
             try
             {
-                using (var connection = new SQLiteConnection(_connectionString))
+                var success = await _unitRepository.DeleteUnitAsync(SelectedUnit.Id);
+
+                if (success)
                 {
-                    connection.Open();
-                    var command = new SQLiteCommand("DELETE FROM Units WHERE Id = @Id", connection);
-                    command.Parameters.AddWithValue("@Id", SelectedUnit.Id);
-                    command.ExecuteNonQuery();
+                    string _name = SelectedUnit.UnitName;
+                    Units.Remove(SelectedUnit);
+                    ShowSuccess($"Объект '{_name}' успешно удален!");
+                }
+                else
+                {
+                    ShowErrorMes("Объект не найден или уже была удален.");
                 }
 
-                Units.Remove(SelectedUnit);
+            }
+            catch (InvalidOperationException ex) when (ex.Message.Contains("используется"))
+            {
+                // На случай, если FOREIGN_KEY сработал 
+                ShowErrorMes($"Невозможно удалить объект: он используется в записях событий!");
             }
             catch (SQLiteException ex) when (ex.ResultCode == SQLiteErrorCode.Constraint)
             {
-                // На случай, если FOREIGN_KEY сработал 
-                MessageBox.Show(
-                    "Невозможно удалить объект: он используется в записях событий !",
-                    "Ошибка",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                ShowErrorMes($"Невозможно удалить объект: он используется в других записях!");
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
-                    $"Ошибка при удалении: {ex.Message}", "Ошибка",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                ShowErrorMes($"Ошибка при удалении: {ex.Message}");
             }
-            CancelEdit(null); //Очищаем и закрываем поле редактирования
+            finally
+            {
+                IsDeleting = false;
+            }
+            CancelEdit(); //Очищаем и закрываем поле редактирования
         }
 
 
@@ -339,50 +342,21 @@ namespace FlowEvents
             SelectedUnit = null; // Снимаем выделение строки
         }
 
-        // Проверка на уникальность
-        private bool IsUnitUnique(string name)
-        {
-            try
-            {
-                using (var connection = new SQLiteConnection(_connectionString))
-                {
-                    connection.Open();
-                    var command = new SQLiteCommand("SELECT COUNT(*) FROM Units WHERE Unit = @Name", connection);
-                    command.Parameters.AddWithValue("@Name", name);
-                    return Convert.ToInt32(command.ExecuteScalar()) == 0;
-                }
-            }
-            catch (SQLiteException ex)
-            {
-                // Обработка ошибок, связанных с SQLite
-                MessageBox.Show($"Ошибка базы данных: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-                return false;
-            }
-            catch (Exception ex)
-            {
-                // Обработка всех остальных ошибок
-                MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-                return false;
-            }
-        }
-
+       
 
         // ===================================================================================================
         // Методы для отображения ошибки и очистки поля с текстом ошибки.
-        private void ShowError(string errorMessage)
+        private void ShowErrorMes(string message) // Метод отображение ошибки в виде сообщения
         {
-            ErrorText = errorMessage;
-            IsErrorTextVisible = true;
+            MessageBox.Show(message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
         }
-
-        private void ClearError()
+        private void ShowSuccess(string message)
         {
-            ErrorText = string.Empty;
-            IsErrorTextVisible = false;
+            MessageBox.Show(message, "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         // Закрытие доступа к полям ввода данных
-        private void CancelEdit(object parameter)
+        private void CancelEdit()
         {
             // Очистите поля ввода
             Unit = string.Empty;
@@ -392,8 +366,16 @@ namespace FlowEvents
             IsAddButtonVisible = true; // Показать кнопку "Добавить"
         }
 
+        private bool CanExecuteSave()
+        {
+            return !IsSaving && !string.IsNullOrWhiteSpace(Unit);
+        }
+        private bool CanExecuteUpdate()
+        {
+            return !IsSaving && SelectedUnit != null && !string.IsNullOrWhiteSpace(Unit);
+        }
         // Проверка, можно ли редактировать или удалять
-        private bool CanEditOrDelete(object parameter)
+        private bool CanExecuteDelete()
         {
             return SelectedUnit != null;
         }
@@ -414,9 +396,6 @@ namespace FlowEvents
                 {
                     _unit = value;
                     OnPropertyChanged();
-
-                    // Очищаем поле с текстом ошибки при изменении текста
-                    ClearError();
                 }
             }
         }
@@ -475,30 +454,6 @@ namespace FlowEvents
             set
             {
                 _isEditPanelVisible = value;
-                OnPropertyChanged();
-            }
-        }
-
-        // Свойство ErrorText, которое будет хранить текст ошибки  
-        private string _errorText;
-        public string ErrorText
-        {
-            get => _errorText;
-            set
-            {
-                _errorText = value;
-                OnPropertyChanged();
-            }
-        }
-
-        //Свойство IsErrorTextVisible, которое будет управлять видимостью TextBlock с содержимым строки ошибки.
-        private bool _isErrorTextVisible;
-        public bool IsErrorTextVisible
-        {
-            get => _isErrorTextVisible;
-            set
-            {
-                _isErrorTextVisible = value;
                 OnPropertyChanged();
             }
         }
