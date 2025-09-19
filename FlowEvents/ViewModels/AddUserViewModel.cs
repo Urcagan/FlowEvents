@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FlowEvents.Services;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data.SQLite;
@@ -23,11 +24,27 @@ namespace FlowEvents.Users
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
-        //private MainViewModel _mainViewModel;
+        private readonly IDatabaseService _databaseService;
+
+        private bool _isLoading;
         private string _connectionString;
         private const int DefaultRoleId = 2; // ID роли "user"
 
         private string _username;
+        private string _password;
+        private string _confirmPassword;
+
+
+        public bool IsLoading
+        {
+            get { return _isLoading; }
+            set
+            {
+                _isLoading = value;
+                OnPropertyChanged(nameof(IsLoading));
+            }
+        }
+
         public string Username
         {
             get => _username;
@@ -38,7 +55,6 @@ namespace FlowEvents.Users
             }
         }
 
-        private string _password;
         public string Password
         {
             get => _password;
@@ -48,8 +64,8 @@ namespace FlowEvents.Users
                 OnPropertyChanged(nameof(Password));
             }
         }
-        
-        private string _confirmPassword;
+
+
         public string ConfirmPassword
         {
             get => _confirmPassword;
@@ -65,19 +81,71 @@ namespace FlowEvents.Users
         public ICommand CancelCommand { get; }
 
 
-        //public AddUserViewModel(MainViewModel mainViewModel, UserManagerModel userManagerModel)
-        public AddUserViewModel(UserManagerModel userManagerModel)
+        public AddUserViewModel(IDatabaseService databaseService)
         {
-            //_mainViewModel = mainViewModel;
+            _databaseService = databaseService;
+
+
             _connectionString = Global_Var.ConnectionString; //_mainViewModel._connectionString;
 
             // Инициализация команд
 
-            AddUserCommand = new RelayCommand(AddUser);
+            AddUserCommand = new RelayCommand(AddLocalUser);
             CancelCommand = new RelayCommand(Cancel);
         }
 
+
+        private async void AddLocalUser()
+        {
+            // Валидация
+            if (string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(Password) || string.IsNullOrWhiteSpace(ConfirmPassword))
+            {
+                MessageBox.Show("Пожалуйста, заполните все поля.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            if (Password != ConfirmPassword)
+            {
+                MessageBox.Show("Пароли не совпадают.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            try
+            {
+                // Показываем индикатор загрузки
+                IsLoading = true;
+
+                var salt = GenerateSalt();
+                var hashedPassword = HashPassword(Password, salt);
+
+                // Асинхронное добавление пользователя
+                await AddUserToDatabaseAsync(Username, hashedPassword, salt);
+
+                MessageBox.Show($"Пользователь {Username} добавлен", "Уведомление");
+
+                // Очистка полей
+                Username = string.Empty;
+                Password = string.Empty;
+                ConfirmPassword = string.Empty;
+
+                // Закрытие окна
+                CloseWindow(parameter as Window, false);
+            }
+            catch (SQLiteException ex)
+            {
+                MessageBox.Show($"Ошибка базы данных: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
         
+
         private void AddUser(object parameter)
         {
             if (string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(Password) || string.IsNullOrWhiteSpace(ConfirmPassword))
@@ -139,7 +207,7 @@ namespace FlowEvents.Users
             Username = string.Empty;
             Password = string.Empty;
             ConfirmPassword = string.Empty;
-            CloseWindow(parameter as Window, false);   
+            CloseWindow(parameter as Window, false);
             //_mainViewModel.CloseAddUserView();
         }
 
@@ -153,7 +221,7 @@ namespace FlowEvents.Users
         }
 
         // Генерация соли для хеширования пароля
-        private string GenerateSalt() 
+        private string GenerateSalt()
         {
             byte[] saltBytes = new byte[16]; // Размер соли 16 байт
             using (var rng = RandomNumberGenerator.Create()) // Использование криптографически безопасного генератора случайных чисел

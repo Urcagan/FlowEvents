@@ -1,5 +1,6 @@
 ﻿using FlowEvents.Models;
 using FlowEvents.Repositories.Interface;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -7,6 +8,13 @@ namespace FlowEvents.Services
 {
     public class DatabaseService : IDatabaseService
     {
+        private string _connectionString;
+        public DatabaseService(string connectionString)
+        {
+            _connectionString = connectionString ?? throw new ArgumentNullException(nameof(connectionString));
+        }
+
+
         private readonly IUserRepository _userRepository;
         private readonly IRoleRepository _roleRepository;
         private readonly IPermissionRepository _permissionRepository;
@@ -47,6 +55,11 @@ namespace FlowEvents.Services
             return await _permissionRepository.GetPermissionsByRoleIdAsync(roleId);
         }
 
+        public async Task AddLocalUserToDatabaseAsync(string username, string hashedPassword, string salt, int RoleId)
+        {
+            return await _userRepository.AddLocalUserToDatabaseAsync(string username, string hashedPassword, string salt, int RoleId);
+        }
+
 
         //public async Task UpdateRolePermissionsAsync(int roleId, List<int> permissionIds)
         //{
@@ -64,7 +77,12 @@ namespace FlowEvents.Services
         //}
 
 
-        //-----------------------------------------------------------------------
+        //-------------------------------------------------------------------
+        /// <summary>
+        /// Метод для обновления строки подключения во время работы приложения
+        /// </summary>
+        /// <param name="newConnectionString"> Строка с нового подключения </param>
+        //-------------------------------------------------------------------
         public void UpdateConnectionString(string newConnectionString)
         {
             _userRepository.UpdateConnectionString(newConnectionString);
@@ -73,7 +91,7 @@ namespace FlowEvents.Services
             _eventRepository.UpdateConnectionString(newConnectionString);
 
             // Обновляем глобальную переменную
-            Global_Var.ConnectionString = newConnectionString;
+            _connectionString = newConnectionString;
         }
     }
 }

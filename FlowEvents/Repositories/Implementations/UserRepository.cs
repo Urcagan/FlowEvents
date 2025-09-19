@@ -6,6 +6,7 @@ using System.Data.SQLite;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace FlowEvents.Repositories
 {
@@ -65,6 +66,34 @@ namespace FlowEvents.Repositories
 
 
 
+        // Асинхронный метод для добавления пользователя в БД
+        public async Task AddLocalUserToDatabaseAsync(string username, string hashedPassword, string salt, int RoleId)
+        {
+            using (var connection = new SQLiteConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+
+                string query = @"INSERT INTO Users 
+                    (UserName, DomainName, DisplayName, Email, RoleId, IsAllowed, Password, Salt) 
+                    VALUES 
+                    (@username, '', @username, '', @roleId, 1, @password, @salt)";
+
+                using (var command = new SQLiteCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@username", username);
+                    command.Parameters.AddWithValue("@roleId", RoleId);
+                    command.Parameters.AddWithValue("@password", hashedPassword);
+                    command.Parameters.AddWithValue("@salt", salt);
+
+                    await command.ExecuteNonQueryAsync();
+                }
+            }
+        }
+
+
+        
+
+
         //-------------------------------------------------------------------
         /// <summary>
         /// Метод для обновления строки подключения во время работы приложения
@@ -75,5 +104,6 @@ namespace FlowEvents.Repositories
         {
             _connectionString = newConnectionString;
         }
+
     }
 }

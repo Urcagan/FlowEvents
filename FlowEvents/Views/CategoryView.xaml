@@ -93,11 +93,7 @@
                     Если пользователь вводит текст в TextBox, свойство в ViewModel автоматически обновляется.
                 -->
 
-                <TextBlock x:Name="ErrorTextBlock" Foreground="Red" 
-                            Text="{Binding ErrorText}"
-                            Visibility="{Binding IsErrorTextVisible, Converter={StaticResource BoolToVisibilityConverter}}"/>
-                <!--привязываем TextBlock к свойствам ErrorText и IsErrorTextVisible. Используем конвертер BooleanToVisibilityConverter для управления видимостью.-->
-
+              
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                     <Button Content="Создать" 
                             Command="{Binding SaveCommand}"

@@ -8,10 +8,10 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Data.SQLite;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using System.Windows;
 
 namespace FlowEvents
@@ -26,6 +26,7 @@ namespace FlowEvents
 
         //-----------------------------------------------------------------------------------
 
+        private bool _isLoading;
         private string _currentDbPath;
         private string _currentUsername;
         private List<string> _currentUserPermissions = new List<string>();
@@ -38,6 +39,17 @@ namespace FlowEvents
         private EventForView _selectedEvent; // Выбранное событие в таблице
         private string _userName;
         private ObservableCollection<Unit> _units { get; set; } = new ObservableCollection<Unit>();
+
+
+        public bool IsLoading
+        {
+            get => _isLoading;
+            set
+            {
+                _isLoading = value;
+                OnPropertyChanged();
+            }
+        }
 
         public AppSettings appSettings; // Объект параметров приложения
         public string _connectionString; // Строка подключения
@@ -171,7 +183,8 @@ namespace FlowEvents
         public RelayCommand EventAddWindow { get; }
         public RelayCommand EditEventCommand { get; } // команда для редактирования
         public RelayCommand DeleteEventCommand { get; }
-        public RelayCommand UserManagerWindow { get; }
+        public RelayCommand UserManagerWindow { get; } // Позже удалить----------------------------
+        public RelayCommand OpenPermissionWindowCommand { get; set; }
         public RelayCommand DownDateCommand { get; }
         public RelayCommand UpDateCommand { get; }
         public RelayCommand CheckUpdateAppCommand { get; } // Кнопка проверки обновления программы 
@@ -190,7 +203,8 @@ namespace FlowEvents
             EventAddWindow = new RelayCommand(EventAddBtb);
             EditEventCommand = new RelayCommand(EditEvent);
             DeleteEventCommand = new RelayCommand(DeletEvent);
-            UserManagerWindow = new RelayCommand(UserManagerMenuItem);
+            UserManagerWindow = new RelayCommand(UserManagerMenuItem); //Позже удалить --------------------
+            OpenPermissionWindowCommand = new RelayCommand(OpenPermissionWindow);
             CheckUpdateAppCommand = new RelayCommand(CheckUpdateApp);
             LoginCommand = new RelayCommand(Login);
 
@@ -210,26 +224,42 @@ namespace FlowEvents
 
         }
 
-        public void StartUP()
+
+        //=======================================
+        //      ИНИЦИАЛИЗАЦИЯ РАБОТЫ ПРОГРАММЫ   |
+        //=======================================
+
+        public async Task StartUPAsync() // ← 6. МЕТОД ИНИЦИАЛИЗАЦИИ Запускается после старта программы. Запуск метода находится в MainWindow.xaml.cs по событию Loaded
         {
-            //         appSettings = AppSettings.GetSettingsApp(); // Загружаем настройки программы из файла при запуске программы
-            string pathDB = App.Settings.pathDB; //appSettings.pathDB;
+            IsLoading = true;
+            try
+            {
+                //         appSettings = AppSettings.GetSettingsApp(); // Загружаем настройки программы из файла при запуске программы
+                string pathDB = App.Settings.pathDB; //appSettings.pathDB;
 
-            //Проверка базы данных
-            if (!CheckDB.DBGood(pathDB)) return;
-            _connectionString = $"Data Source={pathDB};Version=3;foreign keys=true;"; //Формируем строку подключения к БД
+                //Проверка базы данных
+                if (!CheckDB.DBGood(pathDB)) return;
+                _connectionString = $"Data Source={pathDB};Version=3;foreign keys=true;"; //Формируем строку подключения к БД
 
-            CurrentDbPath = pathDB; // Устанавливаем текущий путь к базе данных
+                CurrentDbPath = pathDB; // Устанавливаем текущий путь к базе данных
 
-            LoadUnitsToComboBox(); // Загружаем перечень установок из базы данных
-                                   //
-                                   //_currentUser = _authService.GetUser(_currentDbPath, _currentUsername);
-                                   // _currentUser = _authService.GetUser(pathDB, "User3");
+                await LoadUnitsToComboBoxAsync(); // Загружаем перечень установок из базы данных
+                                       //
+                                       //_currentUser = _authService.GetUser(_currentDbPath, _currentUsername);
+                                       // _currentUser = _authService.GetUser(pathDB, "User3");
 
-            CurrentUsername = Environment.UserName; // Устанавливаем текущего пользователя
-                                                    //      CurrentUsername = "Администратор"; // Временно устанавливаем пользователя для тестирования
+                CurrentUsername = Environment.UserName; // Устанавливаем текущего пользователя
+                                                        //      CurrentUsername = "Администратор"; // Временно устанавливаем пользователя для тестирования
+
+                //await LoadCategoriesAsync();
+                //await LoadUserDataAsync();
+                // Другие инициализационные задачи
+            }
+            finally
+            {
+                IsLoading = false;
+            }
         }
-
 
         private void UpdateQuery()
         {
@@ -281,30 +311,37 @@ namespace FlowEvents
         }
 
         // Загрузкак комбобокса установок
-        public void LoadUnitsToComboBox()
+        public async Task  LoadUnitsToComboBoxAsync()
         {
             Units.Clear();
             Units.Insert(0, new Unit { Id = -1, UnitName = "Все" });
 
-            // Загружаем перечень установок из базы данных
-            var unitsFromDb = _eventRepository.GetUnitFromDatabase();
-            foreach (var unit in unitsFromDb)
+            try
             {
-                Units.Add(unit);
+                var unitsFromDb = await _eventRepository.GetUnitFromDatabaseAsync();    // Асинхронно загружаем данные из базы
+
+                foreach (var unit in unitsFromDb)   // Добавляем загруженные данные в коллекцию
+                {
+                    Units.Add(unit);
+                }
+
+
+                SelectedUnit = Units.FirstOrDefault();
             }
-            SelectedUnit = Units.FirstOrDefault();
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка: {ex.Message}");
+            }
         }
 
 
         // Метод для загрузки данных из базы
-        public void LoadEvents()
+        public async Task LoadEvents()
         {
             Events.Clear();
-
-            // Получаем данные из базы
+            
             if (QueryEvent == null) return;
-            //var eventsFromDb = GetEvents(QueryEvent);
-            var eventsFromDb = _eventRepository.GetEvents(QueryEvent);
+            var eventsFromDb = await _eventRepository.GetEventsAsync(QueryEvent);  // Получаем данные из базы
 
             // Добавляем данные в коллекцию
             foreach (var eventModel in eventsFromDb)
@@ -317,93 +354,66 @@ namespace FlowEvents
         // Вызов окна Объектов
         private void UnitMenuItem()
         {
-            // 1. Берем ViewModel из контейнера
-            var unitViewModel = App.ServiceProvider.GetRequiredService<UnitViewModel>();
+            var unitViewModel = App.ServiceProvider.GetRequiredService<UnitViewModel>();    // 1. Берем ViewModel из контейнера
+            var unitsView = new UnitsView();                                                // 2. Создаем окно обычным способом
+            unitsView.DataContext = unitViewModel;   
 
-            // 2. Создаем окно обычным способом
-            var unitsView = new UnitsView();
-
-            // 3. Связываем ViewModel с окном 
-            unitsView.DataContext = unitViewModel;
-
-            // 5. Показываем модально                  
-            unitsView.Owner = Application.Current.MainWindow; //будет дочерним окном относительно главного окна приложения.
-
-            void ClosedHandler(object sender, EventArgs e)
+            async void ClosedHandler(object sender, EventArgs e)                                  // 4. Создает обработчик события Closed, который автоматически отписывается от события после первого срабатывания.
             {
                 unitsView.Closed -= ClosedHandler; // Отвязываем
-                LoadUnitsToComboBox(); // Перезагружаем установки после закрытия окна UnitsView
+                await LoadUnitsToComboBoxAsync(); // Перезагружаем установки после закрытия окна UnitsView
             }
-
-            unitsView.Closed += ClosedHandler; // Подписываемся на событие Closed окна UnitsView
-
-            if (unitsView.ShowDialog() == true) { }
+            unitsView.Closed += ClosedHandler;                                              // 5. Подписываемся на событие Closed окна UnitsView
+            
+            unitsView.Owner = Application.Current.MainWindow;                               // 6. Устанавливает главное окно приложения как владельца (owner) для окна 
+            if (unitsView.ShowDialog() == true) { }                                         // 7. Показываем модально
         }
 
-
+        // Вызов окна Категорий событий
         private void CategoryMenuItem(object parameter)
-        {
-            // 1. Берем ViewModel из контейнера
-            var categoryViewModel = App.ServiceProvider.GetRequiredService<CategoryViewModel>();
-
-            // 2. Создаем окно обычным способом
-            var categoryView = new CategoryView();
-
-            // 3. Связываем ViewModel с окном 
-            categoryView.DataContext = categoryViewModel;
-
-            // 5. Показываем модально                  
-            categoryView.Owner = Application.Current.MainWindow;
-
-            if (categoryView.ShowDialog() == true) { }
+        {            
+            var categoryViewModel = App.ServiceProvider.GetRequiredService<CategoryViewModel>();    // 1. Берем ViewModel из контейнера
+            var categoryView = new CategoryView();                                                  // 2. Создаем окно обычным способом
+            categoryView.DataContext = categoryViewModel;                                           // 3. Связываем ViewModel с окном 
+            categoryView.Owner = Application.Current.MainWindow;                                    // 4. Устанавливает главное окно приложения как владельца (owner) для окна                                                                                                        
+            categoryView.WindowStartupLocation = WindowStartupLocation.CenterOwner;                 // 5. Центрируем относительно владельца если не прописано м xaml (WindowStartupLocation="CenterOwner")
+            if (categoryView.ShowDialog() == true) { }                                              // 6. Показываем модально         
         }
 
-
+        // Вызов окна настроек программы
         private void SettingsMenuItem(object parameter)
         {
-            // 1. Берем ViewModel из контейнера
-            var SettingsViewModel = App.ServiceProvider.GetRequiredService<SettingsViewModel>();
+            var SettingsViewModel = App.ServiceProvider.GetRequiredService<SettingsViewModel>();    // 1. Берем ViewModel из контейнера
+            var SettingsWindow = new SettingsWindow();                                              // 2. Создаем окно обычным способом
+            SettingsWindow.DataContext = SettingsViewModel;                                         // 3. Связываем ViewModel с окном 
 
-            // 2. Создаем окно обычным способом
-            var SettingsWindow = new SettingsWindow();
-
-            // 3. Связываем ViewModel с окном 
-            SettingsWindow.DataContext = SettingsViewModel;
-
-            // 5. Показываем модально                  
-            //SettingsWindow.Owner = Application.Current.MainWindow;
-            //SettingsWindow.ShowDialog();
-
-            // Создаем обработчик, который отвяжет себя после выполнения
-            void ClosedHandler(object sender, EventArgs e)
+            async void ClosedHandler(object sender, EventArgs e)                                          // 4. Создает обработчик события Closed, который автоматически отписывается от события после первого срабатывания.
             {
                 SettingsWindow.Closed -= ClosedHandler; // Отвязываем
-                StartUP();
+             //   StartUP();
+                await StartUPAsync();
             }
+            SettingsWindow.Closed += ClosedHandler;                                                 // 6.Подписываемся на событие закрытия окна
 
-            SettingsWindow.Closed += ClosedHandler;
-            if (SettingsWindow.ShowDialog() == true) { }
+            SettingsWindow.Owner = Application.Current.MainWindow;                                  // 7. Устанавливает главное окно приложения как владельца (owner) для окна
+            SettingsWindow.WindowStartupLocation = WindowStartupLocation.CenterOwner;               // 8. Центрируем относительно владельца если не прописано м xaml (WindowStartupLocation="CenterOwner")
+            if (SettingsWindow.ShowDialog() == true) { }                                            // 9. Показываем модально 
 
-            // Создаем и показываем окно настроек
-            //         var settingsViewModel = new SettingsViewModel(this);
-            //         SettingsWindow settingsWindow = new SettingsWindow(settingsViewModel);
+        }
 
-            // Создаем обработчик, который отвяжет себя после выполнения
-            //         void ClosedHandler(object sender, EventArgs e)
-            //         {
-            //             settingsWindow.Closed -= ClosedHandler; // Отвязываем
-            //              StartUP();
-            //         }
-
-            //         settingsWindow.Closed += ClosedHandler;
-            //         if (settingsWindow.ShowDialog() == true) { }
-
+        // Вызов окна настроек пользователей и их прав доступа.
+        private void OpenPermissionWindow(object parametrs)
+        {
+            var PermissionViewModel = App.ServiceProvider.GetRequiredService<PermissionViewModel>();    // 1. Берем ViewModel из контейнера
+            var PermissionWindow = new PermissionWindow();                                              // 2. Создаем окно обычным способом
+            PermissionWindow.DataContext = PermissionViewModel;                                         // 3. Связываем ViewModel с окном 
+            PermissionWindow.Owner = Application.Current.MainWindow;                                    // 4. Устанавливает главное окно приложения как владельца (owner) для окна
+            PermissionWindow.ShowDialog();                                                              // 5. Показываем модально     
         }
 
         private void UserManagerMenuItem(object parameter)
         {
             var userManagerModel = new UserManagerModel();
-            // Создаем и показываем окно пользователей
             UserManager userManager = new UserManager(userManagerModel);
             if (userManager.ShowDialog() == true) { }
         }
@@ -420,10 +430,10 @@ namespace FlowEvents
             EventWindow eventView = new EventWindow(eventViewModel);
 
             // Создаем обработчик, который отвяжет себя после выполнения
-            void ClosedHandler(object sender, EventArgs e)
+            async void ClosedHandler(object sender, EventArgs e)
             {
                 eventView.Closed -= ClosedHandler; // Отвязываем
-                LoadEvents();
+                await LoadEvents();
             }
 
             eventView.Closed += ClosedHandler;
@@ -435,31 +445,17 @@ namespace FlowEvents
         {
             if (parameter is EventForView selectedEvent)
             {
-                // Создаем ViewModel для редактирования, передавая выбранное событие
                 var eventViewModel = new EventViewModel(selectedEvent);
-
-                // Создаем и показываем окно редактирования
                 var eventWindow = new EventWindow(eventViewModel);
 
-                // Создаем обработчик, который отвяжет себя после выполнения
-                void ClosedHandler(object sender, EventArgs e)
+                async void ClosedHandler(object sender, EventArgs e)
                 {
                     eventWindow.Closed -= ClosedHandler; // Отвязываем
-                    LoadEvents();
+                    await LoadEvents();
                 }
 
                 eventWindow.Closed += ClosedHandler;
                 if (eventWindow.ShowDialog() == true) { };
-            }
-        }
-
-
-        private void ExecuteDeleteCommand(SQLiteConnection connection, string query, int eventId)
-        {
-            using (var command = new SQLiteCommand(query, connection))
-            {
-                command.Parameters.AddWithValue("@EventId", eventId);
-                command.ExecuteNonQuery();
             }
         }
 
@@ -480,14 +476,11 @@ namespace FlowEvents
                     MessageBoxImage.Question);
                 if (confirm != MessageBoxResult.Yes) return;
 
-                // 1. Получаем пепречень файлов связанных с этим событием
-                listAttachedFIles = _eventRepository.GetIdFilesOnEvent(eventId);
+                listAttachedFIles = _eventRepository.GetIdFilesOnEvent(eventId);    // 1. Получаем перечень файлов связанных с этим событием
 
-                // 2. Удаляем Файлы связанные с событием
-                DeleteFiles(listAttachedFIles);
+                DeleteFiles(listAttachedFIles); // 2. Удаляем Файлы связанные с событием
 
-                // 3. Удалям записи о событии из БД (таблица Events) Записи о файлах удаляются автоматически каскадом
-                DeleteEventFromDB(eventId);
+                DeleteEventFromDB(eventId); // 3. Удалям записи о событии из БД (таблица Events) Записи о файлах удаляются автоматически каскадом
             }
         }
 
@@ -572,7 +565,6 @@ namespace FlowEvents
         private void RemoveEventById(int id)
         {
             if (Events == null || Events.Count == 0) return;
-
             var eventToRemove = Events.FirstOrDefault(e => e.Id == id);
             if (eventToRemove != null)
             {
@@ -621,13 +613,10 @@ namespace FlowEvents
 
         // Реализация INotifyPropertyChanged
         public event PropertyChangedEventHandler PropertyChanged;
-
-        // Метод для генерации события
-        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        protected void OnPropertyChanged([CallerMemberName] string propertyName = null) // Метод для генерации события
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
     }
-
 }

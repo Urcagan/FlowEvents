@@ -20,12 +20,16 @@ namespace FlowEvents
     {
         public static IServiceProvider ServiceProvider { get; private set; }
 
-        // Переопределяем метод OnStartup, Внем задаем наш формат
-        protected override void OnStartup(StartupEventArgs e)
+        //=================================================
+        // 1. С ЭТОГО МЕТОДА НАЧИНАЕТСЯ СТАРТ ПРОГРАММЫ
+        //=================================================
+        protected override void OnStartup(StartupEventArgs e)// Переопределяем метод OnStartup, Внем задаем наш формат
         {
             try
             {
-                base.OnStartup(e); // Важно: без этого не загрузятся ресурсы App.xaml!
+                base.OnStartup(e);      // ← 1. БАЗОВАЯ ИНИЦИАЛИЗАЦИЯ
+                                        // Загружает ресурсы App.xaml, инициализирует приложение
+                                        // Важно: без этого не загрузятся ресурсы App.xaml!
 
                 // Настройка культуры
                 ConfigureCulture();
@@ -37,16 +41,36 @@ namespace FlowEvents
                 ConfigureServices();
 
                 // Запуск главного окна
-                                        //var mainWindow = ServiceProvider.GetRequiredService<MainWindow>();
-                var mainWindow = ServiceProvider.GetService<MainWindow>();
+                // Получение сервисов из DI-контейнера
+                var mainWindow = ServiceProvider.GetService<MainWindow>();                                      // ← 2. СОЗДАНИЕ ОКНА
                 if (mainWindow == null) throw new InvalidOperationException("MainWindow not registered");
 
-                var mainViewModel = ServiceProvider.GetService<MainViewModel>();
+                var mainViewModel = ServiceProvider.GetService<MainViewModel>();                                // ← 3. СОЗДАНИЕ ViewModel
                 if (mainViewModel == null) throw new InvalidOperationException("MainViewModel not registered");
 
-                mainWindow.DataContext = mainViewModel;
                 
-                mainWindow.Show();
+                mainWindow.DataContext = mainViewModel;     // ← 4. ПРИВЯЗКА ДАННЫХ.  Связывание DataContext
+
+                mainWindow.Show();                          // ← 5. ПОКАЗ ОКНА        Отображение главного окна
+                                                            // ГДЕ-ТО ПОСЛЕ ЭТОГО ВЫЗЫВАЕТСЯ: mainViewModel.StartUPAsync();
+                                                            // Который подписан на событие Loaded в MainWindow.xaml.cs
+                                                            // То есть посде гарантированной прогрузки всего UI по событию Loaded,
+                                                            // происходит первоначальная загрузка всех остальных параметров и данных программы. 
+
+                //   -------------------------------------------------
+                //  |   Полная последовательность запуска программы   |
+                //  |   1.Application.Startup()                       |
+                //  |   2.App.OnStartup()                             |
+                //  |   3. base.OnStartup() ← ресурсы App.xaml        |
+                //  |   4.DI - контейнер: создание MainWindow         |
+                //  |   5.DI - контейнер: создание MainViewModel      |
+                //  |   6.mainWindow.DataContext = mainViewModel      |
+                //  |   7.mainWindow.Show() ← окно появляется         |
+                //  |   8.MainWindow.Loaded event                     |
+                //  |   9. MainViewModel.StartUP() ← ваш метод        |
+                //  |   10. Application running                       |
+                //   -------------------------------------------------
+
             }
             catch (Exception ex )
             {
@@ -92,6 +116,7 @@ namespace FlowEvents
             services.AddTransient<PermissionViewModel>();            
             services.AddTransient<CategoryViewModel>();
             services.AddTransient<UnitViewModel>();
+            services.AddTransient<AddUserViewModel>();
 
             // Регистрация окон
             services.AddTransient<MainWindow>();

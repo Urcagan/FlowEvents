@@ -94,32 +94,25 @@ namespace FlowEvents
 
         private void OpenPermissionWindow(object parametrs)
         {
-            // 1. Берем ViewModel из контейнера
-            var PermissionViewModel = App.ServiceProvider.GetRequiredService<PermissionViewModel>();
-            //var PermissionViewModel = App.ServiceProvider.GetService<PermissionViewModel>();
-
-            // 2. Создаем окно обычным способом
-            var PermissionWindow = new PermissionWindow();
-
-            // 3. Связываем ViewModel с окном 
-            PermissionWindow.DataContext = PermissionViewModel;
-
-            // 5. Показываем модально                  
+            var PermissionViewModel = App.ServiceProvider.GetRequiredService<PermissionViewModel>(); // 1. Берем ViewModel из контейнера
+            var PermissionWindow = new PermissionWindow();  // 2. Создаем окно обычным способом
+            PermissionWindow.DataContext = PermissionViewModel; // 3. Связываем ViewModel с окном 
             PermissionWindow.Owner = Application.Current.MainWindow;
-            PermissionWindow.ShowDialog();
-
+            PermissionWindow.ShowDialog(); // 5. Показываем модально
         }
 
-        private void OpenAddUserWindows(object parameters)
+        private void OpenAddUserWindows()
         {
-            AddUserWindow addUserWindow = new AddUserWindow(this);
+            var addUserViewModel = App.ServiceProvider.GetRequiredService<AddUserViewModel>();
+            var addUserWindow = new AddUserWindow();
+            addUserWindow.DataContext = addUserViewModel;
+            addUserWindow.Owner = Application.Current.MainWindow;
 
             void ClosedHandler(object sender, EventArgs e)
             {
                 addUserWindow.Closed -= ClosedHandler; // Отвязываем
                 GetUsers();  // Перезагружаем установки после закрытия окна UnitsView
             }
-
             addUserWindow.Closed += ClosedHandler; // Подписываемся на событие закрытия окна
             if (addUserWindow.ShowDialog() == true) { }
         }

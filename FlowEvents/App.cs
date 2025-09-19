@@ -12,7 +12,7 @@ namespace FlowEvents
             {
                 if (_settings == null)
                 {
-                    _settings = AppSettings.GetSettingsApp();
+                    _settings = AppSettings.GetSettingsApp(); // Загрузка настроек программы из файла конфигурации
                 }
                 return _settings;
             }
@@ -20,8 +20,7 @@ namespace FlowEvents
 
         protected override void OnExit(ExitEventArgs e)
         {
-            // При выходе из приложения сохраняем настройки
-            Settings.SaveSettingsApp();
+            Settings.SaveSettingsApp(); // При выходе из приложения сохраняем настройки
             base.OnExit(e);
         }
 

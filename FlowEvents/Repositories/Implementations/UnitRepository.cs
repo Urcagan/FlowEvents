@@ -57,7 +57,9 @@ namespace FlowEvents.Repositories.Implementations
             }
         }
 
+        //----------------------------------
         //Удаление
+        //----------------------------------
         public async Task<bool> DeleteUnitAsync(int unitId)
         {
             try
@@ -77,8 +79,7 @@ namespace FlowEvents.Repositories.Implementations
             {
                 // Пробрасываем специальное исключение для ограничений FOREIGN KEY
                 throw new InvalidOperationException("Объект используется в записях событий", ex);
-            }
-            
+            }            
         }
 
 
@@ -144,8 +145,6 @@ namespace FlowEvents.Repositories.Implementations
                 var count = (long)await command.ExecuteScalarAsync();
                 return count == 0;
             }
-
-
         }
 
 

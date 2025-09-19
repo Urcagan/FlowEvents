@@ -24,7 +24,6 @@ namespace FlowEvents
         private Category _selectedCategory; // Данные выделенной строки.
 
 
-
         public bool IsSaving
         {
             get => _isSaving;
@@ -35,7 +34,6 @@ namespace FlowEvents
                 OnPropertyChanged();
                 // UpdateCanExecute();
                 // SaveCommand.RaiseCanExecuteChanged(); // ✅ Обновит кнопку
-
             }
         }
 
@@ -48,7 +46,6 @@ namespace FlowEvents
                 VisibleBar = value;
                 OnPropertyChanged();
                 // UpdateCanExecute();
-
             }
         }
         public bool IsLoading
@@ -72,7 +69,6 @@ namespace FlowEvents
             }
         }
 
-
         public string Name
         {
             get => _name;
@@ -82,8 +78,6 @@ namespace FlowEvents
                 {
                     _name = value;
                     OnPropertyChanged();
-                    // Очищаем ошибку при изменении текста
-                    ClearError();
                 }
             }
         }
@@ -146,20 +140,17 @@ namespace FlowEvents
         {
             _categoryRepository = categoryRepository;
 
-
             // Инициализация команд
             AddCommand = new RelayCommand(AddCategory);
             CancelCommand = new RelayCommand(CancelEdit);
-            SaveCommand = new RelayCommand(async () => await SaveNewCategoryAsync(), () => !string.IsNullOrWhiteSpace(Name));
+            SaveCommand = new RelayCommand(async () => await SaveNewCategoryAsync(), () => CanExecuteSave());
             UpdateCommand = new RelayCommand(async () => await UpdateCategoryAsync(), CanExecuteUpdate);
             DeleteCommand = new RelayCommand(async () => await DeleteCategoryAsync(), () => CanExecuteDelete());
-            
-
+  
             //Как работает RelayCommand?
             //Он принимает два делегата:
             //  Action<object> — метод, который выполняется при вызове команды.
             //  Func<object, bool>(опционально) — метод, который проверяет, можно ли выполнить команду.
-
 
             Categories.Clear();
             // Автоматическая загрузка при создании
@@ -212,13 +203,12 @@ namespace FlowEvents
             // Проверка на пустое значение
             if (string.IsNullOrWhiteSpace(Name))
             {
-                ShowErrorMes("Название обязательно для заполнения!");
+                ShowError("Название обязательно для заполнения!");
                 return;
             }
 
             IsSaving = true;
-
-            
+                        
             await Task.Delay(500); // Имитация задержки сети (2 секунды)
 
             try
@@ -226,7 +216,7 @@ namespace FlowEvents
                 // Проверка на уникальность через репозиторий
                 if (!await _categoryRepository.IsCategoryNameUniqueAsync(Name))
                 {
-                    ShowErrorMes("Категория с таким именем уже существует!");
+                    ShowError("Категория с таким именем уже существует!");
                     return;
                 }
 
@@ -246,18 +236,15 @@ namespace FlowEvents
                 // SelectedCategory = savedCategory;
 
                 CancelEdit(); // Сбрасываем форму
-
-
             }
             catch (Exception ex)
             {
-                ShowErrorMes($"Ошибка данных: {ex.Message}");
+                ShowError($"Ошибка данных: {ex.Message}");
             }
             finally
             {
                 IsSaving = false;
             }
-
         }
 
 
@@ -348,20 +335,20 @@ namespace FlowEvents
                 }
                 else
                 {
-                    ShowErrorMes("Категория не найдена или уже была удалена.");
+                    ShowError("Категория не найдена или уже была удалена.");
                 }
             }
             catch (InvalidOperationException ex) when (ex.Message.Contains("используется"))
             {
-                ShowErrorMes($"Невозможно удалить категорию: она используется в записях событий!");
+                ShowError($"Невозможно удалить категорию: она используется в записях событий!");
             }
             catch (SQLiteException ex) when (ex.ResultCode == SQLiteErrorCode.Constraint)
             {
-                ShowErrorMes($"Невозможно удалить категорию: она используется в других записях!");
+                ShowError($"Невозможно удалить категорию: она используется в других записях!");
             }
             catch (Exception ex)
             {
-                ShowErrorMes($"Ошибка при удалении: {ex.Message}");
+                ShowError($"Ошибка при удалении: {ex.Message}");
             }
             finally
             {
@@ -391,9 +378,9 @@ namespace FlowEvents
 
 
         // ===================================================================================================
-        // Методы для отображения ошибки и очистки поля с текстом ошибки.
+        // Методы для отображения ошибки
 
-        private void ShowErrorMes(string message) // Метод отображение ошибки в виде сообщения
+        private void ShowError(string message) // Метод отображение ошибки в виде сообщения
         {
             MessageBox.Show(message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
         }
@@ -402,17 +389,6 @@ namespace FlowEvents
             MessageBox.Show(message, "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
-        private void ShowError(string errorMessage)
-        {
-            ErrorText = errorMessage;
-            IsErrorTextVisible = true;
-        }
-
-        private void ClearError()
-        {
-            ErrorText = string.Empty;
-            IsErrorTextVisible = false;
-        }
 
         // Закрытие доступа к полям ввода данных
         private void CancelEdit()
@@ -427,10 +403,6 @@ namespace FlowEvents
         }
 
         // Проверка, можно ли редактировать или удалять
-        private bool CanEditOrDelete(object parameter)
-        {
-            return SelectedCategory != null;
-        }
 
         private bool CanExecuteSave()
         {
@@ -494,29 +466,6 @@ namespace FlowEvents
             }
         }
 
-        // Свойство ErrorText, которое будет хранить текст ошибки  
-        private string _errorText;
-        public string ErrorText
-        {
-            get => _errorText;
-            set
-            {
-                _errorText = value;
-                OnPropertyChanged();
-            }
-        }
-
-        //Свойство IsErrorTextVisible, которое будет управлять видимостью TextBlock с содержимым строки ошибки.
-        private bool _isErrorTextVisible;
-        public bool IsErrorTextVisible
-        {
-            get => _isErrorTextVisible;
-            set
-            {
-                _isErrorTextVisible = value;
-                OnPropertyChanged();
-            }
-        }
 
 
         //====================================================================================================

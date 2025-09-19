@@ -1,20 +1,13 @@
 ﻿using FlowEvents.Models;
-using FlowEvents.Repositories.Implementations;
 using FlowEvents.Repositories.Interface;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Data;
 using System.Data.SQLite;
 using System.Diagnostics;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Xml.Linq;
 
 namespace FlowEvents
 {
@@ -28,19 +21,6 @@ namespace FlowEvents
         private bool _visibleBar;
 
         private ObservableCollection<Unit> _units { get; set; } = new ObservableCollection<Unit>();
-
-
-        private string _connectionString;
-        public string ConnectionString
-        {
-            get { return _connectionString; }
-            set
-            {
-                _connectionString = value;
-                // OnPropertyChanged(nameof(ConnectionString));
-               // GetUnits();
-            }
-        }
 
         public bool IsSaving
         {
@@ -111,18 +91,13 @@ namespace FlowEvents
         {
             _unitRepository = unitRepository;
 
-
             // Инициализация команд
-            AddCommand = new RelayCommand(AddUnit);
+            AddCommand = new RelayCommand(OpenPermitToAddUnitJption);
             CancelCommand = new RelayCommand(CancelEdit);
             SaveCommand = new RelayCommand( async () => await SaveNewUnitAsync(), () => CanExecuteSave());
             UpdateCommand = new RelayCommand(async () => await UpdateAsync(), () => CanExecuteUpdate());
             DeleteCommand = new RelayCommand(async () => await DeleteUnitAsync(), () =>  CanExecuteDelete());
             
-
-            // Загрузка данных из базы
-            ConnectionString = Global_Var.ConnectionString; //_mainViewModel._connectionString; //$"Data Source={_mainViewModel.appSettings.pathDB};Version=3;";
-
             _ = InitializeAsync(); // Асинхронная загрузка данных из БД
 
             IsAddButtonVisible = true; // Показать кнопку "Добавить"
@@ -172,7 +147,7 @@ namespace FlowEvents
             // Проверка на пустое значение
               if (string.IsNullOrWhiteSpace(Unit))
             {
-                ShowErrorMes("Название обязательно для заполнения!");
+                ShowError("Название обязательно для заполнения!");
                 // ClearField(NameTextBox);
                 return;
             }
@@ -184,7 +159,7 @@ namespace FlowEvents
             {
                 if (!await _unitRepository.IsUnitNameUniqueAsync(Unit)) // Проверка на уникальность
                 {
-                    ShowErrorMes("Объект с таким именем уже существует!");
+                    ShowError("Объект с таким именем уже существует!");
                     return;
                 }
 
@@ -203,7 +178,7 @@ namespace FlowEvents
             }
             catch (Exception ex)
             {
-                ShowErrorMes($"Ошибка данных: {ex.Message}");
+                ShowError($"Ошибка данных: {ex.Message}");
             }
             finally
             {
@@ -211,11 +186,9 @@ namespace FlowEvents
             }
         }
 
-
-     
+            
 
         //Обновление записи
-
         private async Task UpdateAsync()
         {
             if (SelectedUnit == null) return;
@@ -223,14 +196,14 @@ namespace FlowEvents
             // Проверка на пустое значение
             if (string.IsNullOrWhiteSpace(Unit))
             {
-                ShowErrorMes("Название обязательно для заполнения!");
+                ShowError("Название обязательно для заполнения!");
                 return;
             }
 
             // Проверка на уникальность (исключая текущую категорию)
             if (!await _unitRepository.IsUnitNameUniqueAsync(Unit, SelectedUnit.Id))
             {
-                ShowErrorMes("Объект с таким именем уже существует!");
+                ShowError("Объект с таким именем уже существует!");
                 return;
             }
 
@@ -258,7 +231,7 @@ namespace FlowEvents
             }
             catch (Exception ex)
             {
-                ShowErrorMes($"Ошибка данных: {ex.Message}");
+                ShowError($"Ошибка данных: {ex.Message}");
             }
             finally
             {
@@ -298,22 +271,22 @@ namespace FlowEvents
                 }
                 else
                 {
-                    ShowErrorMes("Объект не найден или уже была удален.");
+                    ShowError("Объект не найден или уже была удален.");
                 }
 
             }
             catch (InvalidOperationException ex) when (ex.Message.Contains("используется"))
             {
                 // На случай, если FOREIGN_KEY сработал 
-                ShowErrorMes($"Невозможно удалить объект: он используется в записях событий!");
+                ShowError($"Невозможно удалить объект: он используется в записях событий!");
             }
             catch (SQLiteException ex) when (ex.ResultCode == SQLiteErrorCode.Constraint)
             {
-                ShowErrorMes($"Невозможно удалить объект: он используется в других записях!");
+                ShowError($"Невозможно удалить объект: он используется в других записях!");
             }
             catch (Exception ex)
             {
-                ShowErrorMes($"Ошибка при удалении: {ex.Message}");
+                ShowError($"Ошибка при удалении: {ex.Message}");
             }
             finally
             {
@@ -327,7 +300,7 @@ namespace FlowEvents
         // Вспомогательные методы
 
         // Открытия доступа к полям ввода новой категории
-        private void AddUnit(object parameter)
+        private void OpenPermitToAddUnitJption(object parameter)
         {
             // Очистите поля ввода (если нужно)
             Unit = string.Empty;
@@ -345,8 +318,8 @@ namespace FlowEvents
        
 
         // ===================================================================================================
-        // Методы для отображения ошибки и очистки поля с текстом ошибки.
-        private void ShowErrorMes(string message) // Метод отображение ошибки в виде сообщения
+        // Методы для отображения сообщений.
+        private void ShowError(string message) // Метод отображение ошибки в виде сообщения
         {
             MessageBox.Show(message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
         }
@@ -356,9 +329,9 @@ namespace FlowEvents
         }
 
         // Закрытие доступа к полям ввода данных
-        private void CancelEdit()
-        {
-            // Очистите поля ввода
+        // Очистите полей ввода
+        private void CancelEdit() 
+        {            
             Unit = string.Empty;
             Description = string.Empty;
             IsEditPanelVisible = false; // Скрыть панель редактирования
@@ -382,9 +355,6 @@ namespace FlowEvents
 
 
         //===============================================================================================================================================
-        //Поля, Переменный, Свойства
-
-        //----------------------------------------
         // свойства для привязки к полям ввода и редактирования данных.
         private string _unit;
         public string Unit

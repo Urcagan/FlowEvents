@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Data.SQLite;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 
@@ -25,6 +24,63 @@ namespace FlowEvents.Repositories
         /// </summary>
         /// <param name="queryEvent"></param>
         /// <returns></returns>
+        /// 
+
+
+        public async Task<List<EventForView>> GetEventsAsync(string queryEvent)
+        {
+            var eventsDict = new Dictionary<int, EventForView>();
+
+            using (var connection = new SQLiteConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+                var command = new SQLiteCommand(queryEvent, connection);
+                using (var reader = await command.ExecuteReaderAsync().ConfigureAwait(false))
+                {
+                    while (await reader.ReadAsync().ConfigureAwait(false))
+                    {
+                        int eventId = reader.GetInt32(reader.GetOrdinal("id"));
+
+                        // Если события еще нет в словаре, добавляем его
+                        if (!eventsDict.TryGetValue(eventId, out var eventModel))
+                        {
+                            eventModel = new EventForView
+                            {
+                                Id = eventId,
+                                DateEventString = reader.GetString(reader.GetOrdinal("DateEvent")),
+                                Unit = reader.GetString(reader.GetOrdinal("Unit")),
+                                OilRefining = reader.IsDBNull(reader.GetOrdinal("OilRefining")) ? null : reader.GetString(reader.GetOrdinal("OilRefining")),
+                                Category = reader.GetString(reader.GetOrdinal("Category")),
+                                Description = reader.IsDBNull(reader.GetOrdinal("Description")) ? null : reader.GetString(reader.GetOrdinal("Description")),
+                                Action = reader.IsDBNull(reader.GetOrdinal("Action")) ? null : reader.GetString(reader.GetOrdinal("Action")),
+                                DateCreate = reader.GetString(reader.GetOrdinal("DateCreate")),
+                                Creator = reader.IsDBNull(reader.GetOrdinal("Creator")) ? null : reader.GetString(reader.GetOrdinal("Creator"))
+                            };
+                            eventsDict[eventId] = eventModel;
+                        }
+
+                        // Если есть прикрепленный файл, добавляем его
+                        //if (!reader.IsDBNull(reader.GetOrdinal("FileId")))
+                        if (!await reader.IsDBNullAsync(reader.GetOrdinal("FileId")).ConfigureAwait(false))
+                        {
+                            eventModel.AttachedFiles.Add(new AttachedFileModel(_connectionString) // Передаем строку подключения
+                            {
+                                FileId = reader.GetInt32(reader.GetOrdinal("FileId")),
+                                FileCategory = reader.GetString(reader.GetOrdinal("FileCategory")),
+                                FileName = reader.GetString(reader.GetOrdinal("FileName")),
+                                FilePath = reader.GetString(reader.GetOrdinal("FilePath")),
+                                FileSize = reader.GetInt64(reader.GetOrdinal("FileSize")),
+                                FileType = reader.GetString(reader.GetOrdinal("FileType")),
+                                UploadDate = DateTime.Parse(reader.GetString(reader.GetOrdinal("UploadDate")))
+                            });
+                        }
+                    }
+                }
+            }
+            return eventsDict.Values.ToList();
+        }
+
+
         public List<EventForView> GetEvents(string queryEvent)
         {
             var eventsDict = new Dictionary<int, EventForView>();
@@ -81,6 +137,43 @@ namespace FlowEvents.Repositories
         /// Загрузка перечня установок из ДБ
         /// </summary>
         /// <returns></returns>
+
+        public async Task<ObservableCollection<Unit>> GetUnitFromDatabaseAsync()
+        {
+            var units = new ObservableCollection<Unit>();
+
+            try
+            {
+                using (var connection = new SQLiteConnection(_connectionString))
+                {
+                    await connection.OpenAsync();
+
+                    string query = @"SELECT id, Unit, Description FROM Units";
+
+                    using (var command = new SQLiteCommand(query, connection))
+                    using (var reader = await command.ExecuteReaderAsync())
+                    {
+                        while (await reader.ReadAsync())
+                        {
+                            units.Add(new Unit
+                            {
+                                Id = reader.GetInt32(0),
+                                UnitName = reader.GetString(1),
+                                Description = reader.IsDBNull(2) ? null : reader.GetString(2)
+                            });
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка загрузки данных: {ex.Message}");
+            }
+
+            return units;
+        }
+
+
         public ObservableCollection<Unit> GetUnitFromDatabase()
         {
             var units = new ObservableCollection<Unit>();
@@ -127,7 +220,7 @@ namespace FlowEvents.Repositories
             List<AttachedFileForEvent> attachedFile = new List<AttachedFileForEvent>();
             try
             {
-                using (var connection = new SQLiteConnection(_connectionString)) 
+                using (var connection = new SQLiteConnection(_connectionString))
                 {
                     connection.Open();
 
@@ -257,5 +350,6 @@ namespace FlowEvents.Repositories
         {
             _connectionString = newConnectionString;
         }
+
     }
 }

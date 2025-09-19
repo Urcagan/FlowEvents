@@ -9,15 +9,9 @@ namespace FlowEvents.Users
     /// </summary>
     public partial class AddUserWindow : Window
     {
-        public UserManagerModel _userManagerModel { get; }
-        public AddUserWindow(UserManagerModel userManagerModel)
+        public AddUserWindow()
         {
             InitializeComponent();
-
-            _userManagerModel = userManagerModel;
-
-            //DataContext = new AddUserViewModel(_userManagerModel.MainViewModel, userManagerModel);
-            DataContext = new AddUserViewModel( userManagerModel);
 
             // Привязываем PasswordBox к ViewModel (так как PasswordBox не поддерживает обычную привязку)
             txtPassword.PasswordChanged += (sender, e) =>
@@ -34,10 +28,6 @@ namespace FlowEvents.Users
                     vm.ConfirmPassword = txtConfirmPassword.Password;
                 }
             };
-        }
-
-        public AddUserWindow()
-        {
         }
 
         private void DragArea_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)

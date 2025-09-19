@@ -19,25 +19,42 @@ namespace FlowEvents
                  
             // Подписываемся на события загрузки и закрытия окна
             Loaded += MainWindow_Loaded;
+
+            // Подписка на метод продолжающий иниициализацию программы при старте 
+            Loaded += async (s, e) =>
+            {
+                if (DataContext is MainViewModel viewModel)
+                {
+                    await viewModel.StartUPAsync();
+                }
+            };
+
             Closing += MainWindow_Closing;
         }
 
 
-        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+    //    private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+    //    {
+    //        // Загружаем настройки ширины столбцов
+    //        LoadDataGridColumnsSettings();
+
+    //        // Подписываемся на изменения ширины столбцов
+    //        // ВЫКЛЮЧИЛ ДАБЫ НЕ ПЕРЕПИСЫВАТЬ ФАЙЛ НАСТРОЕК МНОЖЕСТВО РАЗ
+    ////        SubscribeToColumnWidthChanges(); 
+
+    //        // Получаем ViewModel из DataContext
+    //        if (DataContext is MainViewModel viewModel)
+    //        {
+    //            // Вызываем метод загрузки и проверки данных
+    //            viewModel.StartUP();
+    //        }
+    //    }
+
+        private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
             // Загружаем настройки ширины столбцов
             LoadDataGridColumnsSettings();
 
-            // Подписываемся на изменения ширины столбцов
-            // ВЫКЛЮЧИЛ ДАБЫ НЕ ПЕРЕПИСЫВАТЬ ФАЙЛ НАСТРОЕК МНОЖЕСТВО РАЗ
-    //        SubscribeToColumnWidthChanges(); 
-
-            // Получаем ViewModel из DataContext
-            if (DataContext is MainViewModel viewModel)
-            {
-                // Вызываем метод загрузки и проверки данных
-                viewModel.StartUP();
-            }
         }
 
 
