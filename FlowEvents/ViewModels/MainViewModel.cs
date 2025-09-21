@@ -52,7 +52,6 @@ namespace FlowEvents
         }
 
         public AppSettings appSettings; // Объект параметров приложения
-        public string _connectionString; // Строка подключения
         public string CurrentDbPath
         {
             get => _currentDbPath;
@@ -218,10 +217,7 @@ namespace FlowEvents
                 EndDate = EndDate.AddDays(1);
                 StartDate = StartDate.AddDays(1);
             });
-
             //  User();
-            //    appSettings = AppSettings.GetSettingsApp(); // Загружаем настройки программы из файла при запуске программы
-
         }
 
 
@@ -239,7 +235,6 @@ namespace FlowEvents
 
                 //Проверка базы данных
                 if (!CheckDB.DBGood(pathDB)) return;
-                _connectionString = $"Data Source={pathDB};Version=3;foreign keys=true;"; //Формируем строку подключения к БД
 
                 CurrentDbPath = pathDB; // Устанавливаем текущий путь к базе данных
 

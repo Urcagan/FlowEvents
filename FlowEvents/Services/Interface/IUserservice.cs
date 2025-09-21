@@ -12,6 +12,10 @@ namespace FlowEvents.Services.Interface
         Task<(bool Success, string Message)> RegisterUserAsync(string username, string password, string confirmPassword, int DefaultRoleID );
         Task<List<User>> GetUsersAsync();
 
+        Task UpdateUserAccessAsync(string username, bool isAllowed);
+
+        Task<bool> DeleteUserAsync(string userName);
+
         Task ChangeUserRoleAsync(string userName, int newRoleId);
     }
 }

@@ -106,8 +106,26 @@ namespace FlowEvents.Repositories
             }
         }
 
-        
-        public async Task UpdateUserRoleAsync(string username, int newRoleId) 
+
+        public async Task<bool> DeleteUserAsync(string userName)
+        {
+            using (var connection = new SQLiteConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+
+                const string query = "DELETE FROM Users WHERE UserName = @UserName";
+
+                using (var command = new SQLiteCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@UserName", userName);
+
+                    int rowsAffected = await command.ExecuteNonQueryAsync();
+                    return rowsAffected > 0;
+                }
+            }
+        }
+
+        public async Task UpdateUserRoleAsync(string username, int newRoleId)
         {
             using (var connection = new SQLiteConnection(_connectionString))
             {
@@ -123,6 +141,32 @@ namespace FlowEvents.Repositories
             }
         }
 
+
+        public async Task UpdateUserAccessAsync(string username, bool isAllowed)
+        {
+            using (var connection = new SQLiteConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+
+                const string query = @"
+                                    UPDATE Users 
+                                    SET IsAllowed = @isAllowed 
+                                    WHERE UserName = @username";
+
+                using (var command = new SQLiteCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@username", username);
+                    command.Parameters.AddWithValue("@isAllowed", isAllowed);
+
+                    int rowsAffected = await command.ExecuteNonQueryAsync();
+
+                    if (rowsAffected == 0)
+                    {
+                        throw new InvalidOperationException($"Пользователь '{username}' не найден");
+                    }
+                }
+            }
+        }
 
         //-------------------------------------------------------------------
         /// <summary>

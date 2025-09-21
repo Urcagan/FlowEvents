@@ -35,7 +35,7 @@ namespace FlowEvents
 
 
         //Обработка событий при работе со строкой в таблице пользователей 
-        private void DgUsers_CellEditEnding(object sender, DataGridCellEditEndingEventArgs e)
+        private async void DgUsers_CellEditEnding(object sender, DataGridCellEditEndingEventArgs e)
         {
             if (e.EditAction == DataGridEditAction.Commit)
             {
@@ -53,7 +53,7 @@ namespace FlowEvents
                     {
                         int newRole = Convert.ToInt32(((ComboBox)e.EditingElement).SelectedValue);
                        // _model.UpdateUserRole(username, newRole);
-                        _model.ChangeUserRole(username, newRole);
+                        await _model.ChangeUserRole(username, newRole);
                     }
                 }
             }

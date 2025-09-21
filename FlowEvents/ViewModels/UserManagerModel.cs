@@ -40,8 +40,8 @@ namespace FlowEvents
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(UsersTable)));
             }
         }
-             
-        
+
+
         // Коллекция для хранения категорий (источник данных (коллекцию))
         //public ObservableCollection<UnitModel> UsersTable { get; set; } = new ObservableCollection<UnitModel>();
 
@@ -59,9 +59,6 @@ namespace FlowEvents
         public RelayCommand OpenAddUserWindowCommand { get; set; }
         public RelayCommand OpenPermissionWindowCommand { get; set; }
         #region
-        //public event PropertyChangedEventHandler PropertyChanged;
-
-
 
 
         #endregion
@@ -136,29 +133,63 @@ namespace FlowEvents
 
 
         // Удаление категории
-        private void DeletUser(object parameter)
+        private async Task DeletUser(object parameter)
         {
             if (SelectedUser == null) return;
             int selectRowID = Convert.ToInt32(SelectedUser.Row["id"]);
+            string userName = SelectedUser.Row["UserName"].ToString();
 
             var confirm = MessageBox.Show(
                 $"Вы уверены, что хотите удалить пользователя {SelectedUser.Row["DisplayName"]} ?",
                 "Подтверждение",
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Question);
-            if (confirm != MessageBoxResult.Yes) { SelectedUser = null; return; }
+            if (confirm != MessageBoxResult.Yes)
+            {
+                SelectedUser = null;
+                return;
+            }
 
             try
             {
-                using (var connection = new SQLiteConnection(_connectionString))
+                bool success = await _userService.DeleteUserAsync(userName);
+                if (success)
                 {
-                    connection.Open();
-                    var command = new SQLiteCommand("DELETE FROM Users WHERE Id = @Id", connection);
-                    command.Parameters.AddWithValue("@Id", selectRowID);
-                    command.ExecuteNonQuery();
-                }
+                    MessageBox.Show(
+                $"Пользователь {userName} успешно удален",
+                "Успех",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
 
-                // Units.Remove(SelectedUser);
+                GetUsers(); //ЕОБХОДИМО ПЕРЕДЕЛАТЬ НА АСИНХРОННЫЙ МЕТОД
+                    // Обновляем список пользователей
+                    //await LoadUsersAsync();
+                }
+                else
+                {
+                    MessageBox.Show(
+                        "Не удалось удалить пользователя",
+                        "Ошибка",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                }
+                
+            }
+            catch (InvalidOperationException ex) when (ex.Message.Contains("Нельзя удалить собственный аккаунт"))
+            {
+                MessageBox.Show(
+                    ex.Message,
+                    "Ошибка",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+            catch (ArgumentException ex)
+            {
+                MessageBox.Show(
+                    ex.Message,
+                    "Ошибка",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
             }
             catch (Exception ex)
             {
@@ -167,9 +198,11 @@ namespace FlowEvents
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
             }
-
-            SelectedUser = null;
-            GetUsers();
+            finally
+            {
+                SelectedUser = null;
+            }
+            
         }
 
 
@@ -198,74 +231,47 @@ namespace FlowEvents
         }
 
         // Метод для загрузки данных из таблицы Users
+
         public void GetUsers()
+        {
+            UsersTable = LoadUsers();
+        }
+
+        private DataTable LoadUsers()
         {
             try
             {
                 using (var connection = new SQLiteConnection(_connectionString))
                 {
+                    var dataTable = new DataTable();
+
                     connection.Open();
                     var command = new SQLiteCommand("SELECT * FROM Users", connection);
 
                     using (var adapter = new SQLiteDataAdapter(command))
                     {
-                        var dataTable = new DataTable();
+                        //var dataTable = new DataTable();
                         adapter.Fill(dataTable);
-                        UsersTable = dataTable;
+                        //UsersTable = dataTable;
                     }
+                    return dataTable;
                 }
+
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Ошибка загрузки пользователей: {ex.Message}");
+                return new DataTable();
             }
         }
 
-        /**
-        public void AddDomainUser(DomainUserModel domainUser, int roleId)
+
+
+        public async void UpdateUserAccess(string username, bool isAllowed)
         {
             try
             {
-                using (var connection = new SQLiteConnection(ConnectionString))
-                {
-                    connection.Open();
-                    var command = new SQLiteCommand(
-                    "INSERT OR REPLACE INTO Users " +
-                    "(Username, DomainName, DisplayName, Email, RoleId) " +
-                    "VALUES (@username, @domain, @displayName, @email, @roleId)",
-                    connection);
-
-                    command.Parameters.AddWithValue("@username", domainUser.Username);
-                    command.Parameters.AddWithValue("@domain", domainUser.DomainName);
-                    command.Parameters.AddWithValue("@displayName", domainUser.DisplayName);
-                    command.Parameters.AddWithValue("@email", domainUser.Email);
-                    command.Parameters.AddWithValue("@roleId", roleId);
-
-                    command.ExecuteNonQuery();
-                    GetUsers(); // Обновляем таблицу
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Ошибка добавления пользователя: {ex.Message}");
-            }
-        }
-        **/
-
-        public void UpdateUserAccess(string username, bool isAllowed)
-        {
-            try
-            {
-                using (var connection = new SQLiteConnection(ConnectionString))
-                {
-                    connection.Open();
-                    var command = new SQLiteCommand(
-                        "UPDATE Users SET IsAllowed = @isAllowed WHERE Username = @username",
-                        connection);
-                    command.Parameters.AddWithValue("@username", username);
-                    command.Parameters.AddWithValue("@isAllowed", isAllowed ? 1 : 0);
-                    command.ExecuteNonQuery();
-                }
+                await _userService.UpdateUserAccessAsync(username, isAllowed);
             }
             catch (Exception ex)
             {
@@ -273,26 +279,6 @@ namespace FlowEvents
             }
         }
 
-        public void UpdateUserRole(string username, int SelRole)
-        {
-            try
-            {
-                using (var connection = new SQLiteConnection(ConnectionString))
-                {
-                    connection.Open();
-                    var command = new SQLiteCommand(
-                        "UPDATE Users SET RoleId = @selRole WHERE Username = @username",
-                        connection);
-                    command.Parameters.AddWithValue("@username", username);
-                    command.Parameters.AddWithValue("@selRole", SelRole);
-                    command.ExecuteNonQuery();
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Ошибка обновления роли пользователя: {ex.Message}");
-            }
-        }
 
         public async Task ChangeUserRole(string username, int SelRole)
         {

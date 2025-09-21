@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace FlowEvents.Services.Implementations
 {
@@ -44,9 +45,9 @@ namespace FlowEvents.Services.Implementations
                 var hashedPassword = _passwordHasher.HashPassword(password, salt);  // Хеширование пароля с солью
 
                 // Добавление пользователя
-                var userId = await _userRepository.AddUserAsync(username, hashedPassword, salt, DefaultRoleID); 
+                var userId = await _userRepository.AddUserAsync(username, hashedPassword, salt, DefaultRoleID);
 
-                return (true, $"Пользователь {username} успешно зарегистрирован"); 
+                return (true, $"Пользователь {username} успешно зарегистрирован");
             }
             catch (SQLiteException ex)
             {
@@ -57,6 +58,28 @@ namespace FlowEvents.Services.Implementations
                 return (false, $"Ошибка: {ex.Message}");
             }
         }
+
+
+       // public async Task<bool> DeleteUserAsync(string userName, string currentUser)
+        public async Task<bool> DeleteUserAsync(string userName)
+        {
+            // Проверка: нельзя удалить самого себя
+            //if (userName.Equals(currentUser, StringComparison.OrdinalIgnoreCase))
+            //{
+            //    throw new InvalidOperationException("Нельзя удалить собственный аккаунт");
+            //}
+
+            // Проверка существования пользователя
+            if (!await _userRepository.UserExistsAsync(userName))
+            {
+                throw new ArgumentException($"Пользователь '{userName}' не существует");
+            }
+
+            // Удаление пользователя
+            return await _userRepository.DeleteUserAsync(userName);
+        }
+
+       
 
 
         //public async Task ChangeUserRoleAsync(int userId, int newRoleId, int changedByUserId)
@@ -73,6 +96,11 @@ namespace FlowEvents.Services.Implementations
 
             // 4. Обновление роли
             await _userRepository.UpdateUserRoleAsync(userName, newRoleId);
+        }
+
+        public async Task UpdateUserAccessAsync(string username, bool isAllowed)
+        {
+            await _userRepository.UpdateUserAccessAsync(username, isAllowed);
         }
 
 
