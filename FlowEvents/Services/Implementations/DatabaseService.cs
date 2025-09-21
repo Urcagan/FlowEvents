@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace FlowEvents.Services
+namespace FlowEvents.Services.Implementations
 {
     public class DatabaseService : IDatabaseService
     {
@@ -55,10 +55,7 @@ namespace FlowEvents.Services
             return await _permissionRepository.GetPermissionsByRoleIdAsync(roleId);
         }
 
-        public async Task AddLocalUserToDatabaseAsync(string username, string hashedPassword, string salt, int RoleId)
-        {
-            return await _userRepository.AddLocalUserToDatabaseAsync(string username, string hashedPassword, string salt, int RoleId);
-        }
+     
 
 
         //public async Task UpdateRolePermissionsAsync(int roleId, List<int> permissionIds)

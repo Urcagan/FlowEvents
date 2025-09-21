@@ -413,9 +413,15 @@ namespace FlowEvents
 
         private void UserManagerMenuItem(object parameter)
         {
-            var userManagerModel = new UserManagerModel();
-            UserManager userManager = new UserManager(userManagerModel);
-            if (userManager.ShowDialog() == true) { }
+            var UserManagerModel = App.ServiceProvider.GetRequiredService<UserManagerModel>();
+            var UserManager = new UserManager();
+            UserManager.DataContext = UserManagerModel;
+            UserManager.Owner = Application.Current.MainWindow;
+            if (UserManager.ShowDialog() == true) { }
+
+            //var userManagerModel = new UserManagerModel();
+            //UserManager userManager = new UserManager(userManagerModel);
+            //if (userManager.ShowDialog() == true) { }
         }
 
         private void Login(object parameter)

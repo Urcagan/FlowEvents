@@ -43,10 +43,10 @@ namespace FlowEvents.Users
 
         private void RegisterText_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            UserManagerModel userManagerModel = new UserManagerModel();
-            var registerWindow = new AddUserWindow();
-            registerWindow.Show();
-            this.Close();
+            //UserManagerModel userManagerModel = new UserManagerModel();
+            //var registerWindow = new AddUserWindow();
+            //registerWindow.Show();
+            //this.Close();
         }
 
         private void CloseButton_Click(object sender, RoutedEventArgs e)

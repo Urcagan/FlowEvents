@@ -1,15 +1,8 @@
 ﻿using FlowEvents.Services;
-using System;
-using System.Collections.Generic;
+using FlowEvents.Services.Interface;
 using System.ComponentModel;
-using System.Data.SQLite;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Input;
 
 namespace FlowEvents.Users
@@ -17,7 +10,6 @@ namespace FlowEvents.Users
     public class AddUserViewModel : INotifyPropertyChanged
     {
         // Реализация INotifyPropertyChanged
-        // Событие, которое уведомляет об изменении свойства
         public event PropertyChangedEventHandler PropertyChanged;
         protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
@@ -25,9 +17,9 @@ namespace FlowEvents.Users
         }
 
         private readonly IDatabaseService _databaseService;
+        private readonly IUserService _userService;
 
         private bool _isLoading;
-        private string _connectionString;
         private const int DefaultRoleId = 2; // ID роли "user"
 
         private string _username;
@@ -65,7 +57,6 @@ namespace FlowEvents.Users
             }
         }
 
-
         public string ConfirmPassword
         {
             get => _confirmPassword;
@@ -81,124 +72,50 @@ namespace FlowEvents.Users
         public ICommand CancelCommand { get; }
 
 
-        public AddUserViewModel(IDatabaseService databaseService)
+        public AddUserViewModel(IDatabaseService databaseService, IUserService userService)
         {
             _databaseService = databaseService;
-
-
-            _connectionString = Global_Var.ConnectionString; //_mainViewModel._connectionString;
-
-            // Инициализация команд
+            _userService = userService;
 
             AddUserCommand = new RelayCommand(AddLocalUser);
             CancelCommand = new RelayCommand(Cancel);
         }
 
 
-        private async void AddLocalUser()
+        // Добавить локального пользователя
+        private async void AddLocalUser(object parameter)
         {
-            // Валидация
-            if (string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(Password) || string.IsNullOrWhiteSpace(ConfirmPassword))
-            {
-                MessageBox.Show("Пожалуйста, заполните все поля.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
-
-            if (Password != ConfirmPassword)
-            {
-                MessageBox.Show("Пароли не совпадают.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
-
             try
             {
-                // Показываем индикатор загрузки
                 IsLoading = true;
 
-                var salt = GenerateSalt();
-                var hashedPassword = HashPassword(Password, salt);
+                var result = await _userService.RegisterUserAsync(Username, Password, ConfirmPassword, DefaultRoleId); 
 
-                // Асинхронное добавление пользователя
-                await AddUserToDatabaseAsync(Username, hashedPassword, salt);
+                if (result.Success)
+                {
+                    MessageBox.Show(result.Message, "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
 
-                MessageBox.Show($"Пользователь {Username} добавлен", "Уведомление");
+                    // Очистка полей
+                    Username = string.Empty;
+                    Password = string.Empty;
+                    ConfirmPassword = string.Empty;
 
-                // Очистка полей
-                Username = string.Empty;
-                Password = string.Empty;
-                ConfirmPassword = string.Empty;
-
-                // Закрытие окна
-                CloseWindow(parameter as Window, false);
-            }
-            catch (SQLiteException ex)
-            {
-                MessageBox.Show($"Ошибка базы данных: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    // Закрытие окна
+                    if (parameter is Window window)
+                        window.Close();
+                }
+                else
+                {
+                    MessageBox.Show(result.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
             finally
             {
                 IsLoading = false;
             }
         }
+
         
-
-        private void AddUser(object parameter)
-        {
-            if (string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(Password) || string.IsNullOrWhiteSpace(ConfirmPassword))
-            {
-                // Проверка на пустые поля
-                System.Windows.MessageBox.Show("Пожалуйста, заполните все поля.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
-                return;
-            }
-            if (Password != ConfirmPassword)
-            {
-                // Проверка на совпадение паролей
-                System.Windows.MessageBox.Show("Пароли не совпадают.", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
-                return;
-            }
-            var salt = GenerateSalt(); // Генерация соли
-            var hashedPassword = HashPassword(Password, salt); // Хеширование пароля
-            try
-            {
-                using (var connection = new SQLiteConnection(_connectionString))
-                {
-                    connection.Open();
-                    string query = @"INSERT INTO Users 
-                                (UserName, DomainName, DisplayName, Email, RoleId, IsAllowed, Password, Salt) 
-                                VALUES 
-                                (@username, '', @username, '', @roleId, 1, @password, @salt)";
-                    var command = new SQLiteCommand(query, connection);
-                    command.Parameters.AddWithValue("@username", Username);
-                    command.Parameters.AddWithValue("@roleId", DefaultRoleId);
-                    command.Parameters.AddWithValue("@password", hashedPassword);
-                    command.Parameters.AddWithValue("@salt", salt);
-                    command.ExecuteNonQuery();
-                }
-                MessageBox.Show($"Пользователь {Username} добавлен", "Уведомление");
-                Username = string.Empty; // Очистка полей после добавления
-                Password = string.Empty;
-                ConfirmPassword = string.Empty;
-
-                // При успешном добавлении пользователя закрываем окно
-                CloseWindow(parameter as Window, false); // 
-            }
-            catch (SQLiteException ex)
-            {
-                // Обработка ошибок базы данных
-                MessageBox.Show($"Ошибка базы данных: {ex.Message}", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
-            }
-            catch (Exception ex)
-            {
-                // Обработка всех остальных ошибок
-                MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
-            }
-
-        }
-
 
         // Отмена добавления пользователя
         private void Cancel(object parameter)
@@ -219,28 +136,6 @@ namespace FlowEvents.Users
                 window.Close();
             }
         }
-
-        // Генерация соли для хеширования пароля
-        private string GenerateSalt()
-        {
-            byte[] saltBytes = new byte[16]; // Размер соли 16 байт
-            using (var rng = RandomNumberGenerator.Create()) // Использование криптографически безопасного генератора случайных чисел
-            {
-                rng.GetBytes(saltBytes); // Заполнение массива случайными байтами
-            }
-            return Convert.ToBase64String(saltBytes); // Преобразование массива байтов в строку Base64
-        }
-
-        // Хеширование пароля с использованием соли
-        private string HashPassword(string password, string salt)
-        {
-            using (var sha256 = SHA256.Create()) // Использование SHA-256 для хеширования
-            {
-                var saltedPassword = password + salt; // Добавление соли к паролю
-                byte[] hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(saltedPassword)); // Хеширование пароля с солью
-                return Convert.ToBase64String(hashedBytes); // Возвращение хешированного пароля в виде строки
-            }
-        }
-
+               
     }
 }

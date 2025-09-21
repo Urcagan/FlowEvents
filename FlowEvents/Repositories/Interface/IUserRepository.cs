@@ -9,9 +9,11 @@ namespace FlowEvents.Repositories.Interface
 {
     public interface IUserRepository
     {
-        Task<List<User>> GetAllUsersAsync();
+        Task<List<User>> GetAllUsersAsync(); // Получение всех пользователей
+        Task<bool> UserExistsAsync(string username); // Проверка существования пользователя
+        Task<int> AddUserAsync(string username, string hashedPassword, string salt, int roleId); // Добавление нового пользователя и возврат его ID
 
-        Task AddLocalUserToDatabaseAsync(string username, string hashedPassword, string salt, int RoleId);
+        Task UpdateUserRoleAsync(string username, int newRoleId);
 
 
         void UpdateConnectionString(string newConnectionString);

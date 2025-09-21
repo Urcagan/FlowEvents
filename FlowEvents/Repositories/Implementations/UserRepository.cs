@@ -3,8 +3,6 @@ using FlowEvents.Repositories.Interface;
 using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 
@@ -19,8 +17,8 @@ namespace FlowEvents.Repositories
             _connectionString = connectionString;
         }
 
-        
 
+        // Асинхронный метод для получения всех пользователей из базы данных
         public async Task<List<User>> GetAllUsersAsync()
         {
             var users = new List<User>();
@@ -65,33 +63,65 @@ namespace FlowEvents.Repositories
         }
 
 
+        // Асинхронный метод для проверки существования пользователя по имени
+        public async Task<bool> UserExistsAsync(string username)
+        {
+            using (var connection = new SQLiteConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+                string query = "SELECT COUNT(1) FROM Users WHERE UserName = @username";
 
-        // Асинхронный метод для добавления пользователя в БД
-        public async Task AddLocalUserToDatabaseAsync(string username, string hashedPassword, string salt, int RoleId)
+                using (var command = new SQLiteCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@username", username);
+                    var result = await command.ExecuteScalarAsync();
+                    return Convert.ToInt32(result) > 0;
+                }
+            }
+        }
+
+        // Асинхронный метод для добавления пользователя в БД и возврата его ID
+        public async Task<int> AddUserAsync(string username, string hashedPassword, string salt, int roleId)
         {
             using (var connection = new SQLiteConnection(_connectionString))
             {
                 await connection.OpenAsync();
 
                 string query = @"INSERT INTO Users 
-                    (UserName, DomainName, DisplayName, Email, RoleId, IsAllowed, Password, Salt) 
-                    VALUES 
-                    (@username, '', @username, '', @roleId, 1, @password, @salt)";
+                (UserName, DomainName, DisplayName, Email, RoleId, IsAllowed, Password, Salt) 
+                VALUES 
+                (@username, '', @username, '', @roleId, 1, @password, @salt);
+                SELECT last_insert_rowid();";
 
                 using (var command = new SQLiteCommand(query, connection))
                 {
                     command.Parameters.AddWithValue("@username", username);
-                    command.Parameters.AddWithValue("@roleId", RoleId);
+                    command.Parameters.AddWithValue("@roleId", roleId);
                     command.Parameters.AddWithValue("@password", hashedPassword);
                     command.Parameters.AddWithValue("@salt", salt);
 
-                    await command.ExecuteNonQueryAsync();
+                    var result = await command.ExecuteScalarAsync();
+                    return Convert.ToInt32(result);
                 }
             }
         }
 
-
         
+        public async Task UpdateUserRoleAsync(string username, int newRoleId) 
+        {
+            using (var connection = new SQLiteConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+                string query = "UPDATE Users SET RoleId = @selRole WHERE Username = @username";
+
+                using (var command = new SQLiteCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@username", username);
+                    command.Parameters.AddWithValue("@selRole", newRoleId);
+                    await command.ExecuteNonQueryAsync();
+                }
+            }
+        }
 
 
         //-------------------------------------------------------------------
@@ -104,6 +134,7 @@ namespace FlowEvents.Repositories
         {
             _connectionString = newConnectionString;
         }
+
 
     }
 }

@@ -50,10 +50,23 @@ namespace FlowEvents.Repositories.Implementations
             return roles;
         }
 
-        public Task<Role> GetRoleByIdAsync(int id)
+        
+        public async Task<bool> RoleExistsAsync(int roleId)
         {
-            throw new NotImplementedException();
+            using (var connection = new SQLiteConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+                string query = "SELECT COUNT(1) FROM Roles WHERE RoleId = @RoleId";
+
+                using (var command = new SQLiteCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@RoleId", roleId);
+                    var result = await command.ExecuteScalarAsync();
+                    return Convert.ToInt32(result) > 0;
+                }
+            }
         }
+
 
 
         //-------------------------------------------------------------------

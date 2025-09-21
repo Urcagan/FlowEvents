@@ -1,4 +1,5 @@
 ﻿using FlowEvents.Properties;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -21,18 +22,17 @@ namespace FlowEvents
     /// </summary>
     public partial class UserManager : Window
     {
-
         private readonly UserManagerModel _model;
 
-        public UserManager(UserManagerModel userManagerModel)
+        public UserManager()
         {
             InitializeComponent();
-            _model = userManagerModel;
-            DataContext = _model;
 
+            _model = App.ServiceProvider.GetRequiredService<UserManagerModel>();
+            DataContext = _model;
         }
 
-        
+
 
         //Обработка событий при работе со строкой в таблице пользователей 
         private void DgUsers_CellEditEnding(object sender, DataGridCellEditEndingEventArgs e)
@@ -52,7 +52,8 @@ namespace FlowEvents
                     else if (e.Column.Header.ToString() == "Роль")
                     {
                         int newRole = Convert.ToInt32(((ComboBox)e.EditingElement).SelectedValue);
-                        _model.UpdateUserRole(username, newRole);
+                       // _model.UpdateUserRole(username, newRole);
+                        _model.ChangeUserRole(username, newRole);
                     }
                 }
             }

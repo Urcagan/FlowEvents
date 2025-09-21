@@ -83,6 +83,10 @@
     <Compile Include="Repositories\Implementations\UnitRepository.cs" />
     <Compile Include="Repositories\Interface\ICategoryRepository.cs" />
     <Compile Include="Repositories\Interface\IUnitRepository.cs" />
+    <Compile Include="Services\Implementations\PasswordHasher.cs" />
+    <Compile Include="Services\Implementations\UserService.cs" />
+    <Compile Include="Services\Interface\IPasswordHasher.cs" />
+    <Compile Include="Services\Interface\IUserservice.cs" />
     <Compile Include="Views\CategoryView.xaml.cs">
       <DependentUpon>CategoryView.xaml</DependentUpon>
     </Compile>

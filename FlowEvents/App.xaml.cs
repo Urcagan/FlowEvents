@@ -2,6 +2,8 @@
 using FlowEvents.Repositories.Implementations;
 using FlowEvents.Repositories.Interface;
 using FlowEvents.Services;
+using FlowEvents.Services.Interface;
+using FlowEvents.Services.Implementations;
 using FlowEvents.Settings;
 using FlowEvents.Users;
 using Microsoft.Extensions.DependencyInjection;
@@ -106,8 +108,10 @@ namespace FlowEvents
             // Регистрация сервисов
             services.AddSingleton<IDatabaseService, DatabaseService>();
             services.AddSingleton<IPolicyAuthService, PolicyAuthService>();
-            
-            
+            services.AddSingleton<IUserService, UserService>();
+            services.AddSingleton<IPasswordHasher, PasswordHasher>();
+
+
 
             // Регистрация ViewModels
             services.AddTransient<MainViewModel>();

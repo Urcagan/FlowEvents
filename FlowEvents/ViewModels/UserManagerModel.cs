@@ -1,4 +1,6 @@
-﻿using FlowEvents.Services;
+﻿using FlowEvents.Repositories.Interface;
+using FlowEvents.Services;
+using FlowEvents.Services.Interface;
 using FlowEvents.Users;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -6,24 +8,19 @@ using System.ComponentModel;
 using System.Data;
 using System.Data.SQLite;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using System.Windows;
 
 namespace FlowEvents
 {
     public class UserManagerModel : INotifyPropertyChanged
     {
-
-        private readonly IServiceProvider _serviceProvider;
-        private readonly IDatabaseService _databaseService;
-
-        public RelayCommand OpenFindUserWindowCommand { get; set; }
-        public RelayCommand DeletUserCommand { get; set; }
-        public RelayCommand OpenAddUserWindowCommand { get; set; }
-        public RelayCommand OpenPermissionWindowCommand { get; set; }
-        #region
-        //public event PropertyChangedEventHandler PropertyChanged;
+        private readonly IUserService _userService;
 
         private string _connectionString;
+        private DataTable _usersTable;//Таблица пользователей
+        private DataTable _rolesTable;//Таблица ролей пользователей
+
         public string ConnectionString
         {
             get { return _connectionString; }
@@ -34,9 +31,6 @@ namespace FlowEvents
             }
         }
 
-        //Таблица пользователей
-        private DataTable _usersTable;
-
         public DataTable UsersTable
         {
             get => _usersTable;
@@ -46,13 +40,11 @@ namespace FlowEvents
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(UsersTable)));
             }
         }
-
-
+             
+        
         // Коллекция для хранения категорий (источник данных (коллекцию))
         //public ObservableCollection<UnitModel> UsersTable { get; set; } = new ObservableCollection<UnitModel>();
 
-        //Таблица ролей пользователей
-        private DataTable _rolesTable;
         public DataTable RolesTable
         {
             get => _rolesTable;
@@ -62,22 +54,21 @@ namespace FlowEvents
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(RolesTable)));
             }
         }
+        public RelayCommand OpenFindUserWindowCommand { get; set; }
+        public RelayCommand DeletUserCommand { get; set; }
+        public RelayCommand OpenAddUserWindowCommand { get; set; }
+        public RelayCommand OpenPermissionWindowCommand { get; set; }
+        #region
+        //public event PropertyChangedEventHandler PropertyChanged;
 
-        private MainViewModel _mainViewModel;
-        public MainViewModel MainViewModel
-        {
-            get { return _mainViewModel; }
-            set
-            {
-                _mainViewModel = value;
-            }
-        }
+
+
 
         #endregion
 
-
-        public UserManagerModel()
+        public UserManagerModel(IUserService userService)
         {
+            _userService = userService;
 
             OpenFindUserWindowCommand = new RelayCommand(OpenFindUserWindows);
             DeletUserCommand = new RelayCommand(DeletUser);
@@ -85,12 +76,10 @@ namespace FlowEvents
             OpenPermissionWindowCommand = new RelayCommand(OpenPermissionWindow);
 
             // Загрузка данных из базы
-            ConnectionString = Global_Var.ConnectionString; //_mainViewModel._connectionString;
+            ConnectionString = Global_Var.ConnectionString;
             LoadRoles(); // Загружаем роли при создании модели
             GetUsers();  // Загружаем пользователей
         }
-
-
 
         private void OpenPermissionWindow(object parametrs)
         {
@@ -119,8 +108,6 @@ namespace FlowEvents
 
         private void OpenFindUserWindows(object parameters)
         {
-
-            //var findUserModel = new FindUserModel(_mainViewModel);
             FindUserWindow findUserWindow = new FindUserWindow(this); // Создаем дочернее окно, передавая текущую модель (this)
 
             void ClosedHandler(object sender, EventArgs e)
@@ -304,6 +291,19 @@ namespace FlowEvents
             catch (Exception ex)
             {
                 MessageBox.Show($"Ошибка обновления роли пользователя: {ex.Message}");
+            }
+        }
+
+        public async Task ChangeUserRole(string username, int SelRole)
+        {
+            try
+            {
+                await _userService.ChangeUserRoleAsync(username, SelRole);
+                MessageBox.Show("Роль пользователя изменена");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка: {ex.Message}");
             }
         }
 
