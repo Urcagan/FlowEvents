@@ -16,6 +16,7 @@
     <Deterministic>true</Deterministic>
     <NuGetPackageImportStamp>
     </NuGetPackageImportStamp>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Disk</InstallFrom>
@@ -28,7 +29,6 @@
     <MapFileExtensions>true</MapFileExtensions>
     <ApplicationRevision>0</ApplicationRevision>
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
-    <IsWebBootstrapper>false</IsWebBootstrapper>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
   </PropertyGroup>
@@ -79,12 +79,16 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="App.cs" />
+    <Compile Include="Models\DatabaseInfo.cs" />
     <Compile Include="Repositories\Implementations\CategoryRepository.cs" />
+    <Compile Include="Repositories\Implementations\DatabaseInfoRepository.cs" />
     <Compile Include="Repositories\Implementations\UnitRepository.cs" />
     <Compile Include="Repositories\Interface\ICategoryRepository.cs" />
+    <Compile Include="Repositories\Interface\IDatabaseInfoRepository.cs" />
     <Compile Include="Repositories\Interface\IUnitRepository.cs" />
     <Compile Include="Services\Implementations\PasswordHasher.cs" />
     <Compile Include="Services\Implementations\UserService.cs" />
+    <Compile Include="Services\Interface\IDatabaseValidationService.cs" />
     <Compile Include="Services\Interface\IPasswordHasher.cs" />
     <Compile Include="Services\Interface\IUserservice.cs" />
     <Compile Include="Views\CategoryView.xaml.cs">
