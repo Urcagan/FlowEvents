@@ -10,14 +10,9 @@ namespace FlowEvents.Repositories.Implementations
 {
     public class DatabaseInfoRepository : IDatabaseInfoRepository
     {
-        private string _connectionString;
-
-        public DatabaseInfoRepository(string connectionString)
-        {
-            _connectionString = connectionString ?? throw new ArgumentNullException(nameof(connectionString));
-        }
-
-        public async Task<string> GetDatabaseVersionAsync(string connectionString)
+     
+       
+        public async Task<string> GetDatabaseVersionAsync(string connectionString) // Получение версии базы данных
         {
             try
             {
@@ -39,7 +34,7 @@ namespace FlowEvents.Repositories.Implementations
             }
         }
 
-        public async Task<bool> CheckDatabaseStructureAsync(string connectionString)
+        public async Task<bool> CheckDatabaseStructureAsync(string connectionString) // Проверка структуры базы данных
         {
             try
             {
@@ -48,7 +43,7 @@ namespace FlowEvents.Repositories.Implementations
                     await connection.OpenAsync();
 
                     // Проверяем наличие основных таблиц
-                    var tables = new[] { "Config", "Users", "Units", "Events" };
+                    var tables = new[] { "Config", "Users", "Units", "Events"};
 
                     foreach (var table in tables)
                     {
@@ -69,7 +64,7 @@ namespace FlowEvents.Repositories.Implementations
             }
         }
 
-        public async Task<bool> TestConnectionAsync(string connectionString)
+        public async Task<bool> TestConnectionAsync(string connectionString) // Проверка подключения к базе данных
         {
             try
             {
@@ -86,5 +81,4 @@ namespace FlowEvents.Repositories.Implementations
             }
         }
     }
-
 }

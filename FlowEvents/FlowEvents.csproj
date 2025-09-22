@@ -86,6 +86,7 @@
     <Compile Include="Repositories\Interface\ICategoryRepository.cs" />
     <Compile Include="Repositories\Interface\IDatabaseInfoRepository.cs" />
     <Compile Include="Repositories\Interface\IUnitRepository.cs" />
+    <Compile Include="Services\Implementations\DatabaseValidationService.cs" />
     <Compile Include="Services\Implementations\PasswordHasher.cs" />
     <Compile Include="Services\Implementations\UserService.cs" />
     <Compile Include="Services\Interface\IDatabaseValidationService.cs" />

@@ -1,4 +1,5 @@
 ﻿using FlowEvents.Services;
+using FlowEvents.Services.Interface;
 using Microsoft.Win32;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
@@ -8,7 +9,7 @@ namespace FlowEvents.Settings
 {
     public class SettingsViewModel : INotifyPropertyChanged
     {
-        private readonly IDatabaseService _databaseService;
+        private readonly IDatabaseValidationService _validationService;
 
         private string _pathToDB ;
         public string PathToDB
@@ -43,9 +44,9 @@ namespace FlowEvents.Settings
         public RelayCommand SetPathDBCommand { get; }
         public RelayCommand WindowClossingCommand { get; }
 
-        public SettingsViewModel(IDatabaseService databaseService )
+        public SettingsViewModel(IDatabaseValidationService validationService )
         {
-            _databaseService = databaseService;
+            _validationService = validationService;
           
             PathToDB = App.Settings.pathDB;
             PathRelises = App.Settings.UpdateRepository;
@@ -67,7 +68,7 @@ namespace FlowEvents.Settings
             }
         }
 
-        private void FileDialogToPathDB(object parameters)
+        private async void FileDialogToPathDB(object parameters)
         {
             // Открываем диалог выбора файла
             OpenFileDialog openFileDialog = new OpenFileDialog
@@ -76,17 +77,22 @@ namespace FlowEvents.Settings
                 Filter = "Файлы базы данных (*.db;*.sqlite)|*.db;*.sqlite|Все файлы (*.*)|*.*" // Настроить фильтрацию файлов по типу, если нужно
             };
 
-            string newPathDB = string.Empty; // Переменная для хранения нового пути к базе данных
+            //string newPathDB = string.Empty; // Переменная для хранения нового пути к базе данных
             if (openFileDialog.ShowDialog() == true)
             {
                 // Обновляем путь в настройках
-                newPathDB = openFileDialog.FileName;
+                var newPath = openFileDialog.FileName;
 
-                if (!CheckDB.DBGood(newPathDB)) return;
+                var result = await _validationService.ValidateDatabaseAsync(newPath, App.Settings.VerDB);
+                //ПОСЛЕ этой строки можно использовать result.IsValid и result.Message
+                // и если result.IsValid true , то база данных валидна и можно обновить настройки
+
+
+                if (!CheckDB.DBGood(newPath)) return;
                             
-                PathToDB = newPathDB; //Вывод пути в текстовое поле окна.
+                PathToDB = newPath; //Вывод пути в текстовое поле окна.
 
-                App.Settings.pathDB = newPathDB;
+                App.Settings.pathDB = newPath;
             }
             else
             {

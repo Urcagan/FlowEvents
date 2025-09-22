@@ -1,6 +1,7 @@
 ﻿using FlowEvents.Models;
 using FlowEvents.Repositories.Interface;
 using FlowEvents.Services;
+using FlowEvents.Services.Interface;
 using FlowEvents.Settings;
 using FlowEvents.Users;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,6 +24,7 @@ namespace FlowEvents
         //-------------------------
         private readonly IPolicyAuthService _authService; // Сервис проверки пользователя
         private readonly IEventRepository _eventRepository; //Сервис работы с Event
+        private readonly IDatabaseValidationService _validationService; // Сервис проверки базы данных
 
         //-----------------------------------------------------------------------------------
 
@@ -191,10 +193,11 @@ namespace FlowEvents
 
         //===============================================================================================================================================
 
-        public MainViewModel(IPolicyAuthService authService, IEventRepository eventRepository)
+        public MainViewModel(IPolicyAuthService authService, IEventRepository eventRepository , IDatabaseValidationService validationService)
         {
             _authService = authService;
             _eventRepository = eventRepository;
+            _validationService = validationService;
 
             SettingOpenWindow = new RelayCommand(SettingsMenuItem);
             UnitOpenWindow = new RelayCommand(UnitMenuItem);
@@ -227,9 +230,16 @@ namespace FlowEvents
 
         public async Task StartUPAsync() // ← 6. МЕТОД ИНИЦИАЛИЗАЦИИ Запускается после старта программы. Запуск метода находится в MainWindow.xaml.cs по событию Loaded
         {
+
+            await ValidateAndLoadDatabaseAsync(App.Settings.pathDB);
+
+
+
             IsLoading = true;
             try
             {
+
+
                 //         appSettings = AppSettings.GetSettingsApp(); // Загружаем настройки программы из файла при запуске программы
                 string pathDB = App.Settings.pathDB; //appSettings.pathDB;
 
@@ -255,6 +265,28 @@ namespace FlowEvents
                 IsLoading = false;
             }
         }
+
+        private async Task ValidateAndLoadDatabaseAsync(string databasePath)
+        {
+            var result = await _validationService.ValidateDatabaseAsync(
+                databasePath, App.Settings.VerDB);
+
+            if (!result.IsValid)
+            {
+                await HandleDatabaseValidationErrorAsync(result);
+                return;
+            }
+
+           // await LoadApplicationDataAsync(result.DatabaseInfo);
+        }
+
+        private async Task HandleDatabaseValidationErrorAsync(DatabaseValidationResult result)
+        {
+            MessageBox.Show(result.Message, "Ошибка БД", MessageBoxButton.OK, MessageBoxImage.Error);
+
+            // Можно предложить выбрать новый файл или другие действия
+        }
+
 
         private void UpdateQuery()
         {

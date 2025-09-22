@@ -103,6 +103,7 @@ namespace FlowEvents
             services.AddSingleton<IEventRepository>(provider => new  EventRepository(Global_Var.ConnectionString));
             services.AddSingleton<ICategoryRepository>(provider => new CategoryRepository(Global_Var.ConnectionString));
             services.AddSingleton<IUnitRepository>(provider => new  UnitRepository(Global_Var.ConnectionString));
+            services.AddSingleton<IDatabaseInfoRepository>(provider => new DatabaseInfoRepository());
 
 
             // Регистрация сервисов
@@ -110,6 +111,7 @@ namespace FlowEvents
             services.AddSingleton<IPolicyAuthService, PolicyAuthService>();
             services.AddSingleton<IUserService, UserService>();
             services.AddSingleton<IPasswordHasher, PasswordHasher>();
+            services.AddSingleton<IDatabaseValidationService, DatabaseValidationService>();
 
 
 
