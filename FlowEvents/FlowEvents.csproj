@@ -109,11 +109,11 @@
     <Compile Include="Converters\InverseBooleanConverter.cs" />
     <Compile Include="Converters\PermissionsToBoolConverter.cs" />
     <Compile Include="Converters\PermissionsToVisibilityConverter.cs" />
-    <Compile Include="EventAdd\EventViewModel.cs" />
-    <Compile Include="EventAdd\EventWindow.xaml.cs">
+    <Compile Include="ViewModels\EventViewModel.cs" />
+    <Compile Include="Views\EventWindow.xaml.cs">
       <DependentUpon>EventWindow.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Models\AttachedFileModel.cs" />
+    <Compile Include="ViewModels\AttachedFileModel.cs" />
     <Compile Include="Models\Permission.cs" />
     <Compile Include="Models\Role.cs" />
     <Compile Include="Models\User.cs" />
@@ -150,8 +150,8 @@
     <Compile Include="ViewModels\MainViewModel.cs" />
     <Compile Include="Models\Category.cs" />
     <Compile Include="Models\Event.cs" />
-    <Compile Include="ViewModels\DomainUserModel.cs" />
-    <Compile Include="Models\FindUserModel.cs" />
+    <Compile Include="Models\DomainUser.cs" />
+    <Compile Include="ViewModels\FindUserModel.cs" />
     <Compile Include="Views\FindUserWindow.xaml.cs">
       <DependentUpon>FindUserWindow.xaml</DependentUpon>
     </Compile>
@@ -165,7 +165,7 @@
       <DependentUpon>UnitsView.xaml</DependentUpon>
     </Compile>
     <Compile Include="ViewModels\UnitViewModel.cs" />
-    <Compile Include="Users\LoginUser.xaml.cs">
+    <Compile Include="Views\LoginUser.xaml.cs">
       <DependentUpon>LoginUser.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\UserManager.xaml.cs">
@@ -176,7 +176,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="EventAdd\EventWindow.xaml">
+    <Page Include="Views\EventWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
@@ -217,7 +217,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Users\LoginUser.xaml">
+    <Page Include="Views\LoginUser.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

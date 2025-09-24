@@ -8,7 +8,7 @@ namespace FlowEvents
     /// </summary>
     public partial class FindUserWindow : Window
     {
-        public DomainUserModel SelectedUser { get; private set; }
+        public DomainUser SelectedUser { get; private set; }
         public UserManagerModel _userManagerModel { get; }
         public int SelectedRoleId { get; private set; }
 

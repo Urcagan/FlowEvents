@@ -1,13 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Diagnostics;
-using System.DirectoryServices;
 using System.DirectoryServices;
 using System.DirectoryServices.AccountManagement;
 using System.DirectoryServices.ActiveDirectory;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -87,7 +83,7 @@ namespace FlowEvents
 
 
         // Асинзронный метод поиска пользователей в AD
-        public static async Task<List<DomainUserModel>> FindDomainUserAsync(
+        public static async Task<List<DomainUser>> FindDomainUserAsync(
             string userToFind,
             string dcName,
             string countName,
@@ -95,7 +91,7 @@ namespace FlowEvents
         {
             return await Task.Run(() =>
             {
-                var users = new List<DomainUserModel>();
+                var users = new List<DomainUser>();
                 int _maxResults = string.IsNullOrEmpty(countName) ? 1 : Convert.ToInt32(countName);
                 string _userToFind = string.IsNullOrWhiteSpace(userToFind) ? "*" : userToFind;
 
@@ -124,7 +120,7 @@ namespace FlowEvents
 
                                 if (result is UserPrincipal user)
                                 {
-                                    users.Add(new DomainUserModel
+                                    users.Add(new DomainUser
                                     {
                                         Number = users.Count + 1, //Порядковый номер записи
                                         DomainName = context.Name,
@@ -183,9 +179,9 @@ namespace FlowEvents
             }
         }
 
-        public static List<DomainUserModel> FindDomainUser(string userToFind, string dcName, string countName)
+        public static List<DomainUser> FindDomainUser(string userToFind, string dcName, string countName)
         {
-            var users = new List<DomainUserModel>();
+            var users = new List<DomainUser>();
             //int _countName = Convert.ToInt32(countName);
 
             int _maxResults = string.IsNullOrEmpty(countName) ? 1 : Convert.ToInt32(countName);     //Ограничение количества результатов
@@ -218,7 +214,7 @@ namespace FlowEvents
                                 if (users.Count >= _maxResults) break;
                                 if (result is UserPrincipal user)
                                 {
-                                    users.Add(new DomainUserModel
+                                    users.Add(new DomainUser
                                     {
                                         DomainName = context.Name,
                                         Username = user.SamAccountName,

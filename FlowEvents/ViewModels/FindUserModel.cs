@@ -35,7 +35,7 @@ namespace FlowEvents
 
         private UserManagerModel _userManagerModel;
 
-        public ObservableCollection<DomainUserModel> Users { get; set; } = new ObservableCollection<DomainUserModel>();
+        public ObservableCollection<DomainUser> Users { get; set; } = new ObservableCollection<DomainUser>();
 
         private CancellationTokenSource _cts;
            
@@ -242,8 +242,8 @@ namespace FlowEvents
 
 
         // Объект для размещения данных выделенной строки. При выборе строки таблицы в переменную поместятся все значения выделенной строки
-        private DomainUserModel _selectedDomainUser;
-        public DomainUserModel SelectedDomainUser
+        private DomainUser _selectedDomainUser;
+        public DomainUser SelectedDomainUser
         {
             get => _selectedDomainUser;
             set

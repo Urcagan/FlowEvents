@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace FlowEvents
 {
-    public class DomainUserModel : INotifyPropertyChanged
+    public class DomainUser : INotifyPropertyChanged
     {
         private int _number;
         public int Number
