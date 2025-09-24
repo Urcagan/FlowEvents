@@ -1,5 +1,6 @@
 ﻿using FlowEvents.Models;
 using FlowEvents.Repositories.Interface;
+using FlowEvents.Services.Interface;
 using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
@@ -10,17 +11,19 @@ namespace FlowEvents.Repositories
 {
     public class UserRepository : IUserRepository
     {
-        private string _connectionString;
+        private readonly IConnectionStringProvider _connectionProvider;
 
-        public UserRepository(string connectionString)
+        public UserRepository(IConnectionStringProvider connectionProvider)
         {
-            _connectionString = connectionString;
+            _connectionProvider = connectionProvider;
         }
 
 
         // Асинхронный метод для получения всех пользователей из базы данных
         public async Task<List<User>> GetAllUsersAsync()
         {
+            var _connectionString = _connectionProvider.GetConnectionString(); // Получение актуальной строки подключения
+
             var users = new List<User>();
 
             using (var connection = new SQLiteConnection(_connectionString))
@@ -66,6 +69,8 @@ namespace FlowEvents.Repositories
         // Асинхронный метод для проверки существования пользователя по имени
         public async Task<bool> UserExistsAsync(string username)
         {
+            var _connectionString = _connectionProvider.GetConnectionString(); // Получение актуальной строки подключения
+
             using (var connection = new SQLiteConnection(_connectionString))
             {
                 await connection.OpenAsync();
@@ -83,6 +88,8 @@ namespace FlowEvents.Repositories
         // Асинхронный метод для добавления пользователя в БД и возврата его ID
         public async Task<int> AddUserAsync(string username, string hashedPassword, string salt, int roleId)
         {
+            var _connectionString = _connectionProvider.GetConnectionString(); // Получение актуальной строки подключения
+
             using (var connection = new SQLiteConnection(_connectionString))
             {
                 await connection.OpenAsync();
@@ -109,6 +116,8 @@ namespace FlowEvents.Repositories
 
         public async Task<bool> DeleteUserAsync(string userName)
         {
+            var _connectionString = _connectionProvider.GetConnectionString(); // Получение актуальной строки подключения
+
             using (var connection = new SQLiteConnection(_connectionString))
             {
                 await connection.OpenAsync();
@@ -127,6 +136,8 @@ namespace FlowEvents.Repositories
 
         public async Task UpdateUserRoleAsync(string username, int newRoleId)
         {
+            var _connectionString = _connectionProvider.GetConnectionString(); // Получение актуальной строки подключения
+
             using (var connection = new SQLiteConnection(_connectionString))
             {
                 await connection.OpenAsync();
@@ -144,6 +155,8 @@ namespace FlowEvents.Repositories
 
         public async Task UpdateUserAccessAsync(string username, bool isAllowed)
         {
+            var _connectionString = _connectionProvider.GetConnectionString(); // Получение актуальной строки подключения
+
             using (var connection = new SQLiteConnection(_connectionString))
             {
                 await connection.OpenAsync();
@@ -166,17 +179,6 @@ namespace FlowEvents.Repositories
                     }
                 }
             }
-        }
-
-        //-------------------------------------------------------------------
-        /// <summary>
-        /// Метод для обновления строки подключения во время работы приложения
-        /// </summary>
-        /// <param name="newConnectionString"> Строка с нового подключения </param>
-        //-------------------------------------------------------------------
-        public void UpdateConnectionString(string newConnectionString)
-        {
-            _connectionString = newConnectionString;
         }
 
 

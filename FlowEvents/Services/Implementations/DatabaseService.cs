@@ -18,18 +18,15 @@ namespace FlowEvents.Services.Implementations
         private readonly IUserRepository _userRepository;
         private readonly IRoleRepository _roleRepository;
         private readonly IPermissionRepository _permissionRepository;
-        private readonly IEventRepository _eventRepository;
 
         // Внедрение зависимости через конструктор
         public DatabaseService(IUserRepository userRepository,
                             IRoleRepository roleRepository,
-                            IPermissionRepository permissionRepository,
-                            IEventRepository eventRepository)
+                            IPermissionRepository permissionRepository)
         {
             _userRepository = userRepository;
             _roleRepository = roleRepository;
             _permissionRepository = permissionRepository;
-            _eventRepository = eventRepository;
         }
 
         public async Task<List<User>> GetUsersAsync()
@@ -74,21 +71,6 @@ namespace FlowEvents.Services.Implementations
         //}
 
 
-        //-------------------------------------------------------------------
-        /// <summary>
-        /// Метод для обновления строки подключения во время работы приложения
-        /// </summary>
-        /// <param name="newConnectionString"> Строка с нового подключения </param>
-        //-------------------------------------------------------------------
-        public void UpdateConnectionString(string newConnectionString)
-        {
-            _userRepository.UpdateConnectionString(newConnectionString);
-            _roleRepository.UpdateConnectionString(newConnectionString);
-            _permissionRepository.UpdateConnectionString(newConnectionString);
-            _eventRepository.UpdateConnectionString(newConnectionString);
 
-            // Обновляем глобальную переменную
-            _connectionString = newConnectionString;
-        }
     }
 }

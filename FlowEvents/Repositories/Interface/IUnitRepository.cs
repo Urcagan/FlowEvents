@@ -11,8 +11,6 @@ namespace FlowEvents.Repositories.Interface
         Task<bool> DeleteUnitAsync(int unitId); // Удаление категории        
         Task<bool> IsUnitNameUniqueAsync(string unit, int? excludeId = null); // // Проверка ктегорию на уникальность
         Task<ObservableCollection<Unit>> GetAllUnitsAsync(); // Получить все объекты
-        
 
-        void UpdateConnectionString(string newConnectionString);
     }
 }

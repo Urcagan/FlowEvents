@@ -20,6 +20,6 @@ namespace FlowEvents.Repositories.Interface
         
         Task<bool> DeleteEventAsync(int eventId); // Удалить событие по Id
 
-        void UpdateConnectionString(string newConnectionString);
+        //void UpdateConnectionString(string newConnectionString);
     }
 }

@@ -230,21 +230,19 @@ namespace FlowEvents
 
         public async Task StartUPAsync() // ← 6. МЕТОД ИНИЦИАЛИЗАЦИИ Запускается после старта программы. Запуск метода находится в MainWindow.xaml.cs по событию Loaded
         {
-
-            await ValidateAndLoadDatabaseAsync(App.Settings.pathDB);
-
-
-
             IsLoading = true;
             try
             {
+                string pathDB = App.Settings.pathDB; 
 
+                // Проверка и загрузка БД в одном методе
+                var validationResult = await ValidateAndLoadDatabaseAsync(pathDB);
+                if (!validationResult.IsValid)
+                {
+                    // Если валидация не прошла, выходим из метода
+                    return;
+                }
 
-                //         appSettings = AppSettings.GetSettingsApp(); // Загружаем настройки программы из файла при запуске программы
-                string pathDB = App.Settings.pathDB; //appSettings.pathDB;
-
-                //Проверка базы данных
-                if (!CheckDB.DBGood(pathDB)) return;
 
                 CurrentDbPath = pathDB; // Устанавливаем текущий путь к базе данных
 
@@ -266,25 +264,38 @@ namespace FlowEvents
             }
         }
 
-        private async Task ValidateAndLoadDatabaseAsync(string databasePath)
+        private async Task<DatabaseValidationResult> ValidateAndLoadDatabaseAsync(string databasePath)
         {
-            var result = await _validationService.ValidateDatabaseAsync(
-                databasePath, App.Settings.VerDB);
+            var result = await _validationService.ValidateDatabaseAsync(databasePath, App.Settings.VerDB);
 
             if (!result.IsValid)
             {
                 await HandleDatabaseValidationErrorAsync(result);
-                return;
+                return result;
             }
 
-           // await LoadApplicationDataAsync(result.DatabaseInfo);
+            return result;
         }
+
+        //private async Task ValidateAndLoadDatabaseAsync(string databasePath)
+        //{
+        //    var result = await _validationService.ValidateDatabaseAsync( databasePath, App.Settings.VerDB);
+
+        //    if (!result.IsValid)
+        //    {
+        //        await HandleDatabaseValidationErrorAsync(result);
+        //        return;
+        //    }
+
+        //   // await LoadApplicationDataAsync(result.DatabaseInfo);
+        //}
 
         private async Task HandleDatabaseValidationErrorAsync(DatabaseValidationResult result)
         {
             MessageBox.Show(result.Message, "Ошибка БД", MessageBoxButton.OK, MessageBoxImage.Error);
 
             // Можно предложить выбрать новый файл или другие действия
+            // НАДО ЗАПРЕТИТЬ ДОСТУП К ИНТЕРФЕЙСУ ПРОГРАММЫ
         }
 
 

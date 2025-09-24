@@ -13,6 +13,5 @@ namespace FlowEvents.Repositories.Interface
         Task<ObservableCollection<Category>> GetAllCategoriesAsync(); // Получить все категории 
            
 
-        void UpdateConnectionString(string newConnectionString);
     }
 }

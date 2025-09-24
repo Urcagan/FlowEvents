@@ -21,6 +21,7 @@ namespace FlowEvents
     public partial class App : Application
     {
         public static IServiceProvider ServiceProvider { get; private set; }
+        public static AppSettings Settings {  get; private set; } // Поле для Настроек прогаммы 
 
         //=================================================
         // 1. С ЭТОГО МЕТОДА НАЧИНАЕТСЯ СТАРТ ПРОГРАММЫ
@@ -29,9 +30,13 @@ namespace FlowEvents
         {
             try
             {
+
                 base.OnStartup(e);      // ← 1. БАЗОВАЯ ИНИЦИАЛИЗАЦИЯ
                                         // Загружает ресурсы App.xaml, инициализирует приложение
                                         // Важно: без этого не загрузятся ресурсы App.xaml!
+
+                // Загружаем настройки при старте приложения
+                Settings = AppSettings.GetSettingsApp();
 
                 // Настройка культуры
                 ConfigureCulture();
@@ -96,23 +101,32 @@ namespace FlowEvents
         {
             var services = new ServiceCollection();
 
-            // Регистрация репозиториев с использованием Global_Var.ConnectionString
-            services.AddSingleton<IPermissionRepository>(provider => new PermissionRepository(Global_Var.ConnectionString));
-            services.AddSingleton<IRoleRepository>(provider => new RoleRepository(Global_Var.ConnectionString));
-            services.AddSingleton<IUserRepository>(provider => new UserRepository(Global_Var.ConnectionString));
-            services.AddSingleton<IEventRepository>(provider => new  EventRepository(Global_Var.ConnectionString));
-            services.AddSingleton<ICategoryRepository>(provider => new CategoryRepository(Global_Var.ConnectionString));
-            services.AddSingleton<IUnitRepository>(provider => new  UnitRepository(Global_Var.ConnectionString));
+            // Регистрируем настройки как Singleton
+            services.AddSingleton<AppSettings>(provider => Settings);
+
+            // Провайдер строки подключения (Singleton - один на все приложение)
+            // Регистрируем провайдер строки подключения
+            services.AddSingleton<IConnectionStringProvider>(provider =>
+            {
+                var appSettings = provider.GetService<AppSettings>();
+                return new ConnectionStringProvider($"Data Source={appSettings.pathDB};Version=3;foreign keys=true;");
+            });
+
             services.AddSingleton<IDatabaseInfoRepository>(provider => new DatabaseInfoRepository());
 
 
             // Регистрация сервисов
+            services.AddSingleton<IEventRepository, EventRepository>();
+            services.AddSingleton<ICategoryRepository, CategoryRepository>();
             services.AddSingleton<IDatabaseService, DatabaseService>();
             services.AddSingleton<IPolicyAuthService, PolicyAuthService>();
             services.AddSingleton<IUserService, UserService>();
             services.AddSingleton<IPasswordHasher, PasswordHasher>();
             services.AddSingleton<IDatabaseValidationService, DatabaseValidationService>();
-
+            services.AddSingleton<IPermissionRepository, PermissionRepository>();
+            services.AddSingleton<IRoleRepository, RoleRepository>();
+            services.AddSingleton<IUnitRepository, UnitRepository>();
+            services.AddSingleton<IUserRepository, UserRepository>();
 
 
             // Регистрация ViewModels

@@ -1,5 +1,6 @@
 ﻿using FlowEvents.Models;
 using FlowEvents.Repositories.Interface;
+using FlowEvents.Services.Interface;
 using System;
 using System.Collections.ObjectModel;
 using System.Data.SQLite;
@@ -9,15 +10,15 @@ namespace FlowEvents.Repositories.Implementations
 {
     public class UnitRepository : IUnitRepository
     {
-        private string _connectionString;
-        public UnitRepository(string connectionString)
+        private readonly IConnectionStringProvider _connectionProvider;
+        public UnitRepository(IConnectionStringProvider connectionProvider)
         {
-            _connectionString = connectionString ?? throw new ArgumentNullException(nameof(connectionString));
+            _connectionProvider = connectionProvider;
         }
 
         public async Task<Unit> CreateUnitAsync(Unit unit)
         {
-
+            var _connectionString = _connectionProvider.GetConnectionString(); // Получение актуальной строки подключения
             using (var connection = new SQLiteConnection(_connectionString))
             {
                 await connection.OpenAsync();
@@ -42,7 +43,9 @@ namespace FlowEvents.Repositories.Implementations
         //    Обновление в базе данных 
         //----------------------------------
         public async Task<Unit> UpdateUnitAsync(Unit unit)
-        {            
+        {
+            var _connectionString = _connectionProvider.GetConnectionString(); // Получение актуальной строки подключения
+
             using (var connection = new SQLiteConnection(_connectionString))
             {
                 await connection.OpenAsync();
@@ -62,6 +65,8 @@ namespace FlowEvents.Repositories.Implementations
         //----------------------------------
         public async Task<bool> DeleteUnitAsync(int unitId)
         {
+            var _connectionString = _connectionProvider.GetConnectionString(); // Получение актуальной строки подключения
+
             try
             {
                 using (var connection = new SQLiteConnection(_connectionString))
@@ -89,6 +94,8 @@ namespace FlowEvents.Repositories.Implementations
         //----------------------------------
         public async Task<ObservableCollection<Unit>> GetAllUnitsAsync() // Получить все объекты
         {
+            var _connectionString = _connectionProvider.GetConnectionString(); // Получение актуальной строки подключения
+
             using (var connection = new SQLiteConnection(_connectionString))
             {
                 await connection.OpenAsync();
@@ -123,6 +130,7 @@ namespace FlowEvents.Repositories.Implementations
         /// <returns></returns>
         public async Task<bool> IsUnitNameUniqueAsync(string unit, int? excludeId = null)
         {
+            var _connectionString = _connectionProvider.GetConnectionString(); // Получение актуальной строки подключения
 
             using (var connection = new SQLiteConnection(_connectionString))
             {
@@ -145,19 +153,6 @@ namespace FlowEvents.Repositories.Implementations
                 var count = (long)await command.ExecuteScalarAsync();
                 return count == 0;
             }
-        }
-
-
-
-        //-------------------------------------------------------------------
-        /// <summary>
-        /// Метод для обновления строки подключения во время работы приложения
-        /// </summary>
-        /// <param name="newConnectionString"> Строка с нового подключения </param>
-        //-------------------------------------------------------------------
-        public void UpdateConnectionString(string newConnectionString)
-        {
-            _connectionString = newConnectionString;
         }
 
     }

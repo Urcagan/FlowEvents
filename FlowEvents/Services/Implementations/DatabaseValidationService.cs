@@ -36,7 +36,7 @@ namespace FlowEvents.Services.Implementations
         // Метод для валидации базы данных по объекту DatabaseInfo
         public async Task<DatabaseValidationResult> ValidateDatabaseAsync(DatabaseInfo databaseInfo)
         {
-            // 1. Проверка файла
+            // 1. Проверка файла на существование по указанному пути
             if (!ValidateFile(databaseInfo.Path)) // Если файл не найден
             {
                 return new DatabaseValidationResult

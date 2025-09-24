@@ -17,9 +17,6 @@ namespace FlowEvents.Repositories.Interface
         Task UpdateUserAccessAsync(string username, bool isAllowed);
         Task UpdateUserRoleAsync(string username, int newRoleId);
 
-
-        void UpdateConnectionString(string newConnectionString);
-
         //--------------- Интерфейсы которые понадобятся ------------------------
 
         //     Task<User> GetUserByIdAsync(int id);

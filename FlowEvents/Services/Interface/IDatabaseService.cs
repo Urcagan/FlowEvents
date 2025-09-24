@@ -16,6 +16,5 @@ namespace FlowEvents.Services
         //       Task UpdateRolePermissionsAsync(int roleId, List<int> permissionIds);
         //       Task UpdateUserRoleAsync(int userId, int roleId);
 
-        void UpdateConnectionString(string newConnectionString);
     }
 }

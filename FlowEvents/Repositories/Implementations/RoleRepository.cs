@@ -1,5 +1,6 @@
 ﻿using FlowEvents.Models;
 using FlowEvents.Repositories.Interface;
+using FlowEvents.Services.Interface;
 using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
@@ -9,15 +10,17 @@ namespace FlowEvents.Repositories.Implementations
 {
     public class RoleRepository : IRoleRepository
     {
-        private string _connectionString;
+        private readonly IConnectionStringProvider _connectionProvider;
 
-        public RoleRepository(string connectionString)
+        public RoleRepository(IConnectionStringProvider connectionProvider)
         {
-            _connectionString = connectionString;
+            _connectionProvider = connectionProvider;  
         }
 
         public async Task<List<Role>> GetAllRolesAsync()
         {
+            var _connectionString = _connectionProvider.GetConnectionString(); // Получение актуальной строки подключения
+
             var roles = new List<Role>();
 
             using (var connection = new SQLiteConnection(_connectionString))
@@ -53,6 +56,8 @@ namespace FlowEvents.Repositories.Implementations
         
         public async Task<bool> RoleExistsAsync(int roleId)
         {
+            var _connectionString = _connectionProvider.GetConnectionString(); // Получение актуальной строки подключения
+
             using (var connection = new SQLiteConnection(_connectionString))
             {
                 await connection.OpenAsync();
@@ -68,16 +73,5 @@ namespace FlowEvents.Repositories.Implementations
         }
 
 
-
-        //-------------------------------------------------------------------
-        /// <summary>
-        /// Метод для обновления строки подключения во время работы приложения
-        /// </summary>
-        /// <param name="newConnectionString"> Строка с нового подключения </param>
-        //-------------------------------------------------------------------
-        public void UpdateConnectionString(string newConnectionString)
-        {
-            _connectionString = newConnectionString;
-        }
     }
 }

@@ -1770,3 +1770,232 @@ plaintext
 └─────────────────────────────────────────────────┘
 
 Сервисы - это мозг приложения, репозитории - это руки, которые работают с данными! 🧠👐
+
+
+
+ <<<<< ОБНОВЛЕНИЕ строки подключения к БД в репозиториях т сервисах >>>>
+
+Понял! У вас несколько репозиториев и сервисов, и нужно централизованно обновлять строку подключения во всех них. Вот простая и эффективная схема:
+1. Создаем центральный провайдер строки подключения
+
+Services/Database/ConnectionStringProvider.cs
+csharp
+
+public interface IConnectionStringProvider
+{
+    string GetConnectionString();
+    void UpdateConnectionString(string newConnectionString);
+}
+
+public class ConnectionStringProvider : IConnectionStringProvider
+{
+    private string _currentConnectionString;
+
+    public ConnectionStringProvider(string initialConnectionString)
+    {
+        _currentConnectionString = initialConnectionString;
+    }
+
+    public string GetConnectionString()
+    {
+        return _currentConnectionString;
+    }
+
+    public void UpdateConnectionString(string newConnectionString)
+    {
+        _currentConnectionString = newConnectionString;
+    }
+}
+
+2. Репозитории используют провайдер
+
+Repositories/EventRepository.cs
+csharp
+
+public class EventRepository : IEventRepository
+{
+    private readonly IConnectionStringProvider _connectionProvider;
+
+    public EventRepository(IConnectionStringProvider connectionProvider)
+    {
+        _connectionProvider = connectionProvider;
+    }
+
+    public async Task<List<Event>> GetEventsAsync()
+    {
+        var connectionString = _connectionProvider.GetConnectionString();
+        
+        using (var connection = new SQLiteConnection(connectionString))
+        {
+            await connection.OpenAsync();
+            // работа с БД
+        }
+    }
+}
+
+Repositories/UserRepository.cs
+csharp
+
+public class UserRepository : IUserRepository
+{
+    private readonly IConnectionStringProvider _connectionProvider;
+
+    public UserRepository(IConnectionStringProvider connectionProvider)
+    {
+        _connectionProvider = connectionProvider;
+    }
+
+    public async Task AddUserAsync(User user)
+    {
+        var connectionString = _connectionProvider.GetConnectionString();
+        
+        using (var connection = new SQLiteConnection(connectionString))
+        {
+            await connection.OpenAsync();
+            // работа с БД
+        }
+    }
+}
+
+3. Сервисы также используют провайдер
+
+Services/DatabaseValidationService.cs
+csharp
+
+public class DatabaseValidationService : IDatabaseValidationService
+{
+    private readonly IConnectionStringProvider _connectionProvider;
+    private readonly IDatabaseInfoRepository _databaseRepository;
+
+    public DatabaseValidationService(IConnectionStringProvider connectionProvider, 
+                                   IDatabaseInfoRepository databaseRepository)
+    {
+        _connectionProvider = connectionProvider;
+        _databaseRepository = databaseRepository;
+    }
+
+    public async Task<DatabaseValidationResult> ValidateDatabaseAsync(string databasePath, string expectedVersion)
+    {
+        // Временная строка подключения для проверки
+        var tempConnectionString = $"Data Source={databasePath};Version=3;";
+        
+        // Проверяем новую БД
+        var result = await _databaseRepository.ValidateAsync(tempConnectionString, expectedVersion);
+        
+        if (result.IsValid)
+        {
+            // Если БД валидна - обновляем провайдер
+            _connectionProvider.UpdateConnectionString(tempConnectionString);
+        }
+        
+        return result;
+    }
+}
+
+4. Регистрация в DI контейнере
+
+App.xaml.cs или Startup.cs
+csharp
+
+public void ConfigureServices(IServiceCollection services)
+{
+    // Провайдер строки подключения (Singleton - один на все приложение)
+    services.AddSingleton<IConnectionStringProvider>(provider =>
+    {
+        var appSettings = provider.GetService<AppSettings>();
+        return new ConnectionStringProvider(
+            $"Data Source={appSettings.pathDB};Version=3;foreign keys=true;");
+    });
+    
+    // Репозитории (Scoped или Transient)
+    services.AddScoped<IEventRepository, EventRepository>();
+    services.AddScoped<IUserRepository, UserRepository>();
+    services.AddScoped<IUnitRepository, UnitRepository>();
+    
+    // Сервисы
+    services.AddScoped<IDatabaseValidationService, DatabaseValidationService>();
+    services.AddScoped<IDatabaseInfoRepository, DatabaseInfoRepository>();
+    
+    // ViewModels
+    services.AddTransient<MainViewModel>();
+    services.AddTransient<SettingsViewModel>();
+}
+
+5. Использование в SettingsViewModel
+
+ViewModels/SettingsViewModel.cs
+csharp
+
+public class SettingsViewModel : INotifyPropertyChanged
+{
+    private readonly IConnectionStringProvider _connectionProvider;
+    private readonly IDatabaseValidationService _validationService;
+    private readonly AppSettings _appSettings;
+
+    public SettingsViewModel(IConnectionStringProvider connectionProvider,
+                           IDatabaseValidationService validationService,
+                           AppSettings appSettings)
+    {
+        _connectionProvider = connectionProvider;
+        _validationService = validationService;
+        _appSettings = appSettings;
+    }
+
+    private async Task ValidateAndSetDatabasePathAsync(string newPath)
+    {
+        var result = await _validationService.ValidateDatabaseAsync(newPath, _appSettings.VerDB);
+
+        if (result.IsValid)
+        {
+            // Провайдер уже обновлен в ValidationService!
+            // Но на всякий случай явно обновляем:
+            var newConnectionString = $"Data Source={newPath};Version=3;foreign keys=true;";
+            _connectionProvider.UpdateConnectionString(newConnectionString);
+            
+            // Обновляем настройки
+            _appSettings.pathDB = newPath;
+            _appSettings.SaveSettingsApp();
+            
+            PathToDB = newPath;
+            ShowMessage("База данных успешно обновлена", MessageType.Success);
+        }
+    }
+}
+
+6. Главная ViewModel автоматически использует новую БД
+
+ViewModels/MainViewModel.cs
+csharp
+
+public class MainViewModel
+{
+    private readonly IEventRepository _eventRepository;
+    private readonly IUnitRepository _unitRepository;
+
+    public MainViewModel(IEventRepository eventRepository, IUnitRepository unitRepository)
+    {
+        _eventRepository = eventRepository;
+        _unitRepository = unitRepository;
+    }
+
+    // При вызове этих методов они автоматически используют актуальную строку подключения
+    public async Task LoadDataAsync()
+    {
+        var events = await _eventRepository.GetEventsAsync(); // Использует новую БД
+        var units = await _unitRepository.GetUnitsAsync();    // Использует новую БД
+    }
+}
+
+Преимущества этой схемы:
+
+    ✅ Одно изменение - везде обновление
+
+    ✅ Все репозитории и сервисы всегда используют актуальную строку
+
+    ✅ Не нужно обновлять каждый репозиторий отдельно
+
+    ✅ Thread-safe (если добавить lock)
+
+    ✅ Простота понимания и поддержки
+
+Теперь при смене БД через SettingsViewModel все репозитории автоматически начнут работать с новой базой данных!

@@ -1,5 +1,6 @@
 ﻿using FlowEvents.Models;
 using FlowEvents.Repositories.Interface;
+using FlowEvents.Services.Interface;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -12,12 +13,11 @@ namespace FlowEvents.Repositories
 {
     public class EventRepository : IEventRepository
     {
-        private string _connectionString;
-        public EventRepository(string connectionString)
+        private readonly IConnectionStringProvider _connectionProvider;
+        public EventRepository(IConnectionStringProvider connectionProvider)
         {
-            _connectionString = connectionString ?? throw new ArgumentNullException(nameof(connectionString));
+            _connectionProvider = connectionProvider;
         }
-
 
         /// <summary>
         /// Метод для получения событий из базы данных
@@ -25,10 +25,10 @@ namespace FlowEvents.Repositories
         /// <param name="queryEvent"></param>
         /// <returns></returns>
         /// 
-
-
         public async Task<List<EventForView>> GetEventsAsync(string queryEvent)
         {
+            var _connectionString = _connectionProvider.GetConnectionString(); // Получение актуальной строки подключения
+
             var eventsDict = new Dictionary<int, EventForView>();
 
             using (var connection = new SQLiteConnection(_connectionString))
@@ -83,6 +83,8 @@ namespace FlowEvents.Repositories
 
         public List<EventForView> GetEvents(string queryEvent)
         {
+            var _connectionString = _connectionProvider.GetConnectionString(); // Получение актуальной строки подключения
+
             var eventsDict = new Dictionary<int, EventForView>();
 
             using (var connection = new SQLiteConnection(_connectionString))
@@ -140,6 +142,8 @@ namespace FlowEvents.Repositories
 
         public async Task<ObservableCollection<Unit>> GetUnitFromDatabaseAsync()
         {
+            var _connectionString = _connectionProvider.GetConnectionString(); // Получение актуальной строки подключения
+
             var units = new ObservableCollection<Unit>();
 
             try
@@ -176,11 +180,13 @@ namespace FlowEvents.Repositories
 
         public ObservableCollection<Unit> GetUnitFromDatabase()
         {
+            var _connectionString = _connectionProvider.GetConnectionString(); // Получение актуальной строки подключения
+
             var units = new ObservableCollection<Unit>();
 
             try
             {
-                using (var connection = new SQLiteConnection(_connectionString)) //_connectionString
+                using (var connection = new SQLiteConnection(_connectionString)) 
                 {
                     connection.Open();
 
@@ -217,6 +223,8 @@ namespace FlowEvents.Repositories
         /// <returns> List<AttachedFileForEvent> </returns>
         public List<AttachedFileForEvent> GetIdFilesOnEvent(int EventId)
         {
+            var _connectionString = _connectionProvider.GetConnectionString(); // Получение актуальной строки подключения
+
             List<AttachedFileForEvent> attachedFile = new List<AttachedFileForEvent>();
             try
             {
@@ -300,6 +308,8 @@ namespace FlowEvents.Repositories
         /// <returns></returns>
         public async Task<bool> DeleteEventAsync(int eventId)
         {
+            var _connectionString = _connectionProvider.GetConnectionString(); // Получение актуальной строки подключения
+
             try
             {
                 using (var connection = new SQLiteConnection(_connectionString))
@@ -337,19 +347,5 @@ namespace FlowEvents.Repositories
                 await command.ExecuteNonQueryAsync();
             }
         }
-
-
-
-        //-------------------------------------------------------------------
-        /// <summary>
-        /// Метод для обновления строки подключения во время работы приложения
-        /// </summary>
-        /// <param name="newConnectionString"> Строка с нового подключения </param>
-        //-------------------------------------------------------------------
-        public void UpdateConnectionString(string newConnectionString)
-        {
-            _connectionString = newConnectionString;
-        }
-
     }
 }

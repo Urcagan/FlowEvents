@@ -8,6 +8,7 @@
     <OutputType>WinExe</OutputType>
     <RootNamespace>FlowEvents</RootNamespace>
     <AssemblyName>FlowEvents</AssemblyName>
+    <LangVersion>8.0</LangVersion>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
@@ -41,6 +42,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>5</WarningLevel>
+    <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -86,9 +88,11 @@
     <Compile Include="Repositories\Interface\ICategoryRepository.cs" />
     <Compile Include="Repositories\Interface\IDatabaseInfoRepository.cs" />
     <Compile Include="Repositories\Interface\IUnitRepository.cs" />
+    <Compile Include="Services\Implementations\ConnectionStringProvider.cs" />
     <Compile Include="Services\Implementations\DatabaseValidationService.cs" />
     <Compile Include="Services\Implementations\PasswordHasher.cs" />
     <Compile Include="Services\Implementations\UserService.cs" />
+    <Compile Include="Services\Interface\IConnectionStringProvider.cs" />
     <Compile Include="Services\Interface\IDatabaseValidationService.cs" />
     <Compile Include="Services\Interface\IPasswordHasher.cs" />
     <Compile Include="Services\Interface\IUserservice.cs" />
@@ -121,9 +125,9 @@
     <Compile Include="Repositories\Interface\IUserRepository.cs" />
     <Compile Include="Repositories\Implementations\EventRepository.cs" />
     <Compile Include="Repositories\Implementations\UserRepository.cs" />
-    <Compile Include="Services\RoleService.cs" />
+    <Compile Include="Services\RoleService Удалить.cs" />
     <Compile Include="Services\Implementations\DatabaseService.cs" />
-    <Compile Include="Services\FileAttachmentService.cs" />
+    <Compile Include="Services\Implementations\FileAttachmentService Удалить.cs" />
     <Compile Include="Services\Interface\IDatabaseService.cs" />
     <Compile Include="Services\Interface\IPolicyAuthService.cs" />
     <Compile Include="Services\Implementations\PolicyAuthService.cs" />
@@ -192,8 +196,6 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Repositories\CheckDB.cs" />
-    <Compile Include="Repositories\DatabaseHelper.cs" />
     <Compile Include="Settings\SettingsManager.cs" />
     <Compile Include="Views\MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>

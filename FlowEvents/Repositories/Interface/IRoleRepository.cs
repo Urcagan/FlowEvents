@@ -20,6 +20,5 @@ namespace FlowEvents.Repositories.Interface
         //      Task UpdateRoleAsync(Role role);
         //      Task DeleteRoleAsync(int id);
 
-        void UpdateConnectionString(string newConnectionString);
     }
 }

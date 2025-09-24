@@ -1,5 +1,6 @@
 ﻿using FlowEvents.Models;
 using FlowEvents.Repositories.Interface;
+using FlowEvents.Services.Interface;
 using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
@@ -11,15 +12,16 @@ namespace FlowEvents.Repositories.Implementations
 {
     public class PermissionRepository : IPermissionRepository
     {
-        private string _connectionString;
-        public PermissionRepository(string connectionString)
+        private readonly IConnectionStringProvider _connectionProvider;
+        public PermissionRepository(IConnectionStringProvider connectionProvider)
         {
-            _connectionString = connectionString;
+            _connectionProvider = connectionProvider;
         }
 
 
         public async Task<List<Permission>> GetAllPermissionsAsync()
         {
+            var _connectionString = _connectionProvider.GetConnectionString(); // Получение актуальной строки подключения
             var permissions = new List<Permission>();
 
             using (var connection = new SQLiteConnection(_connectionString))
@@ -60,15 +62,5 @@ namespace FlowEvents.Repositories.Implementations
         }
 
 
-        //-------------------------------------------------------------------
-        /// <summary>
-        /// Метод для обновления строки подключения во время работы приложения
-        /// </summary>
-        /// <param name="newConnectionString"> Строка с нового подключения </param>
-        //-------------------------------------------------------------------
-        public void UpdateConnectionString(string newConnectionString)
-        {
-            _connectionString = newConnectionString;
-        }
     }
 }

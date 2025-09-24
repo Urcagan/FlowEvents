@@ -16,6 +16,5 @@ namespace FlowEvents.Repositories.Interface
         //     Task RevokePermissionAsync(int roleId, int permissionId);
         //     Task UpdateRolePermissionsAsync(int roleId, List<int> permissionIds);
 
-        void UpdateConnectionString(string newConnectionString);
     }
 }

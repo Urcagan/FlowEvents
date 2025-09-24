@@ -4,7 +4,7 @@ using System.Data.SQLite;
 using System.IO;
 using System.Threading.Tasks;
 
-namespace FlowEvents.Services
+namespace FlowEvents.Services.Implementations
 {
     public class FileAttachmentService
     {
