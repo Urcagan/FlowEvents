@@ -315,7 +315,7 @@ namespace FlowEvents
         }
 
 
-        private async void AttachFile(object parameter)
+        private void AttachFile(object parameter)
         {
             var fileCategory = parameter as string;
 

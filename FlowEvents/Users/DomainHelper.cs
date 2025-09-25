@@ -138,7 +138,7 @@ namespace FlowEvents
                     MessageBox.Show("Поиск пользователя отменен");
                     return users;  // Операция была отменена - возвращаем частичные результаты
                 }
-                catch (Exception ex)
+                catch (Exception )
                 {
                     // Логирование ошибки
                     //MessageBox.Show($"Ошибка поиска: {ex.Message}");

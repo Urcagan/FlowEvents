@@ -92,8 +92,11 @@
                         </MultiBinding>
                     </MenuItem.IsEnabled>
                 </MenuItem>
+
+                <MenuItem Header="О пользователе" Command="{Binding UserWindowCommand}"/>
                 
                 <Separator />
+                
                 <MenuItem Header="Настройка" Command="{Binding SettingOpenWindow}"/>
                 <MenuItem Header="О программе"></MenuItem>
                 <Separator/>

@@ -158,7 +158,7 @@ namespace FlowEvents.Services.Implementations
                     directorySearcher.ServerTimeLimit = timeout;
                 }
             }
-            catch (Exception ex)
+            catch (Exception )
             {
                 //_logger?.LogWarning(ex, "Не удалось установить таймаут для поиска");
             }

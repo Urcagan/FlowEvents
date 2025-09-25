@@ -4,6 +4,8 @@ using FlowEvents.Services;
 using FlowEvents.Services.Interface;
 using FlowEvents.Settings;
 using FlowEvents.Users;
+using FlowEvents.ViewModels;
+using FlowEvents.Views;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
@@ -12,6 +14,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Security.Principal;
 using System.Threading.Tasks;
 using System.Windows;
 
@@ -31,6 +34,7 @@ namespace FlowEvents
         private bool _isLoading;
         private string _currentDbPath;
         private string _currentUsername;
+        private string _userName;
         private List<string> _currentUserPermissions = new List<string>();
         private User _currentUser;  // Кэш пользователя (опционально)
         private DateTime _sartDate = DateTime.Now; // Значение по умолчанию
@@ -39,7 +43,8 @@ namespace FlowEvents
         private bool _isAllEvents;
         private string _queryEvent; // Для хранения Запроса получения Events 
         private EventForView _selectedEvent; // Выбранное событие в таблице
-        private string _userName;
+        
+        
         private ObservableCollection<Unit> _units { get; set; } = new ObservableCollection<Unit>();
 
 
@@ -190,6 +195,7 @@ namespace FlowEvents
         public RelayCommand UpDateCommand { get; }
         public RelayCommand CheckUpdateAppCommand { get; } // Кнопка проверки обновления программы 
         public RelayCommand LoginCommand { get; }
+        public RelayCommand UserWindowCommand { get; }
 
         //===============================================================================================================================================
 
@@ -209,6 +215,7 @@ namespace FlowEvents
             OpenPermissionWindowCommand = new RelayCommand(OpenPermissionWindow);
             CheckUpdateAppCommand = new RelayCommand(CheckUpdateApp);
             LoginCommand = new RelayCommand(Login);
+            UserWindowCommand = new RelayCommand(UserInfoWindow); 
 
             DownDateCommand = new RelayCommand((parameter) =>
             {
@@ -233,6 +240,11 @@ namespace FlowEvents
             IsLoading = true;
             try
             {
+                
+                // Способ 1: Полная информация о пользователе windows
+                var userInfo = UserInfoService.GetCurrentUserInfo();
+                userInfo.PrintInfo();
+
                 string pathDB = App.Settings.pathDB; 
 
                 // Проверка и загрузка БД в одном методе
@@ -243,7 +255,8 @@ namespace FlowEvents
                     return;
                 }
 
-                CurrentUsername = "Администратор"; // Environment.UserName; // Устанавливаем текущего пользователя
+                CurrentUsername = WindowsIdentity.GetCurrent().Name; //Environment.UserName; // Устанавливаем текущего пользователя
+                UserName = CurrentUsername; // Отображаем имя пользователя в интерфейсе
 
                 CurrentDbPath = pathDB; // Устанавливаем текущий путь к базе данных
 
@@ -389,6 +402,15 @@ namespace FlowEvents
             }
         }
 
+        private void UserInfoWindow(object parameter)
+        {
+            var userInfoViewModel = new UserInfoViewModel();                                        // 1. Берем ViewModel из контейнера
+            var userInfoWindow = new UserInfoWindow();                                                  // 2. Создаем окно обычным способом
+            userInfoWindow.DataContext = userInfoViewModel;                                           // 3. Связываем ViewModel с окном 
+            userInfoWindow.Owner = Application.Current.MainWindow;                                    // 4. Устанавливает главное окно приложения как владельца (owner) для окна                                                                                                        
+            userInfoWindow.WindowStartupLocation = WindowStartupLocation.CenterOwner;                 // 5. Центрируем относительно владельца если не прописано м xaml (WindowStartupLocation="CenterOwner")
+            if (userInfoWindow.ShowDialog() == true) { }                                              // 6. Показываем модально         
+        }
 
         // Вызов окна Объектов
         private void UnitMenuItem()

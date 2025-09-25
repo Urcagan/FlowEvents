@@ -82,6 +82,12 @@
     </ApplicationDefinition>
     <Compile Include="App.cs" />
     <Compile Include="Models\DatabaseInfo.cs" />
+    <Compile Include="Models\UserInfo.cs" />
+    <Compile Include="ViewModels\UserInfoViewModel.cs" />
+    <Compile Include="Views\UserInfoWindow.xaml.cs">
+      <DependentUpon>UserInfoWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UserInfoService.cs" />
     <Compile Include="Repositories\Implementations\CategoryRepository.cs" />
     <Compile Include="Repositories\Implementations\DatabaseInfoRepository.cs" />
     <Compile Include="Repositories\Implementations\UnitRepository.cs" />
@@ -240,6 +246,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\UserDomainSearchSimple.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\UserInfoWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
