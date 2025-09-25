@@ -2,6 +2,8 @@
 using FlowEvents.Services;
 using FlowEvents.Services.Interface;
 using FlowEvents.Users;
+using FlowEvents.ViewModels;
+using FlowEvents.Views;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.ComponentModel;
@@ -58,6 +60,8 @@ namespace FlowEvents
         public RelayCommand DeletUserCommand { get; set; }
         public RelayCommand OpenAddUserWindowCommand { get; set; }
         public RelayCommand OpenPermissionWindowCommand { get; set; }
+
+        public RelayCommand UserSearchWindowCommand { get; set; }  
         #region
 
 
@@ -71,6 +75,8 @@ namespace FlowEvents
             DeletUserCommand = new RelayCommand(DeletUser);
             OpenAddUserWindowCommand = new RelayCommand(OpenAddUserWindows);
             OpenPermissionWindowCommand = new RelayCommand(OpenPermissionWindow);
+
+            UserSearchWindowCommand = new RelayCommand(UserSearchWindow);
 
             // Загрузка данных из базы
             ConnectionString = Global_Var.ConnectionString;
@@ -116,6 +122,18 @@ namespace FlowEvents
             findUserWindow.Closed += ClosedHandler; // Подписываемся на событие закрытия окна
             if (findUserWindow.ShowDialog() == true) { }
 
+        }
+
+        private void UserSearchWindow ()
+        {
+            var UserDomainSearchViewModel = App.ServiceProvider.GetRequiredService<UserDomainSearchViewModel>();
+
+            var UserDomainSearchSimple = new UserDomainSearchSimple();
+
+            UserDomainSearchSimple.DataContext = UserDomainSearchViewModel;
+
+            UserDomainSearchSimple.Owner = Application.Current.MainWindow;
+            UserDomainSearchSimple.ShowDialog();
         }
 
 

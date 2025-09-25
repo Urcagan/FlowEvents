@@ -2,10 +2,11 @@
 using FlowEvents.Repositories.Implementations;
 using FlowEvents.Repositories.Interface;
 using FlowEvents.Services;
-using FlowEvents.Services.Interface;
 using FlowEvents.Services.Implementations;
+using FlowEvents.Services.Interface;
 using FlowEvents.Settings;
 using FlowEvents.Users;
+using FlowEvents.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Globalization;
@@ -116,6 +117,10 @@ namespace FlowEvents
 
 
             // Регистрация сервисов
+                //Сервисы работы с доменом
+            services.AddScoped<IActiveDirectoryService, ActiveDirectoryService>();
+            services.AddScoped<IDomainSettingsService, DomainSettingsService>();
+
             services.AddSingleton<IEventRepository, EventRepository>();
             services.AddSingleton<ICategoryRepository, CategoryRepository>();
             services.AddSingleton<IDatabaseService, DatabaseService>();
@@ -137,6 +142,7 @@ namespace FlowEvents
             services.AddTransient<CategoryViewModel>();
             services.AddTransient<UnitViewModel>();
             services.AddTransient<AddUserViewModel>();
+            services.AddTransient<UserDomainSearchViewModel>();
 
             // Регистрация окон
             services.AddTransient<MainWindow>();

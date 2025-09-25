@@ -1,0 +1,1126 @@
+Что такое ILogger<T>?
+
+Это стандартный интерфейс для логирования в .NET, который является частью Microsoft.Extensions.Logging.
+Полный пример реализации сервиса
+csharp
+
+using Microsoft.Extensions.Logging;
+using System.DirectoryServices;
+
+public class ActiveDirectoryService
+{
+    private readonly ILogger<ActiveDirectoryService> _logger;
+
+    // Конструктор с внедрением зависимости логгера
+    public ActiveDirectoryService(ILogger<ActiveDirectoryService> logger = null)
+    {
+        _logger = logger;
+    }
+
+    // Пример метода с полным логированием
+    public List<User> SearchUsers(string searchTerm, string domainPath = null)
+    {
+        _logger?.LogInformation("Начало поиска пользователей по термину: {SearchTerm}", searchTerm);
+        
+        try
+        {
+            if (string.IsNullOrEmpty(searchTerm))
+            {
+                _logger?.LogWarning("Пустой поисковый запрос");
+                throw new ArgumentException("Search term cannot be empty");
+            }
+
+            using var entry = new DirectoryEntry(domainPath);
+            using var searcher = new DirectorySearcher(entry);
+            
+            searcher.Filter = $"(|(cn={searchTerm}*)(samaccountname={searchTerm}*))";
+            searcher.PropertiesToLoad.AddRange(new[] { "cn", "samaccountname", "mail" });
+
+            _logger?.LogDebug("Выполнение поиска в AD с фильтром: {Filter}", searcher.Filter);
+            
+            var results = searcher.FindAll();
+            var users = new List<User>();
+
+            foreach (SearchResult result in results)
+            {
+                var user = MapToUser(result);
+                users.Add(user);
+            }
+
+            _logger?.LogInformation("Найдено {UserCount} пользователей", users.Count);
+            return users;
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Неожиданная ошибка при поиске пользователей по термину '{SearchTerm}'", searchTerm);
+            throw; // Пробрасываем исключение дальше
+        }
+    }
+
+    // Другой пример метода
+    public User GetUserBySamAccountName(string samAccountName)
+    {
+        using (_logger?.BeginScope("Получение пользователя {SamAccountName}", samAccountName))
+        {
+            try
+            {
+                _logger?.LogDebug("Поиск пользователя по SAM account name");
+                
+                // Логика поиска...
+                var user = SearchUsers(samAccountName).FirstOrDefault();
+                
+                if (user == null)
+                {
+                    _logger?.LogWarning("Пользователь {SamAccountName} не найден", samAccountName);
+                    return null;
+                }
+
+                _logger?.LogInformation("Пользователь {SamAccountName} успешно найден", samAccountName);
+                return user;
+            }
+            catch (DirectoryServicesCOMException ex)
+            {
+                _logger?.LogError(ex, "Ошибка подключения к Active Directory для пользователя {SamAccountName}", samAccountName);
+                throw;
+            }
+        }
+    }
+
+    private User MapToUser(SearchResult result)
+    {
+        // Маппинг данных
+        return new User();
+    }
+}
+
+public class User
+{
+    public string CN { get; set; }
+    public string SamAccountName { get; set; }
+    public string Email { get; set; }
+}
+
+Настройка DI (Dependency Injection) контейнера
+ASP.NET Core (Program.cs или Startup.cs)
+csharp
+
+// ASP.NET Core 6+
+var builder = WebApplication.CreateBuilder(args);
+
+// Настройка логирования
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
+builder.Logging.AddEventLog();
+
+// Регистрация сервиса
+builder.Services.AddScoped<ActiveDirectoryService>();
+
+var app = builder.Build();
+
+Console Application (Program.cs)
+csharp
+
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        // Настройка сервисов
+        var serviceProvider = new ServiceCollection()
+            .AddLogging(builder => 
+            {
+                builder.AddConsole();
+                builder.AddDebug();
+                builder.SetMinimumLevel(LogLevel.Debug);
+            })
+            .AddScoped<ActiveDirectoryService>()
+            .BuildServiceProvider();
+
+        // Использование сервиса
+        using (var scope = serviceProvider.CreateScope())
+        {
+            var adService = scope.ServiceProvider.GetRequiredService<ActiveDirectoryService>();
+            
+            try
+            {
+                var users = adService.SearchUsers("john");
+                foreach (var user in users)
+                {
+                    Console.WriteLine($"User: {user.CN}, Email: {user.Email}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+            }
+        }
+    }
+}
+
+Конфигурация логирования в appsettings.json
+json
+
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft": "Warning",
+      "YourApp.ActiveDirectoryService": "Debug"
+    },
+    "Console": {
+      "LogLevel": {
+        "Default": "Information"
+      }
+    },
+    "File": {
+      "Path": "logs/myapp.txt",
+      "LogLevel": {
+        "Default": "Debug"
+      }
+    }
+  }
+}
+
+Почему используется _logger?.Method()?
+
+Конструкция ? (null-conditional operator) защищает от исключений, если логгер не был внедрен:
+csharp
+
+// Без проверки на null - может вызвать NullReferenceException
+_logger.LogInformation("Сообщение");
+
+// С проверкой на null - безопасно
+_logger?.LogInformation("Сообщение");
+
+Уровни логирования
+csharp
+
+// Разные уровни логирования
+_logger?.LogTrace("Детальная отладочная информация"); // Уровень 0
+_logger?.LogDebug("Отладочная информация"); // Уровень 1
+_logger?.LogInformation("Информационное сообщение"); // Уровень 2
+_logger?.LogWarning("Предупреждение"); // Уровень 3
+_logger?.LogError("Ошибка"); // Уровень 4
+_logger?.LogCritical("Критическая ошибка"); // Уровень 5
+
+Структурированное логирование
+
+Обратите внимание на использование шаблонов с фигурными скобками:
+csharp
+
+// Вместо конкатенации строк
+_logger?.LogInformation("Найдено " + count + " пользователей");
+
+// Используйте структурированное логирование
+_logger?.LogInformation("Найдено {UserCount} пользователей", count);
+
+Преимущества структурированного логирования:
+
+    Лучшая производительность
+
+    Возможность фильтрации в системах сбора логов
+
+    Сохранение структуры данных
+
+Полный рабочий пример с обработкой ошибок
+csharp
+
+public class ActiveDirectoryService
+{
+    private readonly ILogger<ActiveDirectoryService> _logger;
+
+    public ActiveDirectoryService(ILogger<ActiveDirectoryService> logger = null)
+    {
+        _logger = logger;
+    }
+
+    public async Task<bool> AuthenticateUserAsync(string username, string password)
+    {
+        using (_logger?.BeginScope("Аутентификация пользователя {Username}", username))
+        {
+            _logger?.LogInformation("Начало аутентификации");
+            
+            if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
+            {
+                _logger?.LogWarning("Пустое имя пользователя или пароль");
+                return false;
+            }
+
+            try
+            {
+                // Логика аутентификации
+                var isAuthenticated = await Task.Run(() => 
+                    AuthenticateInAD(username, password));
+                
+                if (isAuthenticated)
+                {
+                    _logger?.LogInformation("Успешная аутентификация пользователя {Username}", username);
+                    return true;
+                }
+                else
+                {
+                    _logger?.LogWarning("Неудачная аутентификация пользователя {Username}", username);
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Ошибка при аутентификации пользователя {Username}", username);
+                return false;
+            }
+        }
+    }
+
+    private bool AuthenticateInAD(string username, string password)
+    {
+        // Реальная логика аутентификации в AD
+        return true; // Заглушка
+    }
+}
+
+Такой подход к логированию позволяет:
+
+    Отслеживать выполнение кода
+
+    Диагностировать проблемы
+
+    Собирать метрики производительности
+
+    Анализировать поведение приложения в production
+
+Я так понимаю это встроено в NET
+
+Совершенно верно! ILogger и система логирования встроены в .NET начиная с .NET Core и современных версий .NET (5+).
+Что именно встроено:
+1. Базовые интерфейсы и классы (Microsoft.Extensions.Logging.Abstractions)
+csharp
+
+// Встроенные интерфейсы
+ILogger<T>
+ILoggerFactory
+ILoggerProvider
+
+2. Стандартные провайдеры логирования
+csharp
+
+// Входят в состав различных NuGet пакетов:
+
+// Console logger (Microsoft.Extensions.Logging.Console)
+builder.Logging.AddConsole();
+
+// Debug logger (Microsoft.Extensions.Logging.Debug)  
+builder.Logging.AddDebug();
+
+// EventLog logger (Windows)
+builder.Logging.AddEventLog();
+
+// EventSource logger
+builder.Logging.AddEventSourceLogger();
+
+Минимальный пример для разных типов приложений:
+ASP.NET Core Web API (автоматическая настройка)
+csharp
+
+var builder = WebApplication.CreateBuilder(args);
+
+// ВСЁ УЖЕ НАСТРОЕНО ПО УМОЛЧАНИЮ!
+// ILogger автоматически доступен через DI
+
+builder.Services.AddControllers();
+
+var app = builder.Build();
+
+app.MapControllers();
+app.Run();
+
+// В контроллере автоматически доступен ILogger
+[ApiController]
+[Route("[controller]")]
+public class UsersController : ControllerBase
+{
+    private readonly ILogger<UsersController> _logger; // Встроен в ASP.NET Core
+    
+    public UsersController(ILogger<UsersController> logger)
+    {
+        _logger = logger; // Автоматически внедряется
+    }
+    
+    [HttpGet]
+    public IActionResult Get()
+    {
+        _logger.LogInformation("Запрос пользователей");
+        return Ok();
+    }
+}
+
+Console Application (минимальная настройка)
+csharp
+
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+
+// Минимальная настройка
+var services = new ServiceCollection()
+    .AddLogging(builder => builder.AddConsole()) // Всё!
+    .AddScoped<MyService>()
+    .BuildServiceProvider();
+
+var service = services.GetRequiredService<MyService>();
+service.DoWork();
+
+public class MyService
+{
+    private readonly ILogger<MyService> _logger;
+    
+    public MyService(ILogger<MyService> logger) // ILogger встроен в DI
+    {
+        _logger = logger;
+    }
+    
+    public void DoWork()
+    {
+        _logger.LogInformation("Работаем...");
+    }
+}
+
+Что нужно добавлять отдельно:
+1. Сторонние провайдеры (NuGet пакеты)
+xml
+
+<!-- Для логирования в файлы -->
+<PackageReference Include="Serilog.Extensions.Logging.File" Version="3.0.0" />
+
+<!-- Для логирования в JSON -->
+<PackageReference Include="Serilog" Version="2.12.0" />
+
+<!-- Для Application Insights (Azure) -->
+<PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.21.0" />
+
+<!-- Для NLog -->
+<PackageReference Include="NLog.Web.AspNetCore" Version="5.3.0" />
+
+2. Расширенные конфигурации
+csharp
+
+// Настройка уровней логирования
+builder.Logging.AddFilter("Microsoft", LogLevel.Warning)
+               .AddFilter("System", LogLevel.Warning)
+               .AddFilter("MyApp", LogLevel.Debug);
+
+Полная иерархия встроенного логирования:
+text
+
+Microsoft.Extensions.Logging (ядро)
+├── ILogger<T> (интерфейс)
+├── Logger<T> (реализация)
+├── LogLevel (enum)
+└── Дифференциация по пространствам имен:
+    ├── Microsoft (уровень Warning)
+    ├── System (уровень Warning)  
+    └── ВашеПриложение (уровень Information/Debug)
+
+Почему это удобно:
+1. Единый стандарт для всего .NET
+csharp
+
+// Одинаково работает в:
+- ASP.NET Core
+- Console Apps  
+- Windows Services
+- Xamarin
+- MAUI
+- Blazor
+
+2. Встроенная интеграция с Dependency Injection
+csharp
+
+// Автоматическое внедрение
+public class MyService
+{
+    public MyService(
+        ILogger<MyService> logger,           // Логгер сервиса
+        ILoggerFactory loggerFactory,       // Фабрика логгеров
+        IEnumerable<ILoggerProvider> providers // Все провайдеры
+    ) { }
+}
+
+3. Автоматическая конфигурация в ASP.NET Core
+csharp
+
+var builder = WebApplication.CreateBuilder(args);
+// Уже включает:
+// - Конфигурацию из appsettings.json
+// - Console logger
+// - Debug logger
+// - Логирование в Kestrel
+
+Минимальный пример "из коробки":
+csharp
+
+// Программа работает БЕЗ какой-либо настройки!
+using Microsoft.Extensions.Logging;
+
+// Создаем фабрику логгеров (встроена в .NET)
+using ILoggerFactory loggerFactory = LoggerFactory.Create(builder =>
+{
+    builder.AddConsole(); // Встроенный провайдер
+});
+
+// Получаем логгер (встроенная реализация)
+ILogger logger = loggerFactory.CreateLogger<Program>();
+
+// Используем (встроенные методы)
+logger.LogInformation("Hello from built-in logger!");
+logger.LogError("This is an error message");
+
+Вывод: Да, вы абсолютно правы - основная система логирования является встроенной частью .NET, а дополнительные пакеты нужны только для расширенной функциональности (файлы, базы данных, облачные сервисы).
+Можно его использовать в моем коде 
+using FlowEvents.Repositories;
+using FlowEvents.Repositories.Implementations;
+using FlowEvents.Repositories.Interface;
+using FlowEvents.Services;
+using FlowEvents.Services.Interface;
+using FlowEvents.Services.Implementations;
+using FlowEvents.Settings;
+using FlowEvents.Users;
+using Microsoft.Extensions.DependencyInjection;
+using System;
+using System.Globalization;
+using System.Threading;
+using System.Windows;
+using System.Windows.Markup;
+
+namespace FlowEvents
+{
+    /// <summary>
+    /// Логика взаимодействия для App.xaml
+    /// </summary>
+    public partial class App : Application
+    {
+        public static IServiceProvider ServiceProvider { get; private set; }
+        public static AppSettings Settings {  get; private set; } // Поле для Настроек прогаммы 
+
+        //=================================================
+        // 1. С ЭТОГО МЕТОДА НАЧИНАЕТСЯ СТАРТ ПРОГРАММЫ
+        //=================================================
+        protected override void OnStartup(StartupEventArgs e)// Переопределяем метод OnStartup, Внем задаем наш формат
+        {
+            try
+            {
+
+                base.OnStartup(e);      // ← 1. БАЗОВАЯ ИНИЦИАЛИЗАЦИЯ
+                                        // Загружает ресурсы App.xaml, инициализирует приложение
+                                        // Важно: без этого не загрузятся ресурсы App.xaml!
+
+                // Загружаем настройки при старте приложения
+                Settings = AppSettings.GetSettingsApp();
+
+                // Настройка культуры
+                ConfigureCulture();
+
+                // Загрузка конфигурации БД (должна быть выполнена до настройки сервисов)
+                LoadDatabaseConfiguration();
+
+                // Настройка DI контейнера
+                ConfigureServices();
+
+                // Запуск главного окна
+                // Получение сервисов из DI-контейнера
+                var mainWindow = ServiceProvider.GetService<MainWindow>();                                      // ← 2. СОЗДАНИЕ ОКНА
+                if (mainWindow == null) throw new InvalidOperationException("MainWindow not registered");
+
+                var mainViewModel = ServiceProvider.GetService<MainViewModel>();                                // ← 3. СОЗДАНИЕ ViewModel
+                if (mainViewModel == null) throw new InvalidOperationException("MainViewModel not registered");
+
+                
+                mainWindow.DataContext = mainViewModel;     // ← 4. ПРИВЯЗКА ДАННЫХ.  Связывание DataContext
+
+                mainWindow.Show();                          // ← 5. ПОКАЗ ОКНА        Отображение главного окна
+                                                            // ГДЕ-ТО ПОСЛЕ ЭТОГО ВЫЗЫВАЕТСЯ: mainViewModel.StartUPAsync();
+                                                            // Который подписан на событие Loaded в MainWindow.xaml.cs
+                                                            // То есть посде гарантированной прогрузки всего UI по событию Loaded,
+                                                            // происходит первоначальная загрузка всех остальных параметров и данных программы. 
+
+                //   -------------------------------------------------
+                //  |   Полная последовательность запуска программы   |
+                //  |   1.Application.Startup()                       |
+                //  |   2.App.OnStartup()                             |
+                //  |   3. base.OnStartup() ← ресурсы App.xaml        |
+                //  |   4.DI - контейнер: создание MainWindow         |
+                //  |   5.DI - контейнер: создание MainViewModel      |
+                //  |   6.mainWindow.DataContext = mainViewModel      |
+                //  |   7.mainWindow.Show() ← окно появляется         |
+                //  |   8.MainWindow.Loaded event                     |
+                //  |   9. MainViewModel.StartUP() ← ваш метод        |
+                //  |   10. Application running                       |
+                //   -------------------------------------------------
+
+            }
+            catch (Exception ex )
+            {
+                // Логирование ошибки запуска
+                MessageBox.Show($"Ошибка запуска: {ex.Message}");
+                Shutdown();
+            }
+
+        }
+
+        private void LoadDatabaseConfiguration()
+        {
+            // Здесь должен быть код загрузки конфигурации
+            Global_Var.pathToDB = App.Settings.pathDB;
+            Global_Var.ConnectionString = GetConnectionString();
+        }
+
+        //-------------------------------------------------------------------------------------------------------------------------
+        // КОНФИГУРАЦИЯ СЕРВИСОВ 
+        private void ConfigureServices()
+        {
+            var services = new ServiceCollection();
+
+            // Регистрируем настройки как Singleton
+            services.AddSingleton<AppSettings>(provider => Settings);
+
+            // Провайдер строки подключения (Singleton - один на все приложение)
+            // Регистрируем провайдер строки подключения
+            services.AddSingleton<IConnectionStringProvider>(provider =>
+            {
+                var appSettings = provider.GetService<AppSettings>();
+                return new ConnectionStringProvider($"Data Source={appSettings.pathDB};Version=3;foreign keys=true;");
+            });
+
+            services.AddSingleton<IDatabaseInfoRepository>(provider => new DatabaseInfoRepository());
+
+
+            // Регистрация сервисов
+                //Сервисы работы с доменом
+            services.AddScoped<IActiveDirectoryService, ActiveDirectoryService>();
+            services.AddScoped<IDomainSettingsService, DomainSettingsService>();
+
+            services.AddSingleton<IEventRepository, EventRepository>();
+            services.AddSingleton<ICategoryRepository, CategoryRepository>();
+            services.AddSingleton<IDatabaseService, DatabaseService>();
+            services.AddSingleton<IPolicyAuthService, PolicyAuthService>();
+            services.AddSingleton<IUserService, UserService>();
+            services.AddSingleton<IPasswordHasher, PasswordHasher>();
+            services.AddSingleton<IDatabaseValidationService, DatabaseValidationService>();
+            services.AddSingleton<IPermissionRepository, PermissionRepository>();
+            services.AddSingleton<IRoleRepository, RoleRepository>();
+            services.AddSingleton<IUnitRepository, UnitRepository>();
+            services.AddSingleton<IUserRepository, UserRepository>();
+
+
+            // Регистрация ViewModels
+            services.AddTransient<MainViewModel>();
+            services.AddTransient<SettingsViewModel>();
+            services.AddTransient<UserManagerModel>();
+            services.AddTransient<PermissionViewModel>();            
+            services.AddTransient<CategoryViewModel>();
+            services.AddTransient<UnitViewModel>();
+            services.AddTransient<AddUserViewModel>();
+
+            // Регистрация окон
+            services.AddTransient<MainWindow>();
+            services.AddTransient<UserManager>();
+            services.AddTransient<PermissionWindow>();
+
+            // Построение провайдера услуг
+            ServiceProvider = services.BuildServiceProvider();
+        }
+        //-------------------------------------------------------------------------------------------------------------------------
+
+        private void ConfigureCulture()
+        {
+            var cultureInfo = new CultureInfo("ru-RU");
+            Thread.CurrentThread.CurrentCulture = cultureInfo;
+            Thread.CurrentThread.CurrentUICulture = cultureInfo;
+            CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
+            CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
+            FrameworkElement.LanguageProperty.OverrideMetadata(typeof(FrameworkElement),
+                new FrameworkPropertyMetadata(XmlLanguage.GetLanguage(CultureInfo.CurrentCulture.IetfLanguageTag)));
+        }
+
+        //Получаем строку подключения к БД
+        private static string GetConnectionString()
+        {
+            string pathDB = App.Settings.pathDB;
+            return $"Data Source={pathDB};Version=3;foreign keys=true;";
+        }
+
+    }
+}
+
+Да, конечно! Вы можете легко добавить ILogger в ваше WPF приложение. Вот как это сделать:
+1. Добавьте необходимые NuGet пакеты
+
+Добавьте в ваш .csproj файл:
+xml
+
+<PackageReference Include="Microsoft.Extensions.Hosting" Version="7.0.1" />
+<PackageReference Include="Microsoft.Extensions.Logging" Version="7.0.0" />
+<PackageReference Include="Microsoft.Extensions.Logging.Console" Version="7.0.0" />
+<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="7.0.0" />
+
+2. Модифицированный код App.xaml.cs
+csharp
+
+using FlowEvents.Repositories;
+using FlowEvents.Repositories.Implementations;
+using FlowEvents.Repositories.Interface;
+using FlowEvents.Services;
+using FlowEvents.Services.Interface;
+using FlowEvents.Services.Implementations;
+using FlowEvents.Settings;
+using FlowEvents.Users;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using System;
+using System.Globalization;
+using System.Threading;
+using System.Windows;
+using System.Windows.Markup;
+
+namespace FlowEvents
+{
+    public partial class App : Application
+    {
+        public static IServiceProvider ServiceProvider { get; private set; }
+        public static AppSettings Settings { get; private set; }
+        private static ILogger<App> _logger;
+
+        protected override void OnStartup(StartupEventArgs e)
+        {
+            try
+            {
+                base.OnStartup(e);
+
+                // Настройка логирования ДО всех операций
+                ConfigureLogging();
+
+                _logger?.LogInformation("Запуск приложения FlowEvents");
+
+                // Загружаем настройки при старте приложения
+                Settings = AppSettings.GetSettingsApp();
+                _logger?.LogInformation("Настройки приложения загружены");
+
+                // Настройка культуры
+                ConfigureCulture();
+                _logger?.LogInformation("Культура приложения настроена: {Culture}", CultureInfo.CurrentCulture.Name);
+
+                // Загрузка конфигурации БД
+                LoadDatabaseConfiguration();
+                _logger?.LogInformation("Конфигурация базы данных загружена");
+
+                // Настройка DI контейнера
+                ConfigureServices();
+                _logger?.LogInformation("DI контейнер настроен");
+
+                // Получаем логгер из DI контейнера для дальнейшего использования
+                _logger = ServiceProvider.GetService<ILogger<App>>();
+
+                // Запуск главного окна
+                var mainWindow = ServiceProvider.GetService<MainWindow>();
+                if (mainWindow == null)
+                {
+                    _logger?.LogError("MainWindow не зарегистрирован в DI контейнере");
+                    throw new InvalidOperationException("MainWindow not registered");
+                }
+
+                var mainViewModel = ServiceProvider.GetService<MainViewModel>();
+                if (mainViewModel == null)
+                {
+                    _logger?.LogError("MainViewModel не зарегистрирован в DI контейнере");
+                    throw new InvalidOperationException("MainViewModel not registered");
+                }
+
+                mainWindow.DataContext = mainViewModel;
+                _logger?.LogInformation("Главное окно инициализировано, отображение окна");
+
+                mainWindow.Show();
+                _logger?.LogInformation("Приложение успешно запущено");
+
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogCritical(ex, "Критическая ошибка при запуске приложения");
+                MessageBox.Show($"Ошибка запуска: {ex.Message}");
+                Shutdown();
+            }
+        }
+
+        private void ConfigureLogging()
+        {
+            // Базовая настройка логирования до создания DI контейнера
+            var serviceCollection = new ServiceCollection();
+            serviceCollection.AddLogging(builder =>
+            {
+                builder.AddConsole();
+                builder.AddDebug();
+                builder.SetMinimumLevel(LogLevel.Debug);
+                
+                // Можно добавить фильтрацию
+                builder.AddFilter("Microsoft", LogLevel.Warning);
+                builder.AddFilter("System", LogLevel.Warning);
+                builder.AddFilter("FlowEvents", LogLevel.Debug);
+            });
+
+            var tempProvider = serviceCollection.BuildServiceProvider();
+            _logger = tempProvider.GetService<ILogger<App>>();
+        }
+
+        private void LoadDatabaseConfiguration()
+        {
+            try
+            {
+                _logger?.LogDebug("Загрузка конфигурации базы данных");
+                Global_Var.pathToDB = App.Settings.pathDB;
+                Global_Var.ConnectionString = GetConnectionString();
+                _logger?.LogInformation("Путь к БД: {DbPath}", App.Settings.pathDB);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Ошибка при загрузке конфигурации БД");
+                throw;
+            }
+        }
+
+        private void ConfigureServices()
+        {
+            var services = new ServiceCollection();
+
+            // Регистрация логирования
+            services.AddLogging(builder =>
+            {
+                builder.AddConsole();
+                builder.AddDebug();
+                builder.SetMinimumLevel(LogLevel.Debug);
+            });
+
+            // Регистрируем настройки как Singleton
+            services.AddSingleton<AppSettings>(provider => Settings);
+
+            // Провайдер строки подключения
+            services.AddSingleton<IConnectionStringProvider>(provider =>
+            {
+                var appSettings = provider.GetService<AppSettings>();
+                var connectionString = $"Data Source={appSettings.pathDB};Version=3;foreign keys=true;";
+                _logger?.LogDebug("Создание провайдера строки подключения: {ConnectionString}", 
+                    connectionString.Replace(appSettings.pathDB, "***")); // Маскируем путь для безопасности
+                return new ConnectionStringProvider(connectionString);
+            });
+
+            // Регистрация репозиториев и сервисов с логированием
+            services.AddSingleton<IDatabaseInfoRepository, DatabaseInfoRepository>();
+            
+            // Сервисы работы с доменом
+            services.AddScoped<IActiveDirectoryService, ActiveDirectoryService>();
+            services.AddScoped<IDomainSettingsService, DomainSettingsService>();
+
+            // Остальные сервисы
+            services.AddSingleton<IEventRepository, EventRepository>();
+            services.AddSingleton<ICategoryRepository, CategoryRepository>();
+            services.AddSingleton<IDatabaseService, DatabaseService>();
+            services.AddSingleton<IPolicyAuthService, PolicyAuthService>();
+            services.AddSingleton<IUserService, UserService>();
+            services.AddSingleton<IPasswordHasher, PasswordHasher>();
+            services.AddSingleton<IDatabaseValidationService, DatabaseValidationService>();
+            services.AddSingleton<IPermissionRepository, PermissionRepository>();
+            services.AddSingleton<IRoleRepository, RoleRepository>();
+            services.AddSingleton<IUnitRepository, UnitRepository>();
+            services.AddSingleton<IUserRepository, UserRepository>();
+
+            // Регистрация ViewModels
+            services.AddTransient<MainViewModel>();
+            services.AddTransient<SettingsViewModel>();
+            services.AddTransient<UserManagerModel>();
+            services.AddTransient<PermissionViewModel>();            
+            services.AddTransient<CategoryViewModel>();
+            services.AddTransient<UnitViewModel>();
+            services.AddTransient<AddUserViewModel>();
+
+            // Регистрация окон
+            services.AddTransient<MainWindow>();
+            services.AddTransient<UserManager>();
+            services.AddTransient<PermissionWindow>();
+
+            ServiceProvider = services.BuildServiceProvider();
+        }
+
+        private void ConfigureCulture()
+        {
+            try
+            {
+                _logger?.LogDebug("Настройка региональных параметров");
+                var cultureInfo = new CultureInfo("ru-RU");
+                Thread.CurrentThread.CurrentCulture = cultureInfo;
+                Thread.CurrentThread.CurrentUICulture = cultureInfo;
+                CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
+                CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
+                FrameworkElement.LanguageProperty.OverrideMetadata(typeof(FrameworkElement),
+                    new FrameworkPropertyMetadata(XmlLanguage.GetLanguage(CultureInfo.CurrentCulture.IetfLanguageTag)));
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Ошибка при настройке культуры");
+                throw;
+            }
+        }
+
+        private static string GetConnectionString()
+        {
+            string pathDB = App.Settings.pathDB;
+            _logger?.LogDebug("Генерация строки подключения для БД: {DbPath}", pathDB);
+            return $"Data Source={pathDB};Version=3;foreign keys=true;";
+        }
+
+        protected override void OnExit(ExitEventArgs e)
+        {
+            _logger?.LogInformation("Завершение работы приложения FlowEvents");
+            base.OnExit(e);
+        }
+    }
+}
+
+3. Пример использования в сервисах
+
+Модифицируйте ваши сервисы для использования ILogger:
+csharp
+
+// ActiveDirectoryService.cs
+using Microsoft.Extensions.Logging;
+
+public class ActiveDirectoryService : IActiveDirectoryService
+{
+    private readonly ILogger<ActiveDirectoryService> _logger;
+
+    public ActiveDirectoryService(ILogger<ActiveDirectoryService> logger)
+    {
+        _logger = logger;
+    }
+
+    public List<User> SearchUsers(string searchTerm)
+    {
+        _logger.LogInformation("Поиск пользователей по термину: {SearchTerm}", searchTerm);
+        
+        try
+        {
+            // Ваша логика
+            _logger.LogDebug("Выполнение поиска в Active Directory");
+            // ...
+            _logger.LogInformation("Найдено {Count} пользователей", users.Count);
+            return users;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Ошибка при поиске пользователей по термину '{SearchTerm}'", searchTerm);
+            throw;
+        }
+    }
+}
+
+4. Пример использования в ViewModel
+csharp
+
+// MainViewModel.cs
+using Microsoft.Extensions.Logging;
+
+public class MainViewModel
+{
+    private readonly ILogger<MainViewModel> _logger;
+    private readonly IUserService _userService;
+
+    public MainViewModel(ILogger<MainViewModel> logger, IUserService userService)
+    {
+        _logger = logger;
+        _userService = userService;
+        _logger.LogInformation("MainViewModel инициализирован");
+    }
+
+    public async Task StartUPAsync()
+    {
+        try
+        {
+            _logger.LogInformation("Запуск инициализации MainViewModel");
+            // Ваша логика инициализации
+            await LoadInitialDataAsync();
+            _logger.LogInformation("Инициализация MainViewModel завершена успешно");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Ошибка при инициализации MainViewModel");
+            throw;
+        }
+    }
+}
+
+5. Добавление конфигурации логирования в app.config
+xml
+
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <configSections>
+    <section name="Logging" type="Microsoft.Extensions.Logging.Configuration.LoggingConfigurationSection, Microsoft.Extensions.Logging.Configuration" />
+  </configSections>
+
+  <Logging>
+    <LogLevel Default="Information" />
+    <AddConsoleFormatter name="simple" />
+    <AddConsole name="console" />
+  </Logging>
+</configuration>
+
+Преимущества такого подхода:
+
+    Единообразие - одинаковый подход ко всему приложению
+
+    Структурированные логи - легко читать и анализировать
+
+    Производительность - минимальные накладные расходы
+
+    Гибкость - легко менять уровень логирования для разных компонентов
+
+    Безопасность - автоматическое экранирование敏感 данных
+
+Теперь вы сможете видеть детальные логи работы вашего приложения в Output window Visual Studio или консоли!
+
+
+
+А куда выводятся эти сообщения?
+
+Сообщения ILogger выводятся в несколько мест одновременно, в зависимости от настроек. Вот основные места:
+1. Output Window (Окно вывода) Visual Studio ⭐ Основное место!
+
+При отладке в Visual Studio логи выводятся в Output → Debug:
+text
+
+// Пример вывода в Output Window:
+FlowEvents.App: Information: Запуск приложения FlowEvents
+FlowEvents.MainViewModel: Information: MainViewModel инициализирован
+FlowEvents.ActiveDirectoryService: Information: Поиск пользователей по термину: "Иван"
+
+Как открыть: View → Output или Ctrl+Alt+O
+2. Console (Консоль)
+
+Если запускаете приложение как Console App или с консолью:
+csharp
+
+// Для WPF нужно явно создать консоль:
+[DllImport("kernel32.dll")]
+static extern bool AllocConsole();
+
+// В OnStartup():
+AllocConsole(); // Теперь логи будут в консоли
+
+3. Debug Output
+
+В окне Debug → Windows → Output при отладке.
+4. Проверка вывода в реальном времени
+
+Добавьте временный код для проверки:
+csharp
+
+protected override void OnStartup(StartupEventArgs e)
+{
+    // Временная проверка логирования
+    ConfigureLogging();
+    _logger?.LogInformation("=== ТЕСТ ЛОГИРОВАНИЯ ===");
+    _logger?.LogWarning("Это тестовое предупреждение!");
+    _logger?.LogError("Это тестовая ошибка!");
+    
+    // Принудительный вывод
+    System.Diagnostics.Debug.WriteLine("=== DEBUG OUTPUT ===");
+    Console.WriteLine("=== CONSOLE OUTPUT ===");
+    
+    // ... остальной код
+}
+
+5. Улучшенная настройка логирования
+
+Модифицируйте ConfigureLogging() для лучшего вывода:
+csharp
+
+private void ConfigureLogging()
+{
+    var serviceCollection = new ServiceCollection();
+    serviceCollection.AddLogging(builder =>
+    {
+        builder.AddConsole();
+        builder.AddDebug();
+        
+        // Улучшенный формат для консоли
+        builder.AddSimpleConsole(options => 
+        {
+            options.SingleLine = true;
+            options.TimestampFormat = "HH:mm:ss ";
+            options.IncludeScopes = true;
+        });
+        
+        builder.SetMinimumLevel(LogLevel.Debug);
+        
+        // Фильтрация
+        builder.AddFilter("Microsoft", LogLevel.Warning);
+        builder.AddFilter("System", LogLevel.Warning);
+        builder.AddFilter("FlowEvents", LogLevel.Debug);
+    });
+
+    var tempProvider = serviceCollection.BuildServiceProvider();
+    _logger = tempProvider.GetService<ILogger<App>>();
+    
+    // Тестовые сообщения
+    _logger.LogDebug("=== НАСТРОЙКА ЛОГИРОВАНИЯ ЗАВЕРШЕНА ===");
+}
+
+6. Добавление файлового логгера
+
+Если хотите логи в файл, добавьте:
+xml
+
+<PackageReference Include="Serilog.Extensions.Logging.File" Version="3.0.0" />
+
+csharp
+
+builder.AddFile("Logs/myapp-{Date}.txt", LogLevel.Debug);
+
+7. Быстрая проверка - добавьте кнопку
+
+Временно добавьте кнопку в интерфейс для тестирования:
+xaml
+
+<Button Content="Тест логирования" Click="TestLogging_Click"/>
+
+csharp
+
+private void TestLogging_Click(object sender, RoutedEventArgs e)
+{
+    var logger = App.ServiceProvider.GetService<ILogger<MainWindow>>();
+    logger.LogInformation("Тестовое сообщение из UI");
+    logger.LogWarning("Тестовое предупреждение");
+    logger.LogError("Тестовая ошибка");
+}
+
+Где искать логи по приоритету:
+
+    В первую очередь: Output Window в Visual Studio (Ctrl+Alt+O)
+
+    Во вторую: Окно Immediate Window (Ctrl+Alt+I)
+
+    В третью: Консоль (если создали через AllocConsole())
+
+    Для продакшена: Файлы логов
+
+Если логи не видны:
+
+Добавьте принудительный вывод:
+csharp
+
+// В любой метод для проверки
+Debug.WriteLine($"=== DEBUG: {message} ===");
+Console.WriteLine($"=== CONSOLE: {message} ===");
+Trace.WriteLine($"=== TRACE: {message} ===");
+
+// И проверьте все окна одновременно
+
+Самый надежный способ - добавьте файловый логгер, тогда все сообщения гарантированно будут сохраняться в файл.

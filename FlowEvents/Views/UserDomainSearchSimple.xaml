@@ -1,0 +1,56 @@
+﻿<Window x:Class="FlowEvents.Views.UserDomainSearchSimple"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:FlowEvents.Views"
+        mc:Ignorable="d"
+        Title="UserDomainSearchSimple" Height="450" Width="800">
+    <Grid Margin="10">
+        <StackPanel>
+            <!-- Поисковая строка -->
+            <TextBlock Text="Поиск пользователей в домене:" FontWeight="Bold"/>
+            <TextBox x:Name="SearchTextBox" Text="{Binding SearchTerm, UpdateSourceTrigger=PropertyChanged}" 
+                 Margin="0,5,0,0" Padding="5" Height="30">
+                <TextBox.InputBindings>
+                    <KeyBinding Key="Enter" Command="{Binding SearchCommand}"/>
+                </TextBox.InputBindings>
+            </TextBox>
+
+            <!-- Подсказка -->
+            <TextBlock Text="Введите имя, фамилию или логин пользователя" 
+                   FontStyle="Italic" Foreground="Gray" FontSize="10"/>
+
+            <!-- Кнопки управления -->
+            <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                <Button Content="Найти" Command="{Binding SearchCommand}" 
+                    Padding="15,5" Margin="0,0,10,0"/>
+                <Button Content="Очистить" Command="{Binding ClearCommand}" 
+                    Padding="15,5" Margin="0,0,10,0"/>
+                <Button Content="Отмена" Command="{Binding CancelSearchCommand}" 
+                    Padding="15,5" IsEnabled="{Binding IsSearching}"/>
+            </StackPanel>
+
+            <!-- Индикатор загрузки -->
+            <ProgressBar Height="4" Margin="0,5,0,0" 
+                     IsIndeterminate="{Binding IsSearching}" 
+                     Visibility="{Binding IsSearching, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+            <!-- Результаты поиска -->
+            <TextBlock Text="{Binding ResultsCount, StringFormat='Найдено пользователей: {0}'}" 
+                   Margin="0,10,0,5" FontWeight="SemiBold"/>
+
+            <DataGrid ItemsSource="{Binding Users}" AutoGenerateColumns="False" 
+                  IsReadOnly="True" SelectionMode="Single" Height="300">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="№" Binding="{Binding Number}" Width="30"/>
+                    <DataGridTextColumn Header="Логин" Binding="{Binding Username}" Width="120"/>
+                    <DataGridTextColumn Header="ФИО" Binding="{Binding DisplayName}" Width="200"/>
+                    <DataGridTextColumn Header="Email" Binding="{Binding Email}" Width="200"/>
+                    <DataGridCheckBoxColumn Header="Активен" Binding="{Binding IsActive}" Width="60"/>
+                    <DataGridTextColumn Header="Домен" Binding="{Binding DomainName}" Width="100"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </StackPanel>
+    </Grid>
+</Window>

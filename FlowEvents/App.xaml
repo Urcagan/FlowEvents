@@ -4,7 +4,7 @@
              xmlns:local="clr-namespace:FlowEvents">
     <!-- " StartupUri="Views/MainWindow.xaml" >-->
     <Application.Resources>
-       <!-- Создадим словарь ресурсов для доступа к обьявленным ресурсам во всем приложении        -->
+        <!-- Создадим словарь ресурсов для доступа к обьявленным ресурсам во всем приложении        -->
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <!-- Отдельный словарь ресурсов -->
@@ -15,6 +15,18 @@
                     <!-- Добавьте здесь другие глобальные конвертеры -->
                 </ResourceDictionary>
             </ResourceDictionary.MergedDictionaries>
+
+            <Style x:Key="PrimaryButton" TargetType="Button">
+                <Setter Property="Background" Value="#007ACC"/>
+                <Setter Property="Foreground" Value="White"/>
+                <Setter Property="Padding" Value="15,5"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Cursor" Value="Hand"/>
+            </Style>
+
         </ResourceDictionary>
+        <!-- Стили кнопок -->
+
+
     </Application.Resources>
 </Application>

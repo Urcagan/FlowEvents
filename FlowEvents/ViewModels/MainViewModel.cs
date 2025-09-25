@@ -243,15 +243,16 @@ namespace FlowEvents
                     return;
                 }
 
+                CurrentUsername = "Администратор"; // Environment.UserName; // Устанавливаем текущего пользователя
 
                 CurrentDbPath = pathDB; // Устанавливаем текущий путь к базе данных
 
                 await LoadUnitsToComboBoxAsync(); // Загружаем перечень установок из базы данных
-                                       //
-                                       //_currentUser = _authService.GetUser(_currentDbPath, _currentUsername);
-                                       // _currentUser = _authService.GetUser(pathDB, "User3");
+                                                  //
+                                                  //_currentUser = _authService.GetUser(_currentDbPath, _currentUsername);
+                                                  // _currentUser = _authService.GetUser(pathDB, "User3");
 
-                CurrentUsername = Environment.UserName; // Устанавливаем текущего пользователя
+                
                                                         //      CurrentUsername = "Администратор"; // Временно устанавливаем пользователя для тестирования
 
                 //await LoadCategoriesAsync();

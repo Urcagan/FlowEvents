@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:FlowEvents"
         mc:Ignorable="d"
-         Title="Управление пользователями" Height="450" Width="820">
+         Title="Управление пользователями" Height="450" Width="920">
     <DockPanel>
         <ToolBar DockPanel.Dock="Top">
             <Button Content="Найти пользователя в домене"  
@@ -24,6 +24,11 @@
 
             <Button Content="Управление правами"
                     Command="{Binding OpenPermissionWindowCommand}"
+                    Margin="10" HorizontalAlignment="Right" 
+                    BorderBrush="Black"/>
+            
+            <Button Content="Альтернативный поиск" 
+                    Command="{Binding UserSearchWindowCommand}"
                     Margin="10" HorizontalAlignment="Right" 
                     BorderBrush="Black"/>
         </ToolBar>

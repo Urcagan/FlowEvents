@@ -88,14 +88,19 @@
     <Compile Include="Repositories\Interface\ICategoryRepository.cs" />
     <Compile Include="Repositories\Interface\IDatabaseInfoRepository.cs" />
     <Compile Include="Repositories\Interface\IUnitRepository.cs" />
+    <Compile Include="Services\Implementations\DomainSettingsService.cs" />
+    <Compile Include="Services\Implementations\ActiveDirectoryService.cs" />
     <Compile Include="Services\Implementations\ConnectionStringProvider.cs" />
     <Compile Include="Services\Implementations\DatabaseValidationService.cs" />
     <Compile Include="Services\Implementations\PasswordHasher.cs" />
     <Compile Include="Services\Implementations\UserService.cs" />
+    <Compile Include="Services\Interface\IActiveDirectoryService.cs" />
     <Compile Include="Services\Interface\IConnectionStringProvider.cs" />
     <Compile Include="Services\Interface\IDatabaseValidationService.cs" />
+    <Compile Include="Services\Interface\IDomainSettingsService.cs" />
     <Compile Include="Services\Interface\IPasswordHasher.cs" />
     <Compile Include="Services\Interface\IUserservice.cs" />
+    <Compile Include="ViewModels\UserDomainSearchViewModel.cs" />
     <Compile Include="Views\CategoryView.xaml.cs">
       <DependentUpon>CategoryView.xaml</DependentUpon>
     </Compile>
@@ -168,10 +173,19 @@
     <Compile Include="Views\LoginUser.xaml.cs">
       <DependentUpon>LoginUser.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Views\UserDomainSearch.xaml.cs">
+      <DependentUpon>UserDomainSearch.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\UserDomainSearchSimple.xaml.cs">
+      <DependentUpon>UserDomainSearchSimple.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\UserManager.xaml.cs">
       <DependentUpon>UserManager.xaml</DependentUpon>
     </Compile>
     <Compile Include="ViewModels\UserManagerModel.cs" />
+    <Compile Include="Views\UserPickerControl.xaml.cs">
+      <DependentUpon>UserPickerControl.xaml</DependentUpon>
+    </Compile>
     <Page Include="Views\CategoryView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -221,7 +235,19 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="Views\UserDomainSearch.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\UserDomainSearchSimple.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Views\UserManager.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\UserPickerControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
