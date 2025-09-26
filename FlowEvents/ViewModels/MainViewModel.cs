@@ -28,6 +28,7 @@ namespace FlowEvents
         private readonly IPolicyAuthService _authService; // Сервис проверки пользователя
         private readonly IEventRepository _eventRepository; //Сервис работы с Event
         private readonly IDatabaseValidationService _validationService; // Сервис проверки базы данных
+        private readonly IUserInfoService _userInfoService; // сервис получения данных пользователя windows
 
         //-----------------------------------------------------------------------------------
 
@@ -199,11 +200,12 @@ namespace FlowEvents
 
         //===============================================================================================================================================
 
-        public MainViewModel(IPolicyAuthService authService, IEventRepository eventRepository , IDatabaseValidationService validationService)
+        public MainViewModel(IPolicyAuthService authService, IEventRepository eventRepository , IDatabaseValidationService validationService, IUserInfoService userInfoService)
         {
             _authService = authService;
             _eventRepository = eventRepository;
             _validationService = validationService;
+            _userInfoService = userInfoService;
 
             SettingOpenWindow = new RelayCommand(SettingsMenuItem);
             UnitOpenWindow = new RelayCommand(UnitMenuItem);
@@ -242,8 +244,11 @@ namespace FlowEvents
             {
                 
                 // Способ 1: Полная информация о пользователе windows
-                var userInfo = UserInfoService.GetCurrentUserInfo();
-                userInfo.PrintInfo();
+                var userInfo = _userInfoService.GetCurrentUserInfo();   // Получает данные о пользователе Windows
+              //  userInfo.PrintInfo();
+
+                CurrentUsername = userInfo.DisplayName; //WindowsIdentity.GetCurrent().Name; //Environment.UserName; // Устанавливаем текущего пользователя
+                UserName = CurrentUsername; // Отображаем имя пользователя в интерфейсе
 
                 string pathDB = App.Settings.pathDB; 
 
@@ -255,8 +260,7 @@ namespace FlowEvents
                     return;
                 }
 
-                CurrentUsername = WindowsIdentity.GetCurrent().Name; //Environment.UserName; // Устанавливаем текущего пользователя
-                UserName = CurrentUsername; // Отображаем имя пользователя в интерфейсе
+                
 
                 CurrentDbPath = pathDB; // Устанавливаем текущий путь к базе данных
 
@@ -404,9 +408,9 @@ namespace FlowEvents
 
         private void UserInfoWindow(object parameter)
         {
-            var userInfoViewModel = new UserInfoViewModel();                                        // 1. Берем ViewModel из контейнера
-            var userInfoWindow = new UserInfoWindow();                                                  // 2. Создаем окно обычным способом
-            userInfoWindow.DataContext = userInfoViewModel;                                           // 3. Связываем ViewModel с окном 
+            var userInfoViewModel = App.ServiceProvider.GetRequiredService<UserInfoViewModel>();                                        // 1. Берем ViewModel из контейнера
+            var userInfoWindow = new UserInfoWindow { DataContext= userInfoViewModel};                                                  // 2. Создаем окно обычным способом
+       //     userInfoWindow.DataContext = userInfoViewModel;                                           // 3. Связываем ViewModel с окном с установкой контекста
             userInfoWindow.Owner = Application.Current.MainWindow;                                    // 4. Устанавливает главное окно приложения как владельца (owner) для окна                                                                                                        
             userInfoWindow.WindowStartupLocation = WindowStartupLocation.CenterOwner;                 // 5. Центрируем относительно владельца если не прописано м xaml (WindowStartupLocation="CenterOwner")
             if (userInfoWindow.ShowDialog() == true) { }                                              // 6. Показываем модально         

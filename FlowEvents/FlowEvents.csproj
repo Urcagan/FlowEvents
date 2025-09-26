@@ -83,11 +83,12 @@
     <Compile Include="App.cs" />
     <Compile Include="Models\DatabaseInfo.cs" />
     <Compile Include="Models\UserInfo.cs" />
+    <Compile Include="Services\Interface\IUserInfoService.cs" />
     <Compile Include="ViewModels\UserInfoViewModel.cs" />
     <Compile Include="Views\UserInfoWindow.xaml.cs">
       <DependentUpon>UserInfoWindow.xaml</DependentUpon>
     </Compile>
-    <Compile Include="UserInfoService.cs" />
+    <Compile Include="Services\Implementations\UserInfoService.cs" />
     <Compile Include="Repositories\Implementations\CategoryRepository.cs" />
     <Compile Include="Repositories\Implementations\DatabaseInfoRepository.cs" />
     <Compile Include="Repositories\Implementations\UnitRepository.cs" />

@@ -17,7 +17,9 @@ namespace FlowEvents.Models
         public bool IsDomainUser { get; set; }
         public string SID { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
-
+        public string UserType => IsDomainUser ? "Доменный пользователь" : "Локальный пользователь";
+        
+        
         public void PrintInfo()
         {
             Console.WriteLine("=== ИНФОРМАЦИЯ О ПОЛЬЗОВАТЕЛЕ ===");

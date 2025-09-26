@@ -6,9 +6,9 @@
         xmlns:local="clr-namespace:FlowEvents.Views"
         mc:Ignorable="d"
         Title="UserDomainSearchSimple" Height="450" Width="800">
-    <Grid Margin="10">
+    <!--<Grid Margin="10">
         <StackPanel>
-            <!-- Поисковая строка -->
+            --><!-- Поисковая строка --><!--
             <TextBlock Text="Поиск пользователей в домене:" FontWeight="Bold"/>
             <TextBox x:Name="SearchTextBox" Text="{Binding SearchTerm, UpdateSourceTrigger=PropertyChanged}" 
                  Margin="0,5,0,0" Padding="5" Height="30">
@@ -17,11 +17,11 @@
                 </TextBox.InputBindings>
             </TextBox>
 
-            <!-- Подсказка -->
+            --><!-- Подсказка --><!--
             <TextBlock Text="Введите имя, фамилию или логин пользователя" 
                    FontStyle="Italic" Foreground="Gray" FontSize="10"/>
 
-            <!-- Кнопки управления -->
+            --><!-- Кнопки управления --><!--
             <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
                 <Button Content="Найти" Command="{Binding SearchCommand}" 
                     Padding="15,5" Margin="0,0,10,0"/>
@@ -31,12 +31,12 @@
                     Padding="15,5" IsEnabled="{Binding IsSearching}"/>
             </StackPanel>
 
-            <!-- Индикатор загрузки -->
+            --><!-- Индикатор загрузки --><!--
             <ProgressBar Height="4" Margin="0,5,0,0" 
                      IsIndeterminate="{Binding IsSearching}" 
                      Visibility="{Binding IsSearching, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
-            <!-- Результаты поиска -->
+            --><!-- Результаты поиска --><!--
             <TextBlock Text="{Binding ResultsCount, StringFormat='Найдено пользователей: {0}'}" 
                    Margin="0,10,0,5" FontWeight="SemiBold"/>
 
@@ -52,5 +52,77 @@
                 </DataGrid.Columns>
             </DataGrid>
         </StackPanel>
+    </Grid>-->
+
+    <Grid Margin="10">
+        <StackPanel>
+            <!-- Поисковая строка -->
+            <TextBlock Text="Поиск пользователей в домене:" FontWeight="Bold"/>
+            <TextBox Text="{Binding SearchTerm, UpdateSourceTrigger=PropertyChanged}" 
+                 Margin="0,5,0,0" Padding="5" Height="30">
+                <TextBox.InputBindings>
+                    <KeyBinding Key="Enter" Command="{Binding SearchCommand}"/>
+                </TextBox.InputBindings>
+            </TextBox>
+
+            <!-- Подсказка -->
+            <TextBlock Text="Введите имя, фамилию или логин пользователя" 
+                   FontStyle="Italic" Foreground="Gray" FontSize="10"/>
+
+            <!-- Настройки поиска -->
+            <Grid Margin="0,10,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="100"/>
+                    <ColumnDefinition Width="100"/>
+                    <ColumnDefinition Width="200"/>
+                    <ColumnDefinition Width="150"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Text="Количество результатов:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                <TextBox Grid.Column="1" Text="{Binding MaxResults, UpdateSourceTrigger=PropertyChanged}" 
+                     Margin="5,0" Padding="5" Height="25" ToolTip="Введите число от 1 до 1000"/>
+
+                <TextBlock Grid.Column="2" Text="{Binding MaxResultsValidation}" HorizontalAlignment="Right"
+                       Foreground="Black" FontSize="10" VerticalAlignment="Center"/>
+                
+                <CheckBox Grid.Column="4" Content="Только активные" IsChecked="{Binding OnlyActive}"
+                      VerticalAlignment="Center" Margin="10,0,0,0"/>
+
+                
+            </Grid>
+
+            <!-- Кнопки управления -->
+            <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                <Button Content="Найти" Command="{Binding SearchCommand}" 
+                    Padding="15,5" Margin="0,0,10,0"/>
+                <Button Content="Очистить" Command="{Binding ClearCommand}" 
+                    Padding="15,5" Margin="0,0,10,0"/>
+                <Button Content="Остановить" Command="{Binding CancelSearchCommand}" 
+                    Padding="15,5" IsEnabled="{Binding IsSearching}"/>
+            </StackPanel>
+
+            <!-- Индикатор загрузки -->
+            <ProgressBar Height="4" Margin="0,5,0,0" 
+                     IsIndeterminate="{Binding IsSearching}" 
+                     Visibility="{Binding IsSearching, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+            <!-- Результаты поиска -->
+            <TextBlock Text="{Binding SearchStatus}" 
+                   Margin="0,10,0,5" FontWeight="SemiBold"/>
+
+            <DataGrid ItemsSource="{Binding Users}" AutoGenerateColumns="False" 
+                  IsReadOnly="True" SelectionMode="Single" Height="300">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="№" Binding="{Binding Number}" Width="30"/>
+                    <DataGridTextColumn Header="Логин" Binding="{Binding Username}" Width="120"/>
+                    <DataGridTextColumn Header="ФИО" Binding="{Binding DisplayName}" Width="200"/>
+                    <DataGridTextColumn Header="Email" Binding="{Binding Email}" Width="200"/>
+                    <DataGridCheckBoxColumn Header="Активен" Binding="{Binding IsActive}" Width="60"/>
+                    <DataGridTextColumn Header="Домен" Binding="{Binding DomainName}" Width="100"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </StackPanel>
     </Grid>
+    
 </Window>

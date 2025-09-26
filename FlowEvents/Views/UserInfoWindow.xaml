@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:FlowEvents.Views"
         mc:Ignorable="d"
         Title="Информация о пользователе Windows" 
-        Height="500" Width="600"
+        Height="550" Width="600"
         WindowStartupLocation="CenterScreen"
         Background="#f0f0f0">
     <Window.Resources>
@@ -59,23 +59,23 @@
 
                 <!-- Логин -->
                 <TextBlock Grid.Row="0" Grid.Column="0" Text="Логин:" FontWeight="Bold"/>
-                <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Login}" Name="txtLogin"/>
+                <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Login, Mode=OneWay}" Name="txtLogin"/>
 
                 <!-- Отображаемое имя -->
                 <TextBlock Grid.Row="1" Grid.Column="0" Text="Отображаемое имя:" FontWeight="Bold"/>
-                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding DisplayName}" Name="txtDisplayName"/>
+                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding DisplayName, Mode=OneWay}" Name="txtDisplayName"/>
 
                 <!-- Полный логин -->
                 <TextBlock Grid.Row="2" Grid.Column="0" Text="Полный логин:" FontWeight="Bold"/>
-                <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding FullLogin}" Name="txtFullLogin"/>
+                <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding FullLogin, Mode=OneWay}" Name="txtFullLogin"/>
 
                 <!-- Домен -->
                 <TextBlock Grid.Row="3" Grid.Column="0" Text="Домен/Компьютер:" FontWeight="Bold"/>
-                <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding Domain}" Name="txtDomain"/>
+                <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding Domain, Mode=OneWay}" Name="txtDomain"/>
 
                 <!-- Email -->
                 <TextBlock Grid.Row="4" Grid.Column="0" Text="Email:" FontWeight="Bold"/>
-                <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding Email}" Name="txtEmail"/>
+                <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding Email, Mode=OneWay}" Name="txtEmail"/>
 
                 <!-- Тип пользователя -->
                 <TextBlock Grid.Row="5" Grid.Column="0" Text="Тип пользователя:" FontWeight="Bold"/>
@@ -83,24 +83,26 @@
 
                 <!-- SID -->
                 <TextBlock Grid.Row="6" Grid.Column="0" Text="SID:" FontWeight="Bold"/>
-                <TextBox Grid.Row="6" Grid.Column="1" Text="{Binding SID}" Name="txtSID"/>
+                <TextBox Grid.Row="6" Grid.Column="1" Text="{Binding SID, Mode=OneWay}" Name="txtSID"/>
 
                 <!-- Описание -->
                 <TextBlock Grid.Row="7" Grid.Column="0" Text="Описание:" FontWeight="Bold"/>
-                <TextBox Grid.Row="7" Grid.Column="1" Text="{Binding Description}" Name="txtDescription"/>
+                <TextBox Grid.Row="7" Grid.Column="1" Text="{Binding Description, Mode=OneWay}" Name="txtDescription"/>
 
                 <!-- Distinguished Name -->
                 <TextBlock Grid.Row="8" Grid.Column="0" Text="Distinguished Name:" FontWeight="Bold"/>
-                <TextBox Grid.Row="8" Grid.Column="1" Text="{Binding DistinguishedName}" 
-                         Height="40" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/>
+                <TextBox Grid.Row="8" Grid.Column="1" Text="{Binding DistinguishedName, Mode=OneWay}" 
+                         Height="80" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/>
             </Grid>
         </Border>
 
         <!-- Кнопки -->
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,15,0,0">
-            <Button Content="Обновить" Click="RefreshButton_Click" Width="80" Margin="5,0"/>
-            <Button Content="Копировать все" Click="CopyAllButton_Click" Width="100" Margin="5,0"/>
-            <Button Content="Закрыть" Click="CloseButton_Click" Width="80" Margin="5,0"/>
+
+            <Button Content="Обновить" Command="{Binding RefreshCommand}" Width="80" Margin="5,0"/>
+            <Button Content="Копировать все" Command="{Binding CopyAllCommand}" Width="95" Margin="5,0"/>
+            <Button Content="Закрыть" Command="{Binding CloseCommand}" Width="80" Margin="5,0"/>
+            
         </StackPanel>
     </Grid>
 </Window>

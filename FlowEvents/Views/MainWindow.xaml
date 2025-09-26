@@ -85,12 +85,12 @@
                 </MenuItem>
                 
                 <MenuItem Header="Пользователи (старый на удаление)" Command="{Binding UserManagerWindow}">
-                    <MenuItem.IsEnabled>
+                    <!--<MenuItem.IsEnabled>
                         <MultiBinding Converter="{StaticResource PermissionsConverter}">
                             <Binding Path="CurrentUserPermissions"/>
-                            <Binding Source="ManageUsers, ConfigureSystem"/> <!-- Перечисление прав через запятую -->
+                            <Binding Source="ManageUsers, ConfigureSystem"/> --><!-- Перечисление прав через запятую --><!--
                         </MultiBinding>
-                    </MenuItem.IsEnabled>
+                    </MenuItem.IsEnabled>-->
                 </MenuItem>
 
                 <MenuItem Header="О пользователе" Command="{Binding UserWindowCommand}"/>

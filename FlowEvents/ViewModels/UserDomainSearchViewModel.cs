@@ -12,20 +12,8 @@ namespace FlowEvents.ViewModels
 {
     public class UserDomainSearchViewModel : INotifyPropertyChanged
     {
-
-        // Реализация INotifyPropertyChanged
-        public event PropertyChangedEventHandler PropertyChanged;
-        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-
         private readonly IActiveDirectoryService _adService;
         private readonly IDomainSettingsService _domainSettingsService;
-
-        private string _searchTerm;
-        private bool _isSearching;
-        private ObservableCollection<DomainUser> _users;
         private CancellationTokenSource _cancellationTokenSource;
 
         public UserDomainSearchViewModel(IActiveDirectoryService adService, IDomainSettingsService domainSettingsService)
@@ -34,15 +22,16 @@ namespace FlowEvents.ViewModels
             _domainSettingsService = domainSettingsService;
 
             Users = new ObservableCollection<DomainUser>();
+            _maxResults = "50"; // Значение по умолчанию
 
             SearchCommand = new RelayCommand(async () => await SearchUsersAsync(),
-                () => !string.IsNullOrWhiteSpace(SearchTerm) && !IsSearching);
-            
+                () => !string.IsNullOrWhiteSpace(SearchTerm) && !IsSearching && IsValidMaxResults());
+
             ClearCommand = new RelayCommand(ClearSearch);
-            
-            CancelSearchCommand = new RelayCommand(CancelSearch);
+            CancelSearchCommand = new RelayCommand(CancelSearch, () => IsSearching);
         }
 
+        private string _searchTerm;
         public string SearchTerm
         {
             get => _searchTerm;
@@ -50,14 +39,53 @@ namespace FlowEvents.ViewModels
             {
                 _searchTerm = value;
                 OnPropertyChanged();
-                // Автопоиск при вводе (с задержкой)
-                if (!string.IsNullOrWhiteSpace(value) && value.Length > 2) // Запускать поиск при длинне искомого имени более заданного значения
+                if (!string.IsNullOrWhiteSpace(value) && value.Length > 2)
                 {
                     StartDelayedSearch();
                 }
             }
         }
 
+        private string _maxResults;
+        public string MaxResults
+        {
+            get => _maxResults;
+            set
+            {
+                _maxResults = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(MaxResultsValidation));
+            }
+        }
+
+        public string MaxResultsValidation
+        {
+            get
+            {
+                if (string.IsNullOrWhiteSpace(MaxResults))
+                    return "Введите число";
+                if (!int.TryParse(MaxResults, out int result))
+                    return "Не число";
+                if (result < 1)
+                    return "Минимум 1";
+                if (result > 1000)
+                    return "Максимум 1000";
+                return "✓";
+            }
+        }
+
+        private bool _onlyActive = true;
+        public bool OnlyActive
+        {
+            get => _onlyActive;
+            set
+            {
+                _onlyActive = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private bool _isSearching;
         public bool IsSearching
         {
             get => _isSearching;
@@ -65,57 +93,75 @@ namespace FlowEvents.ViewModels
             {
                 _isSearching = value;
                 OnPropertyChanged();
+                OnPropertyChanged(nameof(SearchStatus));
                 CommandManager.InvalidateRequerySuggested();
             }
         }
 
-        public ObservableCollection<DomainUser> Users
+        public string SearchStatus
         {
-            get => _users;
-            set
+            get
             {
-                _users = value;
-                OnPropertyChanged();
-                OnPropertyChanged(nameof(ResultsCount));
+                if (IsSearching)
+                    return "Поиск...";
+                return $"Найдено пользователей: {ResultsCount}";
             }
         }
 
+        public ObservableCollection<DomainUser> Users { get; set; }
         public int ResultsCount => Users?.Count ?? 0;
 
         public RelayCommand SearchCommand { get; }
         public RelayCommand ClearCommand { get; }
         public RelayCommand CancelSearchCommand { get; }
 
+        private bool IsValidMaxResults()
+        {
+            return int.TryParse(MaxResults, out int result) && result >= 1 && result <= 1000;
+        }
+
         private async Task SearchUsersAsync()
         {
-            if (string.IsNullOrWhiteSpace(SearchTerm)) return;
+            if (string.IsNullOrWhiteSpace(SearchTerm) || !IsValidMaxResults())
+                return;
 
             IsSearching = true;
-            _cancellationTokenSource = new CancellationTokenSource(); //это механизм для отмены асинхронных операций в C#.
+            _cancellationTokenSource = new CancellationTokenSource();
 
             try
             {
-                var options = new DomainSearchOptions
+                int maxResultsValue = int.Parse(MaxResults);
+
+                var options = new DomainSearchOptions // Настраеваем конфигурацию поиска 
                 {
-                    SearchTerm = SearchTerm,
-                    DomainController = _domainSettingsService.GetCurrentDomainController(),
-                    MaxResults = 50
+                    SearchTerm = SearchTerm,                                                // искомыое имя пользоваьеля 
+                    DomainController = _domainSettingsService.GetCurrentDomainController(), //Задаем домен поиска
+                    MaxResults = maxResultsValue,                                           // количество искомых пользователей
+                    OnlyActive = OnlyActive                                                 // состояние активности пользователя
                 };
 
                 var result = await _adService.SearchUsersAsync(options, _cancellationTokenSource.Token);
 
                 if (result.IsSuccess)
                 {
-                    Users = new ObservableCollection<DomainUser>(result.Users);
+                    Users.Clear();
+                    foreach (var user in result.Users)
+                    {
+                        Users.Add(user);
+                    }
                 }
                 else
                 {
-                    MessageBox.Show(result.ErrorMessage, "Ошибка поиска");
+                    MessageBox.Show(result.ErrorMessage, "Ошибка поиска", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
             catch (OperationCanceledException)
             {
                 // Поиск отменен - это нормально
+            }
+            catch (FormatException)
+            {
+                MessageBox.Show("Некорректное количество результатов", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
             {
@@ -127,14 +173,15 @@ namespace FlowEvents.ViewModels
         {
             SearchTerm = string.Empty;
             Users.Clear();
+            MaxResults = "50";
+            OnlyActive = false;
         }
 
-        private void CancelSearch()             // Когда пользователь нажимает кнопку "Остановить поиск"
+        private void CancelSearch()
         {
-            _cancellationTokenSource?.Cancel(); // ← ОТМЕНА!
+            _cancellationTokenSource?.Cancel();
         }
 
-        // Автопоиск с задержкой
         private async void StartDelayedSearch()
         {
             _cancellationTokenSource?.Cancel();
@@ -142,8 +189,8 @@ namespace FlowEvents.ViewModels
 
             try
             {
-                await Task.Delay(500, _cancellationTokenSource.Token);
-                if (!_cancellationTokenSource.Token.IsCancellationRequested)
+                await Task.Delay(800, _cancellationTokenSource.Token);
+                if (!_cancellationTokenSource.Token.IsCancellationRequested && IsValidMaxResults())
                 {
                     await SearchUsersAsync();
                 }
@@ -152,6 +199,12 @@ namespace FlowEvents.ViewModels
             {
                 // Задача отменена - игнорируем
             }
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

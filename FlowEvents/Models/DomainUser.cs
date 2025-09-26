@@ -67,7 +67,8 @@ namespace FlowEvents
     {
         public string SearchTerm { get; set; } = "*";         // Что ищем ("john", "doe", "*" - все)
         public string DomainController { get; set; }          // Контроллер домена ("dc1.company.com")
-        public int MaxResults { get; set; } = 10;             // Максимум результатов (ограничение)
+        public int MaxResults { get; set; } = 50;             // Максимум результатов (ограничение)
         public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(10); // Таймаут операции
+        public bool OnlyActive { get; set; } = false;
     }
 }

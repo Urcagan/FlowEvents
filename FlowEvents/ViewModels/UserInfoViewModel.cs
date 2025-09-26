@@ -1,79 +1,112 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using FlowEvents.Models;
+using FlowEvents.Services.Interface;
+using FlowEvents.Views;
+using System;
 using System.ComponentModel;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Input;
 
 namespace FlowEvents.ViewModels
 {
     public class UserInfoViewModel : INotifyPropertyChanged
     {
-        private string _login = string.Empty;
-        private string _displayName = string.Empty;
-        private string _fullLogin = string.Empty;
-        private string _domain = string.Empty;
-        private string _email = string.Empty;
-        private string _distinguishedName = string.Empty;
-        private bool _isDomainUser;
-        private string _sid = string.Empty;
-        private string _description = string.Empty;
+        private readonly IUserInfoService _userInfoService;
+        private UserInfo _userInfo;
 
-        public string Login
+        public UserInfoViewModel(IUserInfoService userInfoService)
         {
-            get => _login;
-            set { _login = value; OnPropertyChanged(nameof(Login)); }
+            _userInfoService = userInfoService;
+            LoadUserInfo();
         }
 
-        public string DisplayName
+
+        public UserInfo UserInfo
         {
-            get => _displayName;
-            set { _displayName = value; OnPropertyChanged(nameof(DisplayName)); }
+            get => _userInfo;
+            private set
+            {
+                _userInfo = value;
+                OnPropertyChanged(nameof(UserInfo));
+                // Уведомляем об изменении всех свойств для привязки
+                OnPropertyChanged(nameof(Login));
+                OnPropertyChanged(nameof(DisplayName));
+                OnPropertyChanged(nameof(FullLogin));
+                OnPropertyChanged(nameof(Domain));
+                OnPropertyChanged(nameof(Email));
+                OnPropertyChanged(nameof(UserType));
+                OnPropertyChanged(nameof(SID));
+                OnPropertyChanged(nameof(Description));
+                OnPropertyChanged(nameof(DistinguishedName));
+            }
         }
 
-        public string FullLogin
+
+        // Свойства для прямого доступа (удобно для привязки в XAML)
+        public string Login => UserInfo?.Login ?? string.Empty;
+        public string DisplayName => UserInfo?.DisplayName ?? string.Empty;
+        public string FullLogin => UserInfo?.FullLogin ?? string.Empty;
+        public string Domain => UserInfo?.Domain ?? string.Empty;
+        public string Email => UserInfo?.Email ?? string.Empty;
+        public string UserType => UserInfo?.UserType ?? string.Empty;
+        public string SID => UserInfo?.SID ?? string.Empty;
+        public string Description => UserInfo?.Description ?? string.Empty;
+        public string DistinguishedName => UserInfo?.DistinguishedName ?? string.Empty;
+
+        // Команды
+        public ICommand RefreshCommand => new RelayCommand(_ => RefreshUserInfo());
+        public ICommand CloseCommand => new RelayCommand(_ => CloseWindow());
+        public ICommand CopyAllCommand => new RelayCommand(_ => CopyAllToClipboard());
+
+        private void LoadUserInfo()
         {
-            get => _fullLogin;
-            set { _fullLogin = value; OnPropertyChanged(nameof(FullLogin)); }
+            UserInfo = _userInfoService.GetCurrentUserInfo();
         }
 
-        public string Domain
+        private void RefreshUserInfo()
         {
-            get => _domain;
-            set { _domain = value; OnPropertyChanged(nameof(Domain)); }
+            LoadUserInfo();
+            MessageBox.Show("Информация обновлена!", "Обновление",
+                          MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
-        public string Email
+        private void CloseWindow()
         {
-            get => _email;
-            set { _email = value; OnPropertyChanged(nameof(Email)); }
+            // Закрытие окна через привязку к DialogResult
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                var window = Application.Current.Windows
+                    .OfType<UserInfoWindow>()
+                    .FirstOrDefault(w => w.DataContext == this);
+                window?.Close();
+            });
         }
 
-        public string DistinguishedName
+        private void CopyAllToClipboard()
         {
-            get => _distinguishedName;
-            set { _distinguishedName = value; OnPropertyChanged(nameof(DistinguishedName)); }
+            try
+            {
+                var text = $"Логин: {Login}\n" +
+                          $"Отображаемое имя: {DisplayName}\n" +
+                          $"Полный логин: {FullLogin}\n" +
+                          $"Домен: {Domain}\n" +
+                          $"Email: {Email}\n" +
+                          $"Тип: {UserType}\n" +
+                          $"SID: {SID}\n" +
+                          $"Описание: {Description}\n" +
+                          $"Distinguished Name: {DistinguishedName}";
+
+                Clipboard.SetText(text);
+                MessageBox.Show("Все данные скопированы в буфер обмена!", "Копирование",
+                              MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка копирования: {ex.Message}", "Ошибка",
+                              MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
-        public bool IsDomainUser
-        {
-            get => _isDomainUser;
-            set { _isDomainUser = value; OnPropertyChanged(nameof(IsDomainUser)); OnPropertyChanged(nameof(UserType)); }
-        }
-
-        public string SID
-        {
-            get => _sid;
-            set { _sid = value; OnPropertyChanged(nameof(SID)); }
-        }
-
-        public string Description
-        {
-            get => _description;
-            set { _description = value; OnPropertyChanged(nameof(Description)); }
-        }
-
-        public string UserType => IsDomainUser ? "Доменный пользователь" : "Локальный пользователь";
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -82,17 +115,5 @@ namespace FlowEvents.ViewModels
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
-        public override string ToString()
-        {
-            return $"Логин: {Login}\n" +
-                   $"Отображаемое имя: {DisplayName}\n" +
-                   $"Полный логин: {FullLogin}\n" +
-                   $"Домен: {Domain}\n" +
-                   $"Email: {Email}\n" +
-                   $"Тип: {UserType}\n" +
-                   $"SID: {SID}\n" +
-                   $"Описание: {Description}\n" +
-                   $"Distinguished Name: {DistinguishedName}";
-        }
     }
 }

@@ -133,6 +133,8 @@ namespace FlowEvents
             services.AddSingleton<IUnitRepository, UnitRepository>();
             services.AddSingleton<IUserRepository, UserRepository>();
 
+            services.AddSingleton<IUserInfoService, UserInfoService>();
+
 
             // Регистрация ViewModels
             services.AddTransient<MainViewModel>();
@@ -143,6 +145,7 @@ namespace FlowEvents
             services.AddTransient<UnitViewModel>();
             services.AddTransient<AddUserViewModel>();
             services.AddTransient<UserDomainSearchViewModel>();
+            services.AddTransient<UserInfoViewModel>();
 
             // Регистрация окон
             services.AddTransient<MainWindow>();

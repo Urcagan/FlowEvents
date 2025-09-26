@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.DirectoryServices;
 using System.DirectoryServices.AccountManagement;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -27,9 +28,16 @@ namespace FlowEvents.Services.Implementations
             {
                 // Запускаем поиск в отдельном потоке чтобы не блокировать UI
                 var users = await Task.Run(() => SearchUsersInternal(options, cancellationToken), cancellationToken);
+                
+                // Фильтрация только активных пользователей, если включена опция
+                if (options.OnlyActive)
+                {
+                    users = users.Where(u => u.IsActive).ToList();
+                }
+                
                 result.Users = users;
                 result.IsSuccess = true;
-            }
+            }            
             catch (OperationCanceledException)
             {
                 // Пользователь отменил операцию - не ошибка, а нормальная ситуация
@@ -38,14 +46,8 @@ namespace FlowEvents.Services.Implementations
             }
             catch (PrincipalServerDownException ex)
             {
-                
                 //_logger?.LogError(ex, "Сервер домена '{DomainController}' недоступен", options.DomainController);
                 result.ErrorMessage = $"Сервер домена недоступен: {ex.Message}";
-            }
-            catch (PrincipalOperationException ex)
-            {
-                //_logger?.LogError(ex, "Ошибка операции с доменом");
-                result.ErrorMessage = $"Ошибка операции с доменом: {ex.Message}";
             }
             catch (Exception ex)
             {
@@ -65,6 +67,7 @@ namespace FlowEvents.Services.Implementations
 
             // 1. Подключаемся к домену
             using (var context = CreatePrincipalContext(options.DomainController))
+          // using (var context = new PrincipalContext(ContextType.Domain, options.DomainController))
             {
                 // 2. Проверяем подключение
                 if (!context.ValidateCredentials(null, null, ContextOptions.SimpleBind))
@@ -75,7 +78,8 @@ namespace FlowEvents.Services.Implementations
                 // 3. Создаем шаблон для поиска
                 var userPrincipal = new UserPrincipal(context)
                 {
-                    Name = options.SearchTerm // Ищем по имени (можно изменить на EmailAddress и т.д.)
+                    //Name = options.SearchTerm // Ищем по имени (можно изменить на EmailAddress и т.д.)
+                     Name = $"{options.SearchTerm}*" // Добавляем * для поиска по частичному совпадению
                 };
 
                 // 4. Выполняем поиск
