@@ -20,6 +20,8 @@ namespace FlowEvents.ViewModels
     {
         private readonly IActiveDirectoryService _adService;
         private readonly IDomainSettingsService _domainSettingsService;
+        private readonly IUserService _userService;
+
         private CancellationTokenSource _cancellationTokenSource;
 
         private string _searchTerm;
@@ -28,6 +30,7 @@ namespace FlowEvents.ViewModels
         private bool _isSearching;
         private DomainUser _selectedUser;
         private string _domainNameToFaind;
+        private bool _isLoading;
 
 
         public string SearchTerm
@@ -43,8 +46,6 @@ namespace FlowEvents.ViewModels
                 }
             }
         }
-
-
         public string MaxResults
         {
             get => _maxResults;
@@ -111,7 +112,17 @@ namespace FlowEvents.ViewModels
             { _domainNameToFaind = value; OnPropertyChanged(); }
         }
 
+        private const int DefaultRoleId = 2; // ID роли "user"
 
+        public bool IsLoading
+        {
+            get { return _isLoading; }
+            set
+            {
+                _isLoading = value;
+                OnPropertyChanged(nameof(IsLoading));
+            }
+        }
 
         public ObservableCollection<DomainUser> Users { get; set; }
         public int ResultsCount => Users?.Count ?? 0;
@@ -122,10 +133,11 @@ namespace FlowEvents.ViewModels
         public RelayCommand WindowClossingCommand { get; }
 
 
-        public UserDomainSearchViewModel(IActiveDirectoryService adService, IDomainSettingsService domainSettingsService)
+        public UserDomainSearchViewModel(IActiveDirectoryService adService, IDomainSettingsService domainSettingsService, IUserService userService)
         {
             _adService = adService;
             _domainSettingsService = domainSettingsService;
+            _userService = userService;
 
             Users = new ObservableCollection<DomainUser>();
             DomainNameToFaind = _domainSettingsService.GetCurrentDomainController(); //Задаем домен поиска полученное из файла конфигурации
@@ -144,54 +156,36 @@ namespace FlowEvents.ViewModels
 
 
 
-        private void AddDomainUser(object parameter)
+        private async void AddDomainUser() // Добавить доменного пользователя
         {
-            if (SelectedDomainUser == null) return;
+            if (SelectedUser == null) return;
 
-            if (!IsUserUnique(SelectedDomainUser.Username)) // Проверка на наличие данного пользователя в БД
+            try
             {
-                MessageBox.Show("Пользователь с таким именем уже есть!");
-                SelectedDomainUser = null; //Снимаем выделение строки
-                return;
-            }
+                IsLoading = true;
 
-            try // Сохранение в базу
-            {
-                using (var connection = new SQLiteConnection(_connectionString))
+                var result = await _userService.RegisterDomainUserAsync(SelectedUser.Username, SelectedUser.DomainName, SelectedUser.DisplayName, SelectedUser.Email, DefaultRoleId);
+
+                if (result.Success)
                 {
-                    connection.Open();
-                    var command = new SQLiteCommand(
-                        "INSERT INTO Users (UserName, DomainName, DisplayName, Email, RoleId) " +
-                        "VALUES (@UserName, @DomainName, @DisplayName, @Email, @RoleId)",
-                        connection);
+                    MessageBox.Show(result.Message, "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
 
-                    command.Parameters.AddWithValue("@UserName", SelectedDomainUser.Username);
-                    command.Parameters.AddWithValue("@DomainName", string.IsNullOrEmpty(SelectedDomainUser.DomainName) ? DBNull.Value : (object)SelectedDomainUser.DomainName);
-                    command.Parameters.AddWithValue("@DisplayName", string.IsNullOrEmpty(SelectedDomainUser.DisplayName) ? DBNull.Value : (object)SelectedDomainUser.DisplayName);
-                    command.Parameters.AddWithValue("@Email", string.IsNullOrEmpty(SelectedDomainUser.Email) ? DBNull.Value : (object)SelectedDomainUser.Email);
-                    command.Parameters.AddWithValue("@RoleId", 1); // Права пользователя -  0 = user
-                    command.ExecuteNonQuery();
+                    // Очистка полей
+                    SelectedUser = null; //Снимаем выделение строки
+                }
+                else
+                {
+                    MessageBox.Show(result.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
-            catch (SQLiteException ex) // Обработка ошибок, связанных с SQLite
+            finally
             {
-                MessageBox.Show($"Ошибка базы данных: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                IsLoading = false;
             }
-            catch (Exception ex) // Обработка всех остальных ошибок
-            {
-                MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-
-            MessageBox.Show($"Пользователь {SelectedDomainUser.Username} добавлен", "Уведомление");
-            SelectedDomainUser = null; //Снимаем выделение строки
 
             //необходимо обновлять таблицу с пользователями на странице UserManger
-            _userManagerModel?.GetUsers();
+            ///_userManagerModel?.GetUsers();
         }
-
-
-
-
 
 
         public string SearchStatus

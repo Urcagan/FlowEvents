@@ -113,6 +113,30 @@ namespace FlowEvents.Repositories
             }
         }
 
+        // Добавляем доменного пользователя
+        public async Task<int> AddDomenUserAsync(string username, string domainName, string displayName, string email, int roleId)
+        {
+            var _connectionString = _connectionProvider.GetConnectionString();
+            using (var connection = new SQLiteConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+
+                string query = "INSERT INTO Users (UserName, DomainName, DisplayName, RoleId, Email, IsAllowed) " +
+                        "VALUES (@UserName, @DomainName, @DisplayName, @RoleId, @Email, 1)";
+                using (var command = new SQLiteCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@UserName", username);
+                    command.Parameters.AddWithValue("@DomainName", string.IsNullOrEmpty(domainName) ? DBNull.Value : (object)domainName);
+                    command.Parameters.AddWithValue("@DisplayName", string.IsNullOrEmpty(displayName) ? DBNull.Value : (object)displayName);
+                    command.Parameters.AddWithValue("@Email", string.IsNullOrEmpty(email) ? DBNull.Value : (object)email);
+                    command.Parameters.AddWithValue("@RoleId", roleId);
+
+                    var result = await command.ExecuteScalarAsync();
+                    return Convert.ToInt32(result);
+                }
+            }
+
+        }
 
         public async Task<bool> DeleteUserAsync(string userName)
         {

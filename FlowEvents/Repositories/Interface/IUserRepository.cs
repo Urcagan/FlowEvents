@@ -12,6 +12,7 @@ namespace FlowEvents.Repositories.Interface
         Task<List<User>> GetAllUsersAsync(); // Получение всех пользователей
         Task<bool> UserExistsAsync(string username); // Проверка существования пользователя
         Task<int> AddUserAsync(string username, string hashedPassword, string salt, int roleId); // Добавление нового пользователя и возврат его ID
+        Task<int> AddDomenUserAsync(string username, string domainName, string displayName, string email, int roleId);
         Task<bool> DeleteUserAsync(string userName);
 
         Task UpdateUserAccessAsync(string username, bool isAllowed);

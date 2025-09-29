@@ -60,7 +60,32 @@ namespace FlowEvents.Services.Implementations
         }
 
 
-       // public async Task<bool> DeleteUserAsync(string userName, string currentUser)
+        public async Task<(bool Success, string Message)> RegisterDomainUserAsync(string username, string domainName, string displayName, string email, int DefaultRoleID)
+        {
+            if (string.IsNullOrWhiteSpace(username) )
+                return (false, "Пожалуйста, заполните все поля");
+            try
+            {
+                // Проверка существования пользователя
+                if (await _userRepository.UserExistsAsync(username))
+                    return (false, $"Пользователь '{username}' уже существует");
+
+                // Добавление пользователя
+                var userId = await _userRepository.AddDomenUserAsync(username, domainName, displayName, email, DefaultRoleID);
+
+                return (true, $"Пользователь {username} успешно добавлен");
+            }
+            catch (SQLiteException ex)
+            {
+                return (false, $"Ошибка базы данных: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                return (false, $"Ошибка: {ex.Message}");
+            }
+        }
+
+        // public async Task<bool> DeleteUserAsync(string userName, string currentUser)
         public async Task<bool> DeleteUserAsync(string userName)
         {
             // Проверка: нельзя удалить самого себя
@@ -79,7 +104,7 @@ namespace FlowEvents.Services.Implementations
             return await _userRepository.DeleteUserAsync(userName);
         }
 
-       
+
 
 
         //public async Task ChangeUserRoleAsync(int userId, int newRoleId, int changedByUserId)
