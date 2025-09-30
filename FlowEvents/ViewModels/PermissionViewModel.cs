@@ -1,8 +1,14 @@
-﻿using FlowEvents.Models;
+﻿using FlowEvents.ViewModels;
+using FlowEvents.Views;
+using FlowEvents.Models;
 using FlowEvents.Services;
+using Microsoft.Extensions.DependencyInjection;
+using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Threading.Tasks;
+using System.Windows;
+using FlowEvents.Services.Interface;
 
 namespace FlowEvents.Users
 {
@@ -15,6 +21,7 @@ namespace FlowEvents.Users
         }
 
         private readonly IDatabaseService _databaseService;
+        private readonly IUserService _userService;    
 
         private ObservableCollection<User> _users;
         private ObservableCollection<Role> _roles;
@@ -41,7 +48,6 @@ namespace FlowEvents.Users
                 OnPropertyChanged(nameof(Roles));
             }
         }
-
         public ObservableCollection<Permission> Permissions
         {
             get => _permissions;
@@ -51,7 +57,6 @@ namespace FlowEvents.Users
                 OnPropertyChanged(nameof(Permissions));
             }
         }
-
         public User SelectedUser
         {
             get => _selectedUser;
@@ -66,7 +71,6 @@ namespace FlowEvents.Users
                 }
             }
         }
-
         public Role SelectedRole
         {
             get => _selectedRole;
@@ -81,7 +85,6 @@ namespace FlowEvents.Users
                 }
             }
         }
-
         public bool IsLoading
         {
             get => _isLoading;
@@ -95,10 +98,14 @@ namespace FlowEvents.Users
         public RelayCommand LoadDataCommand { get; }
         public RelayCommand SelectAllCommand { get; }
         public RelayCommand DeselectAllCommand { get; }
+        public RelayCommand OpenAddUserWindowCommand { get; }
+        public RelayCommand DomainUserSearchWindowCommand { get; }
+        public RelayCommand DeleteUserCommand { get; }
 
-        public PermissionViewModel(IDatabaseService databaseService)
+        public PermissionViewModel(IDatabaseService databaseService, IUserService userService)
         {
             _databaseService = databaseService;
+            _userService = userService;
 
             Users = new ObservableCollection<User>();
             Roles = new ObservableCollection<Role>();
@@ -107,11 +114,30 @@ namespace FlowEvents.Users
             LoadDataCommand = new RelayCommand(async (patam) => await LoadDataAsync());
             SelectAllCommand = new RelayCommand(SelectAllPermissions);
             DeselectAllCommand = new RelayCommand(DeselectAllPermissions);
+            OpenAddUserWindowCommand = new RelayCommand(OpenAddUserWindows);
+            DomainUserSearchWindowCommand = new RelayCommand(DomainUserSearchWindow);
+            DeleteUserCommand = new RelayCommand(async () => await DeleteUserAsync());
 
             // Автоматическая загрузка данных при старте
             LoadDataCommand.Execute(null);
         }
 
+
+        private async Task DeleteUserAsync()
+        {
+            if (SelectedUser == null)
+            {
+                MessageBox.Show("Выберите пользователя", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+            
+            if (await _userService.DeleteUserAsync(SelectedUser.UserName))
+            {
+                MessageBox.Show("Пользователь удален", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+        }
 
         private async Task LoadDataAsync()
         {
@@ -177,6 +203,43 @@ namespace FlowEvents.Users
             {
                 permission.IsGrantedBool = false;
             }
+        }
+
+        // Окно добавления локального пользователя
+        private void OpenAddUserWindows()
+        {
+            var addUserViewModel = App.ServiceProvider.GetRequiredService<AddUserViewModel>();
+            var addUserWindow = new AddUserWindow();
+            addUserWindow.DataContext = addUserViewModel;
+            addUserWindow.Owner = Application.Current.MainWindow;
+
+            void ClosedHandler(object sender, EventArgs e)
+            {
+                addUserWindow.Closed -= ClosedHandler; // Отвязываем
+                                                       
+                LoadDataCommand.Execute(null); // переезагрузка данных при закрытии окна добавлннтя пользовател
+               // GetUsers();  // Перезагружаем установки после закрытия окна UnitsView
+            }
+            addUserWindow.Closed += ClosedHandler; // Подписываемся на событие закрытия окна
+            if (addUserWindow.ShowDialog() == true) { }
+        }
+
+        private void DomainUserSearchWindow()
+        {
+            var UserDomainSearchViewModel = App.ServiceProvider.GetRequiredService<UserDomainSearchViewModel>();
+
+            var UserDomainSearch = new UserDomainSearch();
+            UserDomainSearch.DataContext = UserDomainSearchViewModel;
+            UserDomainSearch.Owner = Application.Current.MainWindow;
+            void ClosedHandler(object sender, EventArgs e)
+            {
+                UserDomainSearch.Closed -= ClosedHandler; // Отвязываем
+
+                LoadDataCommand.Execute(null); // переезагрузка данных при закрытии окна добавлннтя пользовател
+                                               // GetUsers();  // Перезагружаем установки после закрытия окна UnitsView
+            }
+            UserDomainSearch.Closed += ClosedHandler; // Подписываемся на событие закрытия окна
+            UserDomainSearch.ShowDialog();
         }
     }
 }

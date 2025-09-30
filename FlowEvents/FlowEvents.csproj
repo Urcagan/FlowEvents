@@ -183,9 +183,6 @@
     <Compile Include="Views\UserDomainSearch.xaml.cs">
       <DependentUpon>UserDomainSearch.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Views\UserDomainSearchSimple.xaml.cs">
-      <DependentUpon>UserDomainSearchSimple.xaml</DependentUpon>
-    </Compile>
     <Compile Include="Views\UserManager.xaml.cs">
       <DependentUpon>UserManager.xaml</DependentUpon>
     </Compile>
@@ -243,10 +240,6 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\UserDomainSearch.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Views\UserDomainSearchSimple.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

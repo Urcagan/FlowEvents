@@ -8,29 +8,29 @@
          Title="Управление пользователями" Height="450" Width="920">
     <DockPanel>
         <ToolBar DockPanel.Dock="Top">
-            <Button Content="Найти пользователя в домене"  
+            <!--<Button Content="Найти пользователя в домене"  
                     Command="{Binding OpenFindUserWindowCommand}"
                     Margin="10" HorizontalAlignment="Left" 
-                    BorderBrush="Black"/>
+                    BorderBrush="Black"/>-->
             <Button Content="Удалить пользователя" 
                      Command="{Binding DeletUserCommand}"
                      Margin="10" HorizontalAlignment="Left" 
                      BorderBrush="Black"/>
 
-            <Button Content="Добавить пользователя" 
+            <!--<Button Content="Добавить пользователя" 
                     Command="{Binding OpenAddUserWindowCommand}"
                     Margin="10" HorizontalAlignment="Right" 
-                    BorderBrush="Black"/>
+                    BorderBrush="Black"/>-->
 
-            <Button Content="Управление правами"
+            <!--<Button Content="Управление правами"
                     Command="{Binding OpenPermissionWindowCommand}"
                     Margin="10" HorizontalAlignment="Right" 
-                    BorderBrush="Black"/>
+                    BorderBrush="Black"/>-->
             
-            <Button Content="Альтернативный поиск" 
+            <!--<Button Content="Альтернативный поиск" 
                     Command="{Binding UserSearchWindowCommand}"
                     Margin="10" HorizontalAlignment="Right" 
-                    BorderBrush="Black"/>
+                    BorderBrush="Black"/>-->
         </ToolBar>
         <DataGrid x:Name="dgUsers" 
                   ItemsSource="{Binding UsersTable}"

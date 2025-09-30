@@ -3,57 +3,94 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
         xmlns:local="clr-namespace:FlowEvents.Views"
         mc:Ignorable="d"
-        Title="UserDomainSearch" Height="450" Width="800">
+        WindowStartupLocation="CenterOwner"
+        Title="UserDomainSearchSimple" Height="560" Width="800" ResizeMode="NoResize">
+
+    <i:Interaction.Triggers>
+        <i:EventTrigger EventName="Closing">
+            <i:InvokeCommandAction Command="{Binding WindowClossingCommand}"/>
+        </i:EventTrigger>
+    </i:Interaction.Triggers>
+
     <Grid Margin="10">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
+        <StackPanel>
+            <!-- Поисковая строка -->
+            <TextBlock Text="Поиск пользователей в домене:" FontWeight="Bold"/>
+            <TextBox Text="{Binding SearchTerm, UpdateSourceTrigger=PropertyChanged}" 
+                 Margin="0,5,0,0" Padding="5" Height="30">
+                <TextBox.InputBindings>
+                    <KeyBinding Key="Enter" Command="{Binding SearchCommand}"/>
+                </TextBox.InputBindings>
+            </TextBox>
 
-        <!-- Параметры поиска -->
-        <GroupBox Header="Параметры поиска" Grid.Row="0" Margin="0,0,0,10">
-            <StackPanel>
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
+            <!-- Подсказка -->
+            <TextBlock Text="Введите имя, фамилию или логин пользователя" 
+                   FontStyle="Italic" Foreground="Gray" FontSize="10"/>
 
-                    <TextBlock Text="Поиск:" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                    <TextBox Grid.Column="1" Text="{Binding SearchOptions.SearchTerm}" 
-                         ToolTip="Имя, фамилия, логин или email"/>
+            <!-- Настройки поиска -->
 
-                    <TextBlock Grid.Column="2" Text="Макс. результатов:" 
-                           VerticalAlignment="Center" Margin="10,0,5,0"/>
-                    <ComboBox Grid.Column="3" SelectedItem="{Binding SearchOptions.MaxResults}">
-                        <ComboBoxItem Content="10"/>
-                        <ComboBoxItem Content="50"/>
-                        <ComboBoxItem Content="100"/>
-                        <ComboBoxItem Content="500"/>
-                    </ComboBox>
-                </Grid>
 
-                <CheckBox Content="Только активные пользователи" 
-                      IsChecked="{Binding SearchOptions.OnlyActive}"/>
+            <StackPanel Orientation="Horizontal" Margin="0,5,0,5">
+                <TextBlock Text="Количество результатов:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                <TextBox Text="{Binding MaxResults, UpdateSourceTrigger=PropertyChanged}" 
+                        Margin="5,0" Padding="5" Height="30" Width="90" ToolTip="Введите число от 1 до 1000"/>
+
+                <TextBlock Text="{Binding MaxResultsValidation}" HorizontalAlignment="Right"
+                        Foreground="Black" FontSize="10" VerticalAlignment="Center" Margin="5,0,10,0"/>
+
+                <CheckBox  Content="Только активные" IsChecked="{Binding OnlyActive}"
+                         VerticalAlignment="Center" Margin="10,0,10,0"/>
+
+                <TextBlock Text="Домен:" VerticalAlignment="Center" Margin="10
+                           ,0,5,0"/>
+                <TextBox Text="{Binding DomainNameToFaind, UpdateSourceTrigger=PropertyChanged}" 
+                    Margin="5,0" Padding="5" Height="30" Width=" 200" ToolTip="Имя домена для поиска"/>
             </StackPanel>
-        </GroupBox>
 
-        <!-- Управление -->
-        <StackPanel Grid.Row="1" Orientation="Horizontal">
-            <Button Content="🔍 Поиск" Command="{Binding SearchCommand}" 
-                Style="{StaticResource PrimaryButton}"/>
-            <Button Content="📋 Копировать выделенное" Command="{Binding CopySelectedCommand}"/>
-            <Button Content="👤 Выбрать пользователя" Command="{Binding SelectUserCommand}"/>
+            <!-- Кнопки управления -->
+            <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                <Button Content="🔍 Поиск" Command="{Binding SearchCommand}" 
+                        Style="{StaticResource PrimaryButton}"
+                    Padding="15,5" Margin="0,0,10,0"/>
+                <Button Content="⭮ Очистить" Command="{Binding ClearCommand}" 
+                    Padding="15,5" Margin="0,0,10,0"/>
+                <Button Content="❌ Остановить" Command="{Binding CancelSearchCommand}" 
+                    Padding="15,5" IsEnabled="{Binding IsSearching}"/>
+            </StackPanel>
+
+            <!-- Индикатор загрузки -->
+            <ProgressBar Height="4" Margin="0,5,0,0" 
+                     IsIndeterminate="{Binding IsSearching}" 
+                     Visibility="{Binding IsSearching, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+            <!-- Результаты поиска -->
+            <TextBlock Text="{Binding SearchStatus}" 
+                   Margin="0,10,0,5" FontWeight="SemiBold"/>
+
+            <DataGrid ItemsSource="{Binding Users}" AutoGenerateColumns="False" 
+                    SelectedItem="{Binding SelectedDomainUser, Mode=TwoWay}" 
+                    IsReadOnly="True" SelectionMode="Single" Height="290">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="№" Binding="{Binding Number}" Width="30"/>
+                    <DataGridTextColumn Header="Логин" Binding="{Binding Username}" Width="120"/>
+                    <DataGridTextColumn Header="ФИО" Binding="{Binding DisplayName}" Width="200"/>
+                    <DataGridTextColumn Header="Email" Binding="{Binding Email}" Width="200"/>
+                    <DataGridCheckBoxColumn Header="Активен" Binding="{Binding IsActive}" Width="60"/>
+                    <DataGridTextColumn Header="Домен" Binding="{Binding DomainName}" Width="100"/>
+                </DataGrid.Columns>
+            </DataGrid>
+
+            <StackPanel Orientation="Horizontal" FlowDirection="RightToLeft" Margin="0,10,0,0">
+                <Button Content="👤➕ Добавить пользователя" 
+                        Style="{StaticResource PrimaryButton}"
+                        Command="{Binding AddDomainUserCommand}"
+                        Padding="15,5" Margin="10,0,0,0" />
+            </StackPanel>
+
         </StackPanel>
-
-        <!-- Результаты -->
-        <DataGrid Grid.Row="2" ItemsSource="{Binding Users}">
-            <!-- Колонки как в предыдущем примере -->
-        </DataGrid>
     </Grid>
+
 </Window>

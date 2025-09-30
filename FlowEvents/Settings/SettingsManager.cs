@@ -8,7 +8,6 @@ using System.Security.Principal;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
-using System.Xml.Serialization;
 
 namespace FlowEvents
 {
@@ -32,6 +31,9 @@ namespace FlowEvents
         public string UpdateRepository { get; set; } =  "G:\\VS Dev\\FlowEventsReleases"; //Путь к парке с обновлениями
 
         public string DomenName { get; set; } = "localhost"; // Имя домена по умолчанию
+
+        public int DefaultRole { get; set; } = 2; // Роль присваеваемая пользователь по умолчанию 
+
         // Свойства для хранения ширины столбцов
         // Ключ - заголовок столбца, значение - ширина в пикселях
         public Dictionary<string, double> DataGridColumnWidths { get; set; } = new Dictionary<string, double>

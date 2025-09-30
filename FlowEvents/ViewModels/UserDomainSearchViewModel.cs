@@ -1,14 +1,8 @@
-﻿using FlowEvents.Services;
-using FlowEvents.Services.Interface;
+﻿using FlowEvents.Services.Interface;
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Data.SQLite;
-using System.DirectoryServices;
-using System.DirectoryServices.AccountManagement;
-using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -28,7 +22,7 @@ namespace FlowEvents.ViewModels
         private string _maxResults;
         private bool _onlyActive = true;
         private bool _isSearching;
-        private DomainUser _selectedUser;
+        private DomainUser _selectedDomainUser;
         private string _domainNameToFaind;
         private bool _isLoading;
 
@@ -95,12 +89,12 @@ namespace FlowEvents.ViewModels
             }
         }
 
-        public DomainUser SelectedUser
+        public DomainUser SelectedDomainUser
         {
-            get => _selectedUser;
+            get => _selectedDomainUser;
             set
             {
-                _selectedUser = value;
+                _selectedDomainUser = value;
                 OnPropertyChanged();
             }
         }
@@ -158,20 +152,24 @@ namespace FlowEvents.ViewModels
 
         private async void AddDomainUser() // Добавить доменного пользователя
         {
-            if (SelectedUser == null) return;
+            if (SelectedDomainUser == null)
+            {
+                MessageBox.Show("Необходимо выбрать пользователя", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
 
             try
             {
                 IsLoading = true;
 
-                var result = await _userService.RegisterDomainUserAsync(SelectedUser.Username, SelectedUser.DomainName, SelectedUser.DisplayName, SelectedUser.Email, DefaultRoleId);
+                var result = await _userService.RegisterDomainUserAsync(SelectedDomainUser.Username, SelectedDomainUser.DomainName, SelectedDomainUser.DisplayName, SelectedDomainUser.Email, DefaultRoleId);
 
                 if (result.Success)
                 {
                     MessageBox.Show(result.Message, "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
 
                     // Очистка полей
-                    SelectedUser = null; //Снимаем выделение строки
+                    SelectedDomainUser = null; //Снимаем выделение строки
                 }
                 else
                 {
@@ -287,8 +285,8 @@ namespace FlowEvents.ViewModels
 
         private void OnWindowsClosing(object paramerts) // Обработчик закрытия окна 
         {
-            if (DomainNameToFaind != _domainSettingsService.GetCurrentDomainController()) 
-            _domainSettingsService.SaveDomainSettings(DomainNameToFaind); // App.Settings.SaveSettingsApp(); // Сохранение имя домена в конфигурации приложения в файле cfg
+            if (DomainNameToFaind != _domainSettingsService.GetCurrentDomainController())
+                _domainSettingsService.SaveDomainSettings(DomainNameToFaind); // App.Settings.SaveSettingsApp(); // Сохранение имя домена в конфигурации приложения в файле cfg
 
             //if (paramerts is Window window)
             //{

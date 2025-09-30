@@ -1,21 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using FlowEvents.ViewModels;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 
 namespace FlowEvents.Views
 {
     /// <summary>
-    /// Логика взаимодействия для UserDomainSearch.xaml
+    /// Логика взаимодействия для UserDomainSearchSimple.xaml
     /// </summary>
     public partial class UserDomainSearch : Window
     {
@@ -23,5 +13,21 @@ namespace FlowEvents.Views
         {
             InitializeComponent();
         }
+
+        //private void DataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        //{
+        //    if (DataContext is UserDomainSearchViewModel viewModel)
+        //    {
+        //        if (sender is DataGrid dataGrid && dataGrid.SelectedItem is DomainUser selectedUser)
+        //        {
+        //            // Загружаем свойства выбранного пользователя
+        //          //  viewModel.LoadUserProperties(selectedUser);
+        //        }
+        //        else
+        //        {
+        //            viewModel.SelectedUserProperties = "Выберите пользователя в таблице для просмотра свойств";
+        //        }
+        //    }
+        //}
     }
 }

@@ -1,6 +1,4 @@
-﻿using FlowEvents.Repositories.Interface;
-using FlowEvents.Services;
-using FlowEvents.Services.Interface;
+﻿using FlowEvents.Services.Interface;
 using FlowEvents.Users;
 using FlowEvents.ViewModels;
 using FlowEvents.Views;
@@ -56,12 +54,12 @@ namespace FlowEvents
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(RolesTable)));
             }
         }
-        public RelayCommand OpenFindUserWindowCommand { get; set; }
+        //public RelayCommand OpenFindUserWindowCommand { get; set; }
         public RelayCommand DeletUserCommand { get; set; }
-        public RelayCommand OpenAddUserWindowCommand { get; set; }
-        public RelayCommand OpenPermissionWindowCommand { get; set; }
+      //  public RelayCommand OpenAddUserWindowCommand { get; set; }
+      //  public RelayCommand OpenPermissionWindowCommand { get; set; }
 
-        public RelayCommand UserSearchWindowCommand { get; set; }  
+      //  public RelayCommand UserSearchWindowCommand { get; set; }  
         #region
 
 
@@ -71,12 +69,12 @@ namespace FlowEvents
         {
             _userService = userService;
 
-            OpenFindUserWindowCommand = new RelayCommand(OpenFindUserWindows);
+            //OpenFindUserWindowCommand = new RelayCommand(OpenFindUserWindows);
             DeletUserCommand = new RelayCommand(DeletUser);
-            OpenAddUserWindowCommand = new RelayCommand(OpenAddUserWindows);
-            OpenPermissionWindowCommand = new RelayCommand(OpenPermissionWindow);
+            //OpenAddUserWindowCommand = new RelayCommand(OpenAddUserWindows);
+            //OpenPermissionWindowCommand = new RelayCommand(OpenPermissionWindow);
 
-            UserSearchWindowCommand = new RelayCommand(UserSearchWindow);
+          //  UserSearchWindowCommand = new RelayCommand(UserSearchWindow);
 
             // Загрузка данных из базы
             ConnectionString = Global_Var.ConnectionString;
@@ -84,57 +82,57 @@ namespace FlowEvents
             GetUsers();  // Загружаем пользователей
         }
 
-        private void OpenPermissionWindow(object parametrs)
-        {
-            var PermissionViewModel = App.ServiceProvider.GetRequiredService<PermissionViewModel>(); // 1. Берем ViewModel из контейнера
-            var PermissionWindow = new PermissionWindow();  // 2. Создаем окно обычным способом
-            PermissionWindow.DataContext = PermissionViewModel; // 3. Связываем ViewModel с окном 
-            PermissionWindow.Owner = Application.Current.MainWindow;
-            PermissionWindow.ShowDialog(); // 5. Показываем модально
-        }
+        //private void OpenPermissionWindow(object parametrs)
+        //{
+        //    var PermissionViewModel = App.ServiceProvider.GetRequiredService<PermissionViewModel>(); // 1. Берем ViewModel из контейнера
+        //    var PermissionWindow = new PermissionWindow();  // 2. Создаем окно обычным способом
+        //    PermissionWindow.DataContext = PermissionViewModel; // 3. Связываем ViewModel с окном 
+        //    PermissionWindow.Owner = Application.Current.MainWindow;
+        //    PermissionWindow.ShowDialog(); // 5. Показываем модально
+        //}
 
-        private void OpenAddUserWindows()
-        {
-            var addUserViewModel = App.ServiceProvider.GetRequiredService<AddUserViewModel>();
-            var addUserWindow = new AddUserWindow();
-            addUserWindow.DataContext = addUserViewModel;
-            addUserWindow.Owner = Application.Current.MainWindow;
+        //private void OpenAddUserWindows()
+        //{
+        //    var addUserViewModel = App.ServiceProvider.GetRequiredService<AddUserViewModel>();
+        //    var addUserWindow = new AddUserWindow();
+        //    addUserWindow.DataContext = addUserViewModel;
+        //    addUserWindow.Owner = Application.Current.MainWindow;
 
-            void ClosedHandler(object sender, EventArgs e)
-            {
-                addUserWindow.Closed -= ClosedHandler; // Отвязываем
-                GetUsers();  // Перезагружаем установки после закрытия окна UnitsView
-            }
-            addUserWindow.Closed += ClosedHandler; // Подписываемся на событие закрытия окна
-            if (addUserWindow.ShowDialog() == true) { }
-        }
+        //    void ClosedHandler(object sender, EventArgs e)
+        //    {
+        //        addUserWindow.Closed -= ClosedHandler; // Отвязываем
+        //        GetUsers();  // Перезагружаем установки после закрытия окна UnitsView
+        //    }
+        //    addUserWindow.Closed += ClosedHandler; // Подписываемся на событие закрытия окна
+        //    if (addUserWindow.ShowDialog() == true) { }
+        //}
 
-        private void OpenFindUserWindows(object parameters)
-        {
-            FindUserWindow findUserWindow = new FindUserWindow(this); // Создаем дочернее окно, передавая текущую модель (this)
+        //private void OpenFindUserWindows(object parameters)
+        //{
+        //    FindUserWindow findUserWindow = new FindUserWindow(this); // Создаем дочернее окно, передавая текущую модель (this)
 
-            void ClosedHandler(object sender, EventArgs e)
-            {
-                findUserWindow.Closed -= ClosedHandler; // Отвязываем
-                GetUsers();  // Перезагружаем установки после закрытия окна UnitsView
-            }
+        //    void ClosedHandler(object sender, EventArgs e)
+        //    {
+        //        findUserWindow.Closed -= ClosedHandler; // Отвязываем
+        //        GetUsers();  // Перезагружаем установки после закрытия окна UnitsView
+        //    }
 
-            findUserWindow.Closed += ClosedHandler; // Подписываемся на событие закрытия окна
-            if (findUserWindow.ShowDialog() == true) { }
+        //    findUserWindow.Closed += ClosedHandler; // Подписываемся на событие закрытия окна
+        //    if (findUserWindow.ShowDialog() == true) { }
 
-        }
+        //}
 
-        private void UserSearchWindow ()
-        {
-            var UserDomainSearchViewModel = App.ServiceProvider.GetRequiredService<UserDomainSearchViewModel>();
+        //private void UserSearchWindow ()
+        //{
+        //    var UserDomainSearchViewModel = App.ServiceProvider.GetRequiredService<UserDomainSearchViewModel>();
 
-            var UserDomainSearchSimple = new UserDomainSearchSimple();
+        //    var UserDomainSearch = new UserDomainSearch();
 
-            UserDomainSearchSimple.DataContext = UserDomainSearchViewModel;
+        //    UserDomainSearch.DataContext = UserDomainSearchViewModel;
 
-            UserDomainSearchSimple.Owner = Application.Current.MainWindow;
-            UserDomainSearchSimple.ShowDialog();
-        }
+        //    UserDomainSearch.Owner = Application.Current.MainWindow;
+        //    UserDomainSearch.ShowDialog();
+        //}
 
 
 
