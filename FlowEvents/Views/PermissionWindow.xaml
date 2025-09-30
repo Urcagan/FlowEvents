@@ -3,9 +3,11 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
         xmlns:local="clr-namespace:FlowEvents.Users"
+        xmlns:behavior="clr-namespace:FlowEvents.Behaviors"
         mc:Ignorable="d" 
-        Height="600" Width="1400"
+        Height="800" Width="1400"
         WindowStartupLocation="CenterScreen">
 
 
@@ -56,23 +58,37 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="3*"/>
                 <ColumnDefinition Width="2*"/>
-                <ColumnDefinition Width="2*"/>
+                <ColumnDefinition Width="1.5*"/>
             </Grid.ColumnDefinitions>
 
-            <!-- Левая панель - Пользователи и роли -->
-            <StackPanel Grid.Column="0" Margin="0 0 10 0">
-                <TextBlock Text="👥 Пользователи" Style="{StaticResource HeaderText}"/>
-                <ListView x:Name="UsersListView" Height="350" 
-                         SelectionMode="Single"
-                         ItemsSource="{Binding Users}" SelectedItem="{Binding SelectedUser}">
+            <!-- Левая панель - Пользователи -->
+            <DockPanel Grid.Column="0" LastChildFill="True" Margin="0 0 10 0">
+
+                <TextBlock DockPanel.Dock="Top" Text="👥 Пользователи" Style="{StaticResource HeaderText}"/>
+
+                <WrapPanel  DockPanel.Dock="Bottom"  Orientation="Horizontal" Margin="0 10 0 0" >
+                    <Button x:Name="AddUserButton" Content="👤➕ Добавить локального пользователя" 
+                            Command="{Binding OpenAddUserWindowCommand}"
+                            Style="{StaticResource ModernButton}"/>
+                    <Button x:Name="AddDomainUserButton" Content="🌐 👤 Добавить доменного пользователя"
+                            Command="{Binding DomainUserSearchWindowCommand}"
+                            Style="{StaticResource ModernButton}"/>
+                    <Button Content="🗑️ Удалить пользователя" Command="{Binding DeleteUserCommand}"
+                            Style="{StaticResource ModernButton}"/>
+                    <Button Content="🔄 Обновить данные" Command="{Binding LoadDataCommand}"
+                            Style="{StaticResource ModernButton}"/>
+                </WrapPanel>
+
+                <ListView x:Name="UsersListView"
+                            SelectionMode="Single"
+                            ItemsSource="{Binding Users}" 
+                            SelectedItem="{Binding SelectedUser}">
+                        <i:Interaction.Behaviors>
+                            <behavior:ClearSelectionBehavior/>
+                        </i:Interaction.Behaviors>
                     <ListView.View>
                         <GridView>
                             <GridViewColumn Header="ID" Width="50" DisplayMemberBinding="{Binding Id}"/>
-                            <GridViewColumn Header="Логин" Width="150" DisplayMemberBinding="{Binding UserName}"/>
-                            <GridViewColumn Header="Отображаемое имя" Width="150" DisplayMemberBinding="{Binding DisplayName}"/>
-                            <GridViewColumn Header="Роль" Width="100" DisplayMemberBinding="{Binding RoleName}"/>
-                            <GridViewColumn Header="Email" Width="150" DisplayMemberBinding="{Binding Email}"/>
-                            <GridViewColumn Header="Доменное имя" Width="100" DisplayMemberBinding="{Binding DomainName}"/>
                             <GridViewColumn Header="Доступ" Width="60">
                                 <GridViewColumn.CellTemplate>
                                     <DataTemplate>
@@ -80,24 +96,28 @@
                                     </DataTemplate>
                                 </GridViewColumn.CellTemplate>
                             </GridViewColumn>
+                            <GridViewColumn Header="Логин" Width="150" DisplayMemberBinding="{Binding UserName}"/>
+                            <GridViewColumn Header="Отображаемое имя" Width="150" DisplayMemberBinding="{Binding DisplayName}"/>
+                            <GridViewColumn Header="Роль" Width="100" DisplayMemberBinding="{Binding RoleName}"/>
+                            <GridViewColumn Header="Email" Width="150" DisplayMemberBinding="{Binding Email}"/>
+                            <GridViewColumn Header="Доменное имя" Width="100" DisplayMemberBinding="{Binding DomainName}"/>
+
                         </GridView>
                     </ListView.View>
                 </ListView>
-                <StackPanel Orientation="Horizontal" Margin="0 10 0 0">
-                    <Button x:Name="AddUserButton" Content="👤➕ Добавить локального пользователя" 
-                            Command="{Binding OpenAddUserWindowCommand}"
-                            Style="{StaticResource ModernButton}"/>
-                    <Button x:Name="AddDomainUserButton" Content="🌐 👤 Добавить доменного пользователя"
-                            Command="{Binding DomainUserSearchWindowCommand}"
-                            Style="{StaticResource ModernButton}"/>
-                    <Button Content="🔄 Обновить данные" Command="{Binding LoadDataCommand}"
-                             Style="{StaticResource ModernButton}"/>
-                </StackPanel>
-            </StackPanel>
+            </DockPanel>
 
-            <StackPanel Grid.Column="1" Margin="0 0 10 0">
-                <TextBlock Text="Роли" Style="{StaticResource HeaderText}" />
-                <ListView x:Name="RolesListView" Height="350" 
+            <!-- Средняя панель - Роли -->
+            <DockPanel Grid.Column="1" LastChildFill="True" Margin="0 0 10 0">
+                <TextBlock DockPanel.Dock="Top" Text="Роли" Style="{StaticResource HeaderText}" />
+
+                <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0 10 0 0">
+                    <Button x:Name="AddRoleButton" Content="Добавить роль" 
+                           Style="{StaticResource ModernButton}"/>
+                    <Button Content="🔄 Обновить данные" Command="{Binding LoadDataCommand}"
+                           Style="{StaticResource ModernButton}"/>
+                </StackPanel>
+                <ListView x:Name="RolesListView" 
                          SelectionMode="Single"
                          ItemsSource="{Binding Roles}" SelectedItem="{Binding SelectedRole}">
                     <ListView.View>
@@ -108,26 +128,30 @@
                         </GridView>
                     </ListView.View>
                 </ListView>
+            </DockPanel>
 
-                <StackPanel Orientation="Horizontal" Margin="0 10 0 0">
-                    <Button x:Name="AddRoleButton" Content="Добавить роль" 
-                           Style="{StaticResource ModernButton}"/>
-                    <Button Content="🔄 Обновить данные" Command="{Binding LoadDataCommand}"
-                           Style="{StaticResource ModernButton}"/>
-                </StackPanel>
-            </StackPanel>
 
             <!-- Правая панель - Права доступа -->
-            <StackPanel Grid.Column="2" Margin="0 0 10 0">
-                <TextBlock Text="Права доступа для выбранной роли" 
-                          Style="{StaticResource HeaderText}"/>
-
-                <TextBlock x:Name="SelectedRoleText" Margin="0 0 0 10" 
-                          Text="{Binding SelectedRole.RoleName, StringFormat='Выбрана роль: {0}'}" 
-                           FontWeight="Bold" Foreground="Gray"
-                           Visibility="{Binding SelectedRole, Converter={StaticResource NullToVisibilityConverter}}"/>
-
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Height="300">
+            <DockPanel Grid.Column="2" LastChildFill="True" Margin="0 0 0 0">
+                <TextBlock DockPanel.Dock="Top" Text="Права доступа для выбранной роли" Style="{StaticResource HeaderText}"/>
+                
+                <TextBlock DockPanel.Dock="Top" x:Name="SelectedRoleText" Margin="0 0 0 10" 
+                            Text="{Binding SelectedRole.RoleName, StringFormat='Выбрана роль: {0}'}" 
+                            FontWeight="Bold" Foreground="Gray"
+                            Visibility="{Binding SelectedRole, Converter={StaticResource NullToVisibilityConverter}}"/>
+                
+                <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0 15 0 0">
+                    <Button x:Name="SelectAllButton" Content="Выбрать все" 
+                            Command="{Binding SelectAllCommand}"
+                           Style="{StaticResource ModernButton}" Background="#28A745"/>
+                    <Button x:Name="DeselectAllButton" Content="Снять все"
+                            Command="{Binding DeselectAllCommand}"
+                           Style="{StaticResource ModernButton}" Background="#DC3545"/>
+                    <Button x:Name="SavePermissionsButton" Content="Сохранить права" 
+                           Style="{StaticResource ModernButton}" Background="#17A2B8"/>
+                </StackPanel>
+                
+                <ScrollViewer VerticalScrollBarVisibility="Auto" >
                     <ItemsControl x:Name="PermissionsList"
                                   ItemsSource="{Binding Permissions}">
                         <ItemsControl.ItemTemplate>
@@ -140,18 +164,8 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </ScrollViewer>
-
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0 15 0 0">
-                    <Button x:Name="SelectAllButton" Content="Выбрать все" 
-                            Command="{Binding SelectAllCommand}"
-                           Style="{StaticResource ModernButton}" Background="#28A745"/>
-                    <Button x:Name="DeselectAllButton" Content="Снять все"
-                            Command="{Binding DeselectAllCommand}"
-                           Style="{StaticResource ModernButton}" Background="#DC3545"/>
-                    <Button x:Name="SavePermissionsButton" Content="Сохранить права" 
-                           Style="{StaticResource ModernButton}" Background="#17A2B8"/>
-                </StackPanel>
-            </StackPanel>
+                
+            </DockPanel>
         </Grid>
 
         <!-- Нижняя панель с кнопками -->

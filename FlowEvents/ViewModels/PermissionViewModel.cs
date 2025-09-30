@@ -1,14 +1,15 @@
-﻿using FlowEvents.ViewModels;
-using FlowEvents.Views;
-using FlowEvents.Models;
+﻿using FlowEvents.Models;
 using FlowEvents.Services;
+using FlowEvents.Services.Interface;
+using FlowEvents.ViewModels;
+using FlowEvents.Views;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
-using FlowEvents.Services.Interface;
 
 namespace FlowEvents.Users
 {
@@ -116,27 +117,54 @@ namespace FlowEvents.Users
             DeselectAllCommand = new RelayCommand(DeselectAllPermissions);
             OpenAddUserWindowCommand = new RelayCommand(OpenAddUserWindows);
             DomainUserSearchWindowCommand = new RelayCommand(DomainUserSearchWindow);
-            DeleteUserCommand = new RelayCommand(async () => await DeleteUserAsync());
+            DeleteUserCommand = new RelayCommand(async () => await DeleteUserAsync(), () => SelectedUser != null);
 
             // Автоматическая загрузка данных при старте
             LoadDataCommand.Execute(null);
         }
 
+        // Обновление доступа пользователя
+        public async void UpdateUserAccess(string username, bool isAllowed)
+        {
+            try
+            {
+                await _userService.UpdateUserAccessAsync(username, isAllowed);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка обновления доступа: {ex.Message}");
+            }
+        }
 
         private async Task DeleteUserAsync()
         {
             if (SelectedUser == null)
             {
-                MessageBox.Show("Выберите пользователя", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Выберите пользователя для удаления", "Информация",
+                       MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
-            
-            if (await _userService.DeleteUserAsync(SelectedUser.UserName))
-            {
-                MessageBox.Show("Пользователь удален", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
+            var result = MessageBox.Show($"Вы уверены, что хотите удалить пользователя? ' {SelectedUser.UserName}' ?",
+                                        "Подтверждение удаления",
+                                        MessageBoxButton.YesNo,
+                                        MessageBoxImage.Warning,
+                                        MessageBoxResult.No);
 
+            if (result == MessageBoxResult.Yes)
+            {
+                try
+                {
+                    await _userService.DeleteUserAsync(SelectedUser.UserName);
+                    Users.Remove(SelectedUser);
+                    MessageBox.Show("Пользователь успешно удален", "Успех",
+                           MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Ошибка при удалении: {ex.Message}", "Ошибка",
+                                   MessageBoxButton.OK, MessageBoxImage.Error);
+                }                
+            }
         }
 
         private async Task LoadDataAsync()
@@ -179,6 +207,7 @@ namespace FlowEvents.Users
         // Загрузка прав к выбранной роли
         private void LoadRolePermissions()
         {
+            if (SelectedUser == null) return;
             int roleUser = SelectedUser.RoleId;
             // Заглушка - в следующей итерации реализуем загрузку прав роли
             foreach (var permission in Permissions)
