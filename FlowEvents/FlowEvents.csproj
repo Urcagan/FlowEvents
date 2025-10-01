@@ -83,6 +83,10 @@
     <Compile Include="App.cs" />
     <Compile Include="Models\DatabaseInfo.cs" />
     <Compile Include="Models\UserInfo.cs" />
+    <Compile Include="Services\Implementations\PermissionService.cs" />
+    <Compile Include="Services\Implementations\RoleServices.cs" />
+    <Compile Include="Services\Interface\IPermissionService.cs" />
+    <Compile Include="Services\Interface\IRoleServices.cs" />
     <Compile Include="Services\Interface\IUserInfoService.cs" />
     <Compile Include="Behaviors\ClearSelectionBehavior.cs" />
     <Compile Include="ViewModels\UserInfoViewModel.cs" />
@@ -107,7 +111,7 @@
     <Compile Include="Services\Interface\IDatabaseValidationService.cs" />
     <Compile Include="Services\Interface\IDomainSettingsService.cs" />
     <Compile Include="Services\Interface\IPasswordHasher.cs" />
-    <Compile Include="Services\Interface\IUserservice.cs" />
+    <Compile Include="Services\Interface\IUserService.cs" />
     <Compile Include="ViewModels\UserDomainSearchViewModel.cs" />
     <Compile Include="Views\CategoryView.xaml.cs">
       <DependentUpon>CategoryView.xaml</DependentUpon>
@@ -138,8 +142,6 @@
     <Compile Include="Repositories\Interface\IUserRepository.cs" />
     <Compile Include="Repositories\Implementations\EventRepository.cs" />
     <Compile Include="Repositories\Implementations\UserRepository.cs" />
-    <Compile Include="Services\RoleService Удалить.cs" />
-    <Compile Include="Services\Implementations\DatabaseService.cs" />
     <Compile Include="Services\Implementations\FileAttachmentService Удалить.cs" />
     <Compile Include="Services\Interface\IDatabaseService.cs" />
     <Compile Include="Services\Interface\IPolicyAuthService.cs" />
@@ -150,7 +152,6 @@
     <Compile Include="Views\AddUserWindow.xaml.cs">
       <DependentUpon>AddUserWindow.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Users\DomainHelper.cs" />
     <Compile Include="Global_Var.cs" />
     <Compile Include="Views\LoginWindow.xaml.cs">
       <DependentUpon>LoginWindow.xaml</DependentUpon>
@@ -164,10 +165,6 @@
     <Compile Include="Models\Category.cs" />
     <Compile Include="Models\Event.cs" />
     <Compile Include="Models\DomainUser.cs" />
-    <Compile Include="ViewModels\FindUserModel.cs" />
-    <Compile Include="Views\FindUserWindow.xaml.cs">
-      <DependentUpon>FindUserWindow.xaml</DependentUpon>
-    </Compile>
     <Compile Include="Models\Unit.cs" />
     <Compile Include="RelayCommand.cs" />
     <Compile Include="Views\SettingsWindow.xaml.cs">
@@ -184,10 +181,6 @@
     <Compile Include="Views\UserDomainSearch.xaml.cs">
       <DependentUpon>UserDomainSearch.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Views\UserManager.xaml.cs">
-      <DependentUpon>UserManager.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="ViewModels\UserManagerModel.cs" />
     <Compile Include="Views\UserPickerControl.xaml.cs">
       <DependentUpon>UserPickerControl.xaml</DependentUpon>
     </Compile>
@@ -224,10 +217,6 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Views\FindUserWindow.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
     <Page Include="Views\SettingsWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -245,10 +234,6 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\UserInfoWindow.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Views\UserManager.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

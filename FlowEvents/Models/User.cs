@@ -7,6 +7,16 @@ namespace FlowEvents.Models
     {
 
         private int _id;
+        private string _userName;
+        private string _domainName;
+        private string _displayName;
+        private string _email;
+        private int _roleId;
+        private int _IsAllowed;
+        private string _password;
+        private string _Salt;
+
+
         public int Id
         {
             get => _id;
@@ -17,7 +27,6 @@ namespace FlowEvents.Models
             }
         }
 
-        private string _userName;
         public string UserName
         {
             get => _userName;
@@ -28,7 +37,6 @@ namespace FlowEvents.Models
             }
         }
 
-        private string _domainName;
         public string DomainName
         {
             get => _domainName;
@@ -39,7 +47,6 @@ namespace FlowEvents.Models
             }
         }
 
-        private string _displayName;
         public string DisplayName
         {
             get => _displayName;
@@ -50,7 +57,6 @@ namespace FlowEvents.Models
             }
         }
 
-        private string _email;
         public string Email
         {
             get => _email;
@@ -61,20 +67,25 @@ namespace FlowEvents.Models
             }
         }
 
-        private int _roleId;
         public int RoleId
         {
             get => _roleId;
             set
             {
-                _roleId = value;
-                OnPropertyChanged(nameof(RoleId));
+                if (_roleId != value)
+                {
+                    _roleId = value;
+                    OnPropertyChanged(nameof(RoleId));
+                    OnPropertyChanged(nameof(RoleName));
+                }
             }
         }
 
+        // Свойство для отображения имени роли
+        public string RoleName => Role?.RoleName ?? $"RoleId: {RoleId}";
+
         public Role Role { get; set; }
 
-        private int _IsAllowed;
         public int IsAllowed
         {
             get => _IsAllowed;
@@ -82,10 +93,21 @@ namespace FlowEvents.Models
             {
                 _IsAllowed = value;
                 OnPropertyChanged(nameof(IsAllowed));
+                OnPropertyChanged(nameof(IsAllowedBool));
             }
         }
 
-        private string _password;
+        // Свойство-обертка для CheckBox 
+        public bool IsAllowedBool
+        {
+            get => IsAllowed == 1; // Предполагая, что 1 = true, 0 = false
+            set
+            {
+                IsAllowed = value ? 1 : 0;
+                OnPropertyChanged(nameof(IsAllowedBool));
+            }
+        }
+
         public string Password
         {
             get => _password;
@@ -95,7 +117,7 @@ namespace FlowEvents.Models
                 OnPropertyChanged(nameof(Password));
             }
         }
-        private string _Salt;
+
         public string Salt
         {
             get => _Salt;
@@ -106,6 +128,13 @@ namespace FlowEvents.Models
             }
         }
         public bool IsAuthenticated { get; set; }
+
+        // публичный метод для обновления RoleName
+        public void RefreshRoleName()
+        {
+            OnPropertyChanged(nameof(RoleName));
+        }
+
 
         public event PropertyChangedEventHandler PropertyChanged;
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = "")

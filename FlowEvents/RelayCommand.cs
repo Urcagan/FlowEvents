@@ -19,7 +19,7 @@ namespace FlowEvents
     // Привязка команд в XAML: Позволяет использовать команды в разметке через Binding.
     // Поддержка MVVM: Помогает отделить UI от бизнес-логики.
 
-    public class RelayCommand : ICommand
+    public class RelayCommand : ICommand  // не-generic
     {
         private readonly Action<object> _execute;
         private readonly Func<object, bool> _canExecute;
@@ -64,7 +64,7 @@ namespace FlowEvents
         //    _execute(parameter);
         //}
 
-     
+
         public void Execute(object parameter)
         {
             if (_execute != null)
@@ -79,12 +79,10 @@ namespace FlowEvents
             }
         }
 
-
         private async Task ExecuteAsync(object parameter)
         {
             await _executeAsync(parameter);
         }
-
 
         //1 событие изменения "2" (может ли нажатся кнопка), его подписчик кнопка
         public event EventHandler CanExecuteChanged
@@ -99,8 +97,68 @@ namespace FlowEvents
         {
             CommandManager.InvalidateRequerySuggested();
         }
-
-
-
     }
+
+    // Универсальная версия RelayCommand
+    public class RelayCommand<T> : ICommand     // generic
+    {
+        private readonly Action<T> _execute;
+        private readonly Func<T, bool> _canExecute;
+        private readonly Func<T, Task> _executeAsync;
+
+        // Конструктор для синхронных команд
+        public RelayCommand(Action<T> execute, Func<T, bool> canExecute = null)
+        {
+            _execute = execute ?? throw new ArgumentNullException(nameof(execute));
+            _canExecute = canExecute;
+        }
+
+        // Конструктор для асинхронных команд
+        public RelayCommand(Func<T, Task> executeAsync, Func<T, bool> canExecute = null)
+        {
+            _executeAsync = executeAsync ?? throw new ArgumentNullException(nameof(executeAsync));
+            _canExecute = canExecute;
+        }
+
+        public bool CanExecute(object parameter)
+        {
+            if (parameter is T typedParameter)
+            {
+                return _canExecute == null || _canExecute(typedParameter);
+            }
+            return _canExecute == null || _canExecute(default(T));
+        }
+
+        public void Execute(object parameter)
+        {
+            if (parameter is T typedParameter)
+            {
+                if (_execute != null)
+                {
+                    _execute(typedParameter);
+                }
+                else if (_executeAsync != null)
+                {
+                    _ = ExecuteAsync(typedParameter);
+                }
+            }
+        }
+
+        private async Task ExecuteAsync(T parameter)
+        {
+            await _executeAsync(parameter);
+        }
+
+        public event EventHandler CanExecuteChanged
+        {
+            add { CommandManager.RequerySuggested += value; }
+            remove { CommandManager.RequerySuggested -= value; }
+        }
+
+        public void RaiseCanExecuteChanged()
+        {
+            CommandManager.InvalidateRequerySuggested();
+        }
+    }
+
 }

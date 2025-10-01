@@ -213,7 +213,7 @@ namespace FlowEvents
             EventAddWindow = new RelayCommand(EventAddBtb);
             EditEventCommand = new RelayCommand(EditEvent);
             DeleteEventCommand = new RelayCommand(DeletEvent);
-            UserManagerWindow = new RelayCommand(UserManagerMenuItem); //Позже удалить --------------------
+            //UserManagerWindow = new RelayCommand(UserManagerMenuItem); //Позже удалить --------------------
             OpenPermissionWindowCommand = new RelayCommand(OpenPermissionWindow);
             CheckUpdateAppCommand = new RelayCommand(CheckUpdateApp);
             LoginCommand = new RelayCommand(Login);
@@ -476,18 +476,18 @@ namespace FlowEvents
             PermissionWindow.ShowDialog();                                                              // 5. Показываем модально     
         }
 
-        private void UserManagerMenuItem(object parameter)
-        {
-            var UserManagerModel = App.ServiceProvider.GetRequiredService<UserManagerModel>();
-            var UserManager = new UserManager();
-            UserManager.DataContext = UserManagerModel;
-            UserManager.Owner = Application.Current.MainWindow;
-            if (UserManager.ShowDialog() == true) { }
+        //private void UserManagerMenuItem(object parameter)
+        //{
+        //    var UserManagerModel = App.ServiceProvider.GetRequiredService<UserManagerModel>();
+        //    var UserManager = new UserManager();
+        //    UserManager.DataContext = UserManagerModel;
+        //    UserManager.Owner = Application.Current.MainWindow;
+        //    if (UserManager.ShowDialog() == true) { }
 
-            //var userManagerModel = new UserManagerModel();
-            //UserManager userManager = new UserManager(userManagerModel);
-            //if (userManager.ShowDialog() == true) { }
-        }
+        //    //var userManagerModel = new UserManagerModel();
+        //    //UserManager userManager = new UserManager(userManagerModel);
+        //    //if (userManager.ShowDialog() == true) { }
+        //}
 
         private void Login(object parameter)
         {

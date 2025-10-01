@@ -22,7 +22,7 @@ namespace FlowEvents
     public partial class App : Application
     {
         public static IServiceProvider ServiceProvider { get; private set; }
-        public static AppSettings Settings {  get; private set; } // Поле для Настроек прогаммы 
+        public static AppSettings Settings { get; private set; } // Поле для Настроек прогаммы 
 
         //=================================================
         // 1. С ЭТОГО МЕТОДА НАЧИНАЕТСЯ СТАРТ ПРОГРАММЫ
@@ -56,7 +56,7 @@ namespace FlowEvents
                 var mainViewModel = ServiceProvider.GetService<MainViewModel>();                                // ← 3. СОЗДАНИЕ ViewModel
                 if (mainViewModel == null) throw new InvalidOperationException("MainViewModel not registered");
 
-                
+
                 mainWindow.DataContext = mainViewModel;     // ← 4. ПРИВЯЗКА ДАННЫХ.  Связывание DataContext
 
                 mainWindow.Show();                          // ← 5. ПОКАЗ ОКНА        Отображение главного окна
@@ -80,7 +80,7 @@ namespace FlowEvents
                 //   -------------------------------------------------
 
             }
-            catch (Exception ex )
+            catch (Exception ex)
             {
                 // Логирование ошибки запуска
                 MessageBox.Show($"Ошибка запуска: {ex.Message}");
@@ -117,15 +117,18 @@ namespace FlowEvents
 
 
             // Регистрация сервисов
-                //Сервисы работы с доменом
+            
             services.AddScoped<IActiveDirectoryService, ActiveDirectoryService>();
             services.AddScoped<IDomainSettingsService, DomainSettingsService>();
+            services.AddSingleton<IUserService, UserService>();
+            services.AddSingleton<IUserInfoService, UserInfoService>();
+            services.AddSingleton<IRoleServices, RoleServices>();
+            services.AddSingleton<IPermissionService, PermissionService>();
 
+            // Регистрация репозиториев
             services.AddSingleton<IEventRepository, EventRepository>();
             services.AddSingleton<ICategoryRepository, CategoryRepository>();
-            services.AddSingleton<IDatabaseService, DatabaseService>();
             services.AddSingleton<IPolicyAuthService, PolicyAuthService>();
-            services.AddSingleton<IUserService, UserService>();
             services.AddSingleton<IPasswordHasher, PasswordHasher>();
             services.AddSingleton<IDatabaseValidationService, DatabaseValidationService>();
             services.AddSingleton<IPermissionRepository, PermissionRepository>();
@@ -133,14 +136,13 @@ namespace FlowEvents
             services.AddSingleton<IUnitRepository, UnitRepository>();
             services.AddSingleton<IUserRepository, UserRepository>();
 
-            services.AddSingleton<IUserInfoService, UserInfoService>();
+
 
 
             // Регистрация ViewModels
             services.AddTransient<MainViewModel>();
             services.AddTransient<SettingsViewModel>();
-            services.AddTransient<UserManagerModel>();
-            services.AddTransient<PermissionViewModel>();            
+            services.AddTransient<PermissionViewModel>();
             services.AddTransient<CategoryViewModel>();
             services.AddTransient<UnitViewModel>();
             services.AddTransient<AddUserViewModel>();
@@ -149,7 +151,6 @@ namespace FlowEvents
 
             // Регистрация окон
             services.AddTransient<MainWindow>();
-            services.AddTransient<UserManager>();
             services.AddTransient<PermissionWindow>();
 
             // Построение провайдера услуг

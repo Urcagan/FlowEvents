@@ -92,13 +92,39 @@
                             <GridViewColumn Header="Доступ" Width="60">
                                 <GridViewColumn.CellTemplate>
                                     <DataTemplate>
-                                        <CheckBox IsChecked="{Binding IsAllowed}" IsEnabled="False" HorizontalAlignment="Center"/>
+                                        <!--<CheckBox IsChecked="{Binding IsAllowedBool}"  HorizontalAlignment="Center"/>-->
+                                        <CheckBox IsChecked="{Binding IsAllowedBool}" 
+                                                  Command="{Binding DataContext.UpdateUserAccessCommand, RelativeSource={RelativeSource AncestorType=ListView}}"
+                                                  CommandParameter="{Binding}"
+                                                  HorizontalAlignment="Center"/>
                                     </DataTemplate>
                                 </GridViewColumn.CellTemplate>
                             </GridViewColumn>
                             <GridViewColumn Header="Логин" Width="150" DisplayMemberBinding="{Binding UserName}"/>
                             <GridViewColumn Header="Отображаемое имя" Width="150" DisplayMemberBinding="{Binding DisplayName}"/>
-                            <GridViewColumn Header="Роль" Width="100" DisplayMemberBinding="{Binding RoleName}"/>
+
+                            <!-- Колонка с ComboBox для выбора роли -->
+                            <GridViewColumn Header="Роль" Width="120">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <ComboBox ItemsSource="{Binding DataContext.Roles, RelativeSource={RelativeSource AncestorType=ListView}}"
+                                                  DisplayMemberPath="RoleName"
+                                                  SelectedValuePath="RoleId"
+                                                  SelectedValue="{Binding RoleId, UpdateSourceTrigger=PropertyChanged}"
+                                                  Width="110"
+                                                  Height="22">
+                                            <i:Interaction.Triggers>
+                                                <i:EventTrigger EventName="SelectionChanged">
+                                                    <i:InvokeCommandAction Command="{Binding DataContext.UpdateUserRoleCommand, RelativeSource={RelativeSource AncestorType=ListView}}"
+                                               CommandParameter="{Binding}"/>
+                                                </i:EventTrigger>
+                                            </i:Interaction.Triggers>
+                                        </ComboBox>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+
+                            <!--<GridViewColumn Header="Роль" Width="100" DisplayMemberBinding="{Binding RoleName}"/>-->
                             <GridViewColumn Header="Email" Width="150" DisplayMemberBinding="{Binding Email}"/>
                             <GridViewColumn Header="Доменное имя" Width="100" DisplayMemberBinding="{Binding DomainName}"/>
 
