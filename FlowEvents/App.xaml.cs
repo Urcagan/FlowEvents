@@ -1,4 +1,5 @@
-﻿using FlowEvents.Repositories;
+﻿using FlowEvents.Models;
+using FlowEvents.Repositories;
 using FlowEvents.Repositories.Implementations;
 using FlowEvents.Repositories.Interface;
 using FlowEvents.Services;
@@ -148,6 +149,7 @@ namespace FlowEvents
             services.AddTransient<AddUserViewModel>();
             services.AddTransient<UserDomainSearchViewModel>();
             services.AddTransient<UserInfoViewModel>();
+            services.AddTransient<EventViewModel>();
 
             // Регистрация окон
             services.AddTransient<MainWindow>();

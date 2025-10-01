@@ -12,18 +12,30 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
+using FlowEvents.Repositories.Interface;
 
 namespace FlowEvents
 {
     public class EventViewModel : INotifyPropertyChanged
     {
-       
-        public readonly EventForView _originalEvent;
         private readonly string _connectionString;
-
         private readonly string userName;
-
         private Category _selectedCategory;
+        private DateTime _selectedDateEvent;
+        private string _refining;
+        private int _idCategory;
+        private string _description;
+        private string _action;
+        private string _dateCteate;
+        private string _creator;
+        private string _selectedUnitsText = "";
+        private int _editedEventId;                 // Идентификатор редактируемого события, если есть
+        private string _storagePath;                // = "C:\\temp\\Attachments";  // Путь для хранения файлов
+        private long? _currentEventId;              // Будет установлен после сохранения события
+
+
+        public readonly EventForView _originalEvent;
+
         public Category SelectedCategory
         {
             get => _selectedCategory;
@@ -35,7 +47,6 @@ namespace FlowEvents
             }
         }
 
-        private DateTime _selectedDateEvent;
         public DateTime SelectedDateEvent
         {
             get => _selectedDateEvent;
@@ -46,7 +57,6 @@ namespace FlowEvents
             }
         }
 
-        private string _refining;
         public string Refining
         {
             get => _refining;
@@ -57,7 +67,6 @@ namespace FlowEvents
             }
         }
 
-        private int _idCategory;
         public int Id_Category
         {
             get => _idCategory;
@@ -68,7 +77,6 @@ namespace FlowEvents
             }
         }
 
-        private string _description;
         public string Description
         {
             get => _description;
@@ -80,7 +88,6 @@ namespace FlowEvents
             }
         }
 
-        private string _action;
         public string Action
         {
             get => _action;
@@ -91,7 +98,6 @@ namespace FlowEvents
             }
         }
 
-        private string _dateCteate;
         public string DateCreate
         {
             get => _dateCteate;
@@ -102,14 +108,12 @@ namespace FlowEvents
             }
         }
 
-        private string _creator;
         public string Creator
         {
             get => _creator;
             set => _creator = value;
         }
 
-        private string _selectedUnitsText = "";
         public string SelectedUnitsText
         {
             get => _selectedUnitsText;
@@ -121,7 +125,6 @@ namespace FlowEvents
             }
         }
 
-        private int _editedEventId; // Идентификатор редактируемого события, если есть
         public ObservableCollection<Unit> Units { get; set; } = new ObservableCollection<Unit>();
         public ObservableCollection<Category> Categories { get; set; } = new ObservableCollection<Category>
         {
@@ -140,20 +143,20 @@ namespace FlowEvents
         public ObservableCollection<AttachedFileModel> AttachedFilesDocument { get; } = new ObservableCollection<AttachedFileModel>();
         public ObservableCollection<AttachedFileModel> AttachedFilesMonitoring { get; } = new ObservableCollection<AttachedFileModel>();
 
-        private string _storagePath; // = "C:\\temp\\Attachments";  // Путь для хранения файлов
-        private long? _currentEventId;  // Будет установлен после сохранения события
-
 
         // Команды 
         public RelayCommand AttachFileCommand { get; }
         public RelayCommand SaveCommand { get; }
         public RelayCommand CancelCommand { get; }
 
+        private readonly ICategoryRepository _categoryRepository;
 
         // Конструктор класса инициализации ViewModel для добавления события
-        public EventViewModel()
+        public EventViewModel(ICategoryRepository categoryRepository)
         {
-            //_mainViewModel = mainViewModel;
+            _categoryRepository = categoryRepository;
+
+           
             _connectionString = Global_Var.ConnectionString; //_mainViewModel._connectionString;  
 
             userName = Global_Var.UserName; //_mainViewModel.UserName;
@@ -165,7 +168,8 @@ namespace FlowEvents
             GetUnitFromDatabase(); //Получаем элементы УСТАНОВКА из БД
 
             SelectedCategory = Categories.FirstOrDefault(); // Установка категории по умолчанию
-            GetCategoryFromDatabase();
+            //Categories =   _categoryRepository.GetAllCategoriesAsync(); // Получаем категории из БД
+            //GetCategoryFromDatabase();
 
             SelectedDateEvent = DateTime.Now; // Установка текущей даты по умолчанию
 
@@ -177,10 +181,12 @@ namespace FlowEvents
 
         // Конструктор класса инициализации ViewModel для РЕДАКТИРОВАНИЯ события
         //public EventViewModel(MainViewModel mainViewModel, EventForView eventToEdit)
-        public EventViewModel(EventForView eventToEdit)
+        public EventViewModel(EventForView eventToEdit, ICategoryRepository categoryRepository)
         {
+            _categoryRepository = categoryRepository;
+
             _originalEvent = eventToEdit;
-            _connectionString = Global_Var.ConnectionString; //_mainViewModel._connectionString; //$"Data Source={_mainViewModel.appSettings.pathDB};Version=3;";
+            _connectionString = Global_Var.ConnectionString;
 
             AttachFileCommand = new RelayCommand(AttachFile);
             SaveCommand = new RelayCommand(SaveUpdatedEvents);
@@ -217,7 +223,19 @@ namespace FlowEvents
         public async Task InitializeAsync()
         {
             // здесь запускаем все асинхронные операции коорые надо выполнять в момент открытия окна
-            GetCategoryFromDatabase(); // Получаем категории из БД
+            var categories = await _categoryRepository.GetAllCategoriesAsync();
+
+            // Добавляем начальный элемент "Выбор события"
+            Categories.Add(new Category { Id = -1, Name = "Выбор события" });
+
+            // Добавляем категории из БД
+            foreach (var category in categories)
+            {
+                Categories.Add(category);
+            }
+
+           // GetCategoryFromDatabase(); // Получаем категории из БД
+            
             SelectedCategory = Categories.FirstOrDefault(c => c.Name == _originalEvent.Category);
             await LoadSelectedUnitsForEvent(_editedEventId); // Получение перечень установок связанных с этим событием
             LoadAttachedFiles(_editedEventId); // Получаем перечень прикрепленных файлов.
@@ -228,7 +246,7 @@ namespace FlowEvents
         public async Task LoadSelectedUnitsForEvent(int eventId)
         {
             // 1. Получаем список UnitID, связанных с этим EventID из базы
-            List<int> selectedUnitIds = await GetUnitIdsForEvent(eventId);
+            List<int> selectedUnitIds = await GetUnitIdForEvent(eventId);
 
             // 2. Обновляем флаги IsSelected в коллекции Units
             foreach (var unit in Units)
@@ -238,7 +256,7 @@ namespace FlowEvents
         }
 
         // Возвращает список UnitID для данного EventID
-        private async Task<List<int>> GetUnitIdsForEvent(int eventId)
+        private async Task<List<int>> GetUnitIdForEvent(int eventId)
         {
             var unitIds = new List<int>();
 
@@ -299,7 +317,7 @@ namespace FlowEvents
         //    return Path.Combine(basePath, attachmentsFolder);
         //}
 
-        public string GetAttachmentsFolderPath( DateTime eventDate)
+        public string GetAttachmentsFolderPath(DateTime eventDate)
         {
             string filePath = Global_Var.pathToDB;
             if (string.IsNullOrEmpty(filePath))
@@ -419,7 +437,7 @@ namespace FlowEvents
 
             WriteAttachFile(AttachedFilesDocument);
             WriteAttachFile(AttachedFilesMonitoring);
-          
+
             CloseWindow();
         }
 
@@ -535,12 +553,12 @@ namespace FlowEvents
 
             CommitAttachmentChanges(AttachedFilesDocument);
             CommitAttachmentChanges(AttachedFilesMonitoring);
-            
+
             CloseWindow();
         }
 
         //фиксации изменений файлов
-        private void CommitAttachmentChanges(ObservableCollection<AttachedFileModel>attachedFiles)
+        private void CommitAttachmentChanges(ObservableCollection<AttachedFileModel> attachedFiles)
         {
             if (attachedFiles.Any()) // Проверяем наличие записей о файлах
             {
@@ -566,7 +584,7 @@ namespace FlowEvents
         /// </summary>
         /// <param name="attachedFile">Коллекция содержащая файлы</param>
         /// <returns>Возвращает две коллекции типа List одна содержит файлы дл сохранения, другая файлы на удаление</returns>
-        private (List<AttachedFileModel>, List<AttachedFileModel>) SeparateAttachments(ObservableCollection<AttachedFileModel>attachedFile)
+        private (List<AttachedFileModel>, List<AttachedFileModel>) SeparateAttachments(ObservableCollection<AttachedFileModel> attachedFile)
         {
             var filesToSave = new List<AttachedFileModel>(); //Файлы которые надо сохранить 
             var filesToDelete = new List<AttachedFileModel>(); //Файлы которые надо удалить

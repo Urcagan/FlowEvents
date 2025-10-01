@@ -16,7 +16,6 @@ namespace FlowEvents.Users
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
-        private readonly IDatabaseService _databaseService;
         private readonly IUserService _userService;
 
         private bool _isLoading;
@@ -72,9 +71,9 @@ namespace FlowEvents.Users
         public ICommand CancelCommand { get; }
 
 
-        public AddUserViewModel(IDatabaseService databaseService, IUserService userService)
+        public AddUserViewModel( IUserService userService)
         {
-            _databaseService = databaseService;
+            
             _userService = userService;
 
             AddUserCommand = new RelayCommand(AddLocalUser);

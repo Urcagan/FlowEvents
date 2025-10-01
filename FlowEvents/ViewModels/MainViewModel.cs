@@ -210,10 +210,9 @@ namespace FlowEvents
             SettingOpenWindow = new RelayCommand(SettingsMenuItem);
             UnitOpenWindow = new RelayCommand(UnitMenuItem);
             CategoryOpenWindow = new RelayCommand(CategoryMenuItem);
-            EventAddWindow = new RelayCommand(EventAddBtb);
+            EventAddWindow = new RelayCommand(AddNewEvent);
             EditEventCommand = new RelayCommand(EditEvent);
             DeleteEventCommand = new RelayCommand(DeletEvent);
-            //UserManagerWindow = new RelayCommand(UserManagerMenuItem); //Позже удалить --------------------
             OpenPermissionWindowCommand = new RelayCommand(OpenPermissionWindow);
             CheckUpdateAppCommand = new RelayCommand(CheckUpdateApp);
             LoginCommand = new RelayCommand(Login);
@@ -495,30 +494,47 @@ namespace FlowEvents
             if (loginUser.ShowDialog() == true) { }
         }
 
-        private void EventAddBtb(object parameter)
+        // Вызываем окно для обавления нового события
+        private async void AddNewEvent(object parameter)
         {
-            var eventViewModel = new EventViewModel();
-            EventWindow eventView = new EventWindow(eventViewModel);
+            var eventViewModel = App.ServiceProvider.GetRequiredService<EventViewModel>(); // 1. Берем ViewModel из контейнера
+            var eventWindow = new EventWindow();                             // 2. Создаем окно обычным способом
+            eventWindow.DataContext = eventViewModel;
+            eventWindow.Owner = Application.Current.MainWindow;
+
+            // Вызываем инициализацию ДО открытия окна
+            await eventViewModel.InitializeAsync();
 
             // Создаем обработчик, который отвяжет себя после выполнения
             async void ClosedHandler(object sender, EventArgs e)
             {
-                eventView.Closed -= ClosedHandler; // Отвязываем
+                eventWindow.Closed -= ClosedHandler; // Отвязываем
                 await LoadEvents();
             }
 
-            eventView.Closed += ClosedHandler;
-            if (eventView.ShowDialog() == true) { }
+            eventWindow.Closed += ClosedHandler;
+            if (eventWindow.ShowDialog() == true) { }
         }
 
 
-        private void EditEvent(object parameter)
+        private async void EditEvent(object parameter)
         {
             if (parameter is EventForView selectedEvent)
             {
-                var eventViewModel = new EventViewModel(selectedEvent);
-                var eventWindow = new EventWindow(eventViewModel);
+                var eventViewModel = ActivatorUtilities.CreateInstance<EventViewModel>(App.ServiceProvider, selectedEvent); // 1. Берем ViewModel из контейнера и передаем в конструктор выбранное событие
+                                                                                                                            //  Как это работает:
+                                                                                                                            // 1. ActivatorUtilities анализирует конструкторы EventViewModel
+                                                                                                                            // 2. Видит, что есть конструктор с параметром EventForView eventToEdit
+                                                                                                                            // 3. Передает ваш selectedEvent в этот параметр
+                                                                                                                            // 4. Остальные зависимости(если есть) резолвятся из App.ServiceProvider
+                var eventWindow = new EventWindow();
+                eventWindow.DataContext = eventViewModel;
+                eventWindow.Owner = Application.Current.MainWindow;
 
+                // Вызываем инициализацию ДО открытия окна
+                await eventViewModel.InitializeAsync();
+
+                // Обработчик закрытия
                 async void ClosedHandler(object sender, EventArgs e)
                 {
                     eventWindow.Closed -= ClosedHandler; // Отвязываем
@@ -526,7 +542,8 @@ namespace FlowEvents
                 }
 
                 eventWindow.Closed += ClosedHandler;
-                if (eventWindow.ShowDialog() == true) { };
+                if (eventWindow.ShowDialog() == true) { }
+                ;
             }
         }
 
