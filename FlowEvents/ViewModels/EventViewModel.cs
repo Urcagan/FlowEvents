@@ -1,18 +1,20 @@
-﻿using FlowEvents.Models.Enums;
-using FlowEvents.Models;
+﻿using FlowEvents.Models;
+using FlowEvents.Models.Enums;
+using FlowEvents.Repositories.Interface;
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Data.SQLite;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows;
-using FlowEvents.Repositories.Interface;
 
 namespace FlowEvents
 {
@@ -149,14 +151,19 @@ namespace FlowEvents
         public RelayCommand SaveCommand { get; }
         public RelayCommand CancelCommand { get; }
 
+        private readonly IUnitRepository _unitRepository;
         private readonly ICategoryRepository _categoryRepository;
+        private readonly IEventUnitRepository _eventUnitRepository;
+
 
         // Конструктор класса инициализации ViewModel для добавления события
-        public EventViewModel(ICategoryRepository categoryRepository)
+        public EventViewModel(IUnitRepository unitRepository, ICategoryRepository categoryRepository)
         {
+            _unitRepository = unitRepository;
             _categoryRepository = categoryRepository;
-
            
+
+
             _connectionString = Global_Var.ConnectionString; //_mainViewModel._connectionString;  
 
             userName = Global_Var.UserName; //_mainViewModel.UserName;
@@ -165,11 +172,10 @@ namespace FlowEvents
             SaveCommand = new RelayCommand(SaveNewEvent);
             CancelCommand = new RelayCommand(Cancel);
 
-            GetUnitFromDatabase(); //Получаем элементы УСТАНОВКА из БД
+            //НАДО СДЕЛАТЬ АСИНХРОННЫМ
+            _ = InitializeAsync(); // Первоначальная инициализация перечней объектов и категорий
 
             SelectedCategory = Categories.FirstOrDefault(); // Установка категории по умолчанию
-            //Categories =   _categoryRepository.GetAllCategoriesAsync(); // Получаем категории из БД
-            //GetCategoryFromDatabase();
 
             SelectedDateEvent = DateTime.Now; // Установка текущей даты по умолчанию
 
@@ -181,9 +187,11 @@ namespace FlowEvents
 
         // Конструктор класса инициализации ViewModel для РЕДАКТИРОВАНИЯ события
         //public EventViewModel(MainViewModel mainViewModel, EventForView eventToEdit)
-        public EventViewModel(EventForView eventToEdit, ICategoryRepository categoryRepository)
+        public EventViewModel(EventForView eventToEdit, IUnitRepository unitRepository, ICategoryRepository categoryRepository,IEventUnitRepository eventUnitRepository)
         {
+            _unitRepository = unitRepository;
             _categoryRepository = categoryRepository;
+            _eventUnitRepository = eventUnitRepository;
 
             _originalEvent = eventToEdit;
             _connectionString = Global_Var.ConnectionString;
@@ -198,7 +206,20 @@ namespace FlowEvents
             Description = _originalEvent.Description;
             Action = _originalEvent.Action;
 
-            GetUnitFromDatabase(); //Получаем элементы УСТАНОВКА из БД
+
+            // Запускаем инициализацию без блокировки конструктора
+            // Первоначальная инициализация перечней объектов и категорий
+            // Ждем завершения инициализации перед установкой SelectedCategory
+            InitializeAsync().ContinueWith(t =>
+            {
+                // Этот код выполнится после завершения InitializeAsync
+                SelectedCategory = Categories.FirstOrDefault(c => c.Name == _originalEvent.Category);
+            }, TaskScheduler.FromCurrentSynchronizationContext());
+                       
+            LoadSelectedUnitsForEvent(_editedEventId); // Получение перечень установок связанных с этим событием
+            
+            LoadAttachedFiles(_editedEventId); // Получаем перечень прикрепленных файлов.
+
             SubscribeToUnitsPropertyChanged(); // Подписка на изменение IsSelected (чтобы Label обновлялся автоматически)
         }
 
@@ -219,34 +240,41 @@ namespace FlowEvents
         }
 
 
-        // Асинхронная инициализация (Запуск происходит в EventWindows.xaml.cs)
-        public async Task InitializeAsync()
+
+        // Асинхронная инициализация элементов управления Обьектов и Категорий
+        private async Task InitializeAsync() // здесь запускаем все асинхронные операции коорые надо выполнять в момент открытия окна
         {
-            // здесь запускаем все асинхронные операции коорые надо выполнять в момент открытия окна
-            var categories = await _categoryRepository.GetAllCategoriesAsync();
-
-            // Добавляем начальный элемент "Выбор события"
-            Categories.Add(new Category { Id = -1, Name = "Выбор события" });
-
-            // Добавляем категории из БД
-            foreach (var category in categories)
+            try
             {
-                Categories.Add(category);
+                // 1. Получение перечня категорий для комбобокса из Category
+                var categories = await _categoryRepository.GetAllCategoriesAsync();
+                foreach (var category in categories) // Добавляем категории из БД в комбобокс категорий
+                {
+                    Categories.Add(category);
+                }
+
+                // 2. Получение перечня всех объектов из Units
+                var units = await _unitRepository.GetAllUnitsAsync();
+                foreach (var unit in units)
+                {
+                    Units.Add(unit);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Логирование ошибки
+                Debug.WriteLine($"InitializeAsync error: {ex.Message}");
             }
 
-           // GetCategoryFromDatabase(); // Получаем категории из БД
-            
-            SelectedCategory = Categories.FirstOrDefault(c => c.Name == _originalEvent.Category);
-            await LoadSelectedUnitsForEvent(_editedEventId); // Получение перечень установок связанных с этим событием
-            LoadAttachedFiles(_editedEventId); // Получаем перечень прикрепленных файлов.
         }
+
 
 
         // Востанавливаем выбор на элементах в окне установок
         public async Task LoadSelectedUnitsForEvent(int eventId)
         {
             // 1. Получаем список UnitID, связанных с этим EventID из базы
-            List<int> selectedUnitIds = await GetUnitIdForEvent(eventId);
+            List<int> selectedUnitIds = await _eventUnitRepository.GetIdUnitForEventAsync(eventId);  
 
             // 2. Обновляем флаги IsSelected в коллекции Units
             foreach (var unit in Units)
@@ -255,31 +283,6 @@ namespace FlowEvents
             }
         }
 
-        // Возвращает список UnitID для данного EventID
-        private async Task<List<int>> GetUnitIdForEvent(int eventId)
-        {
-            var unitIds = new List<int>();
-
-            using (var connection = new SQLiteConnection(_connectionString))
-            {
-                await connection.OpenAsync();
-                using (var command = new SQLiteCommand(
-                    "SELECT UnitID FROM EventUnits WHERE EventID = @eventId",
-                    connection))
-                {
-                    command.Parameters.AddWithValue("@eventId", eventId);
-
-                    using (var reader = await command.ExecuteReaderAsync())
-                    {
-                        while (await reader.ReadAsync())
-                        {
-                            unitIds.Add(reader.GetInt32(0));
-                        }
-                    }
-                }
-            }
-            return unitIds;
-        }
 
         public void RemoveAttachedFile(AttachedFileModel fileToRemove) // метод для удаления файла из коллекции
         {
@@ -678,70 +681,7 @@ namespace FlowEvents
         }
 
 
-        private void GetUnitFromDatabase()
-        {
-            try
-            {
-                using (var connection = new SQLiteConnection(_connectionString))
-                {
-                    connection.Open();
-
-                    string query = @" Select id, Unit, Description From Units ";
-
-                    using (var command = new SQLiteCommand(query, connection))
-                    using (var reader = command.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            Units.Add(new Unit
-                            {
-                                Id = reader.GetInt32(0),
-                                UnitName = reader.GetString(1),
-                                Description = reader.IsDBNull(2) ? null : reader.GetString(2)
-                            });
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Ошибка загрузки данных: {ex.Message}");
-            }
-        }
-
-        private void GetCategoryFromDatabase()
-        {
-            try
-            {
-                using (var connection = new SQLiteConnection(_connectionString))
-                {
-                    connection.Open();
-
-                    string query = @" Select id, Name, Description, Colour From Category ";
-
-                    using (var command = new SQLiteCommand(query, connection))
-                    using (var reader = command.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            Categories.Add(new Category
-                            {
-                                Id = reader.GetInt32(0),
-                                Name = reader.GetString(1),
-                                Description = reader.IsDBNull(2) ? null : reader.GetString(2),
-                                Colour = reader.IsDBNull(3) ? null : reader.GetString(2)
-                            });
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Ошибка загрузки категорий: {ex.Message}");
-            }
-        }
-
-
+        
 
         /// <summary>
         /// Добавление новой строки в таблицу задач 

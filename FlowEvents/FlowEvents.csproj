@@ -83,6 +83,8 @@
     <Compile Include="App.cs" />
     <Compile Include="Models\DatabaseInfo.cs" />
     <Compile Include="Models\UserInfo.cs" />
+    <Compile Include="Repositories\Implementations\EventUnitRepository.cs" />
+    <Compile Include="Repositories\Interface\IEventUnitRepository.cs" />
     <Compile Include="Services\Implementations\PermissionService.cs" />
     <Compile Include="Services\Implementations\RoleServices.cs" />
     <Compile Include="Services\Interface\IPermissionService.cs" />

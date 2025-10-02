@@ -495,15 +495,12 @@ namespace FlowEvents
         }
 
         // Вызываем окно для обавления нового события
-        private async void AddNewEvent(object parameter)
+        private void AddNewEvent(object parameter)
         {
             var eventViewModel = App.ServiceProvider.GetRequiredService<EventViewModel>(); // 1. Берем ViewModel из контейнера
             var eventWindow = new EventWindow();                             // 2. Создаем окно обычным способом
             eventWindow.DataContext = eventViewModel;
             eventWindow.Owner = Application.Current.MainWindow;
-
-            // Вызываем инициализацию ДО открытия окна
-            await eventViewModel.InitializeAsync();
 
             // Создаем обработчик, который отвяжет себя после выполнения
             async void ClosedHandler(object sender, EventArgs e)
@@ -517,7 +514,7 @@ namespace FlowEvents
         }
 
 
-        private async void EditEvent(object parameter)
+        private void EditEvent(object parameter)
         {
             if (parameter is EventForView selectedEvent)
             {
@@ -530,9 +527,6 @@ namespace FlowEvents
                 var eventWindow = new EventWindow();
                 eventWindow.DataContext = eventViewModel;
                 eventWindow.Owner = Application.Current.MainWindow;
-
-                // Вызываем инициализацию ДО открытия окна
-                await eventViewModel.InitializeAsync();
 
                 // Обработчик закрытия
                 async void ClosedHandler(object sender, EventArgs e)
