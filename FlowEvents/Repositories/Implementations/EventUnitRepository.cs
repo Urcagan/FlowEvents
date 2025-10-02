@@ -17,8 +17,6 @@ namespace FlowEvents.Repositories.Implementations
             _connectionProvider = connectionProvider;
         }
 
-  
-
 
         /// <summary>
         /// Возвращает список UnitID для данного EventID 
@@ -57,5 +55,23 @@ namespace FlowEvents.Repositories.Implementations
             return unitIds; // Возвращает пустой список если связей не найдено
         }
 
+
+        public async Task InsertEventUnitsAsync(long eventId, IEnumerable<int> unitIds) // Добавдяем связь между событием и обьектами
+        {
+            var connectionString = _connectionProvider.GetConnectionString();
+
+            using var connection = new SQLiteConnection(connectionString);
+            await connection.OpenAsync();
+
+            const string insertQuery = "INSERT INTO EventUnits (EventID, UnitID) VALUES (@EventID, @UnitID);";
+
+            foreach (var unitId in unitIds)
+            {
+                using var command = new SQLiteCommand(insertQuery, connection);
+                command.Parameters.AddWithValue("@EventID", eventId);
+                command.Parameters.AddWithValue("@UnitID", unitId);
+                await command.ExecuteNonQueryAsync();
+            }
+        }
     }
 }

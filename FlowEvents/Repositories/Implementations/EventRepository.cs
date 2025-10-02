@@ -19,6 +19,72 @@ namespace FlowEvents.Repositories
             _connectionProvider = connectionProvider;
         }
 
+        // Добавдяем событие и связь между событием и обьектами
+        public async Task<long> AddEventWithUnitsAsync(Event newEvent, IEnumerable<int> unitIds) 
+        {
+            var connectionString = _connectionProvider.GetConnectionString();
+
+            using var connection = new SQLiteConnection(connectionString);
+            await connection.OpenAsync();
+
+            using var transaction = connection.BeginTransaction();
+
+            try
+            {
+                // 1. Вставляем событие
+                var eventId = await InsertEventAsync(connection, transaction, newEvent);
+
+                // 2. Вставляем связи с установками
+                if (unitIds?.Any() == true)
+                {
+                    await InsertEventUnitsAsync(connection, transaction, eventId, unitIds);
+                }
+
+                transaction.Commit();
+                return eventId;
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
+        }
+
+        // Добавляем событие
+        private async Task<long> InsertEventAsync(SQLiteConnection connection, SQLiteTransaction transaction, Event newEvent)
+        {
+            const string query = @"
+            INSERT INTO Events (DateEvent, OilRefining, id_category, Description, Action, DateCreate, Creator)
+            VALUES (@DateEvent, @OilRefining, @id_category, @Description, @Action, @DateCreate, @Creator);
+            SELECT last_insert_rowid();";
+
+            using var command = new SQLiteCommand(query, connection, transaction);
+            // Добавление параметров
+            command.Parameters.AddWithValue("@DateEvent", newEvent.DateEvent);
+            command.Parameters.AddWithValue("@OilRefining", newEvent.OilRefining ?? (object)DBNull.Value);
+            command.Parameters.AddWithValue("@id_category", newEvent.Id_Category);
+            command.Parameters.AddWithValue("@Description", newEvent.Description ?? (object)DBNull.Value); // Если Description == null, вставляем NULL
+            command.Parameters.AddWithValue("@Action", newEvent.Action ?? (object)DBNull.Value); // Если Action == null, вставляем NULL
+            command.Parameters.AddWithValue("@DateCreate", newEvent.DateCreate);
+            command.Parameters.AddWithValue("@Creator", newEvent.Creator);
+            var result = await command.ExecuteScalarAsync();
+            return Convert.ToInt64(result);
+        }
+
+        // Добавдяем связь между событием и обьектами
+        private async Task InsertEventUnitsAsync(SQLiteConnection connection, SQLiteTransaction transaction, long eventId, IEnumerable<int> unitIds)
+        {
+            const string insertQuery = "INSERT INTO EventUnits (EventID, UnitID) VALUES (@EventID, @UnitID);";
+
+            foreach (var unitId in unitIds)
+            {
+                using var command = new SQLiteCommand(insertQuery, connection, transaction);
+                command.Parameters.AddWithValue("@EventID", eventId);
+                command.Parameters.AddWithValue("@UnitID", unitId);
+                await command.ExecuteNonQueryAsync();
+            }
+        }
+
         /// <summary>
         /// Метод для получения событий из базы данных
         /// </summary>
@@ -186,7 +252,7 @@ namespace FlowEvents.Repositories
 
             try
             {
-                using (var connection = new SQLiteConnection(_connectionString)) 
+                using (var connection = new SQLiteConnection(_connectionString))
                 {
                     connection.Open();
 

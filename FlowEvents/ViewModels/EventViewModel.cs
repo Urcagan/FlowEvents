@@ -1,6 +1,7 @@
 ﻿using FlowEvents.Models;
 using FlowEvents.Models.Enums;
 using FlowEvents.Repositories.Interface;
+using FlowEvents.Services.Interface;
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
@@ -135,6 +136,7 @@ namespace FlowEvents
 
         // Свойство с Id выбранных элементов
         public List<int> SelectedIds => Units.Where(u => u.IsSelected).Select(u => u.Id).ToList();
+        public IEnumerable<int> N_SelectedIds => Units.Where(u => u.IsSelected).Select(u => u.Id).ToList();
 
         //----------------------------------------
 
@@ -154,14 +156,15 @@ namespace FlowEvents
         private readonly IUnitRepository _unitRepository;
         private readonly ICategoryRepository _categoryRepository;
         private readonly IEventUnitRepository _eventUnitRepository;
+        private readonly IEventRepository _eventRepository;
 
 
         // Конструктор класса инициализации ViewModel для добавления события
-        public EventViewModel(IUnitRepository unitRepository, ICategoryRepository categoryRepository)
+        public EventViewModel(IUnitRepository unitRepository, ICategoryRepository categoryRepository,IEventRepository  eventRepository )
         {
             _unitRepository = unitRepository;
-            _categoryRepository = categoryRepository;
-           
+            _categoryRepository = categoryRepository;       
+            _eventRepository = eventRepository;
 
 
             _connectionString = Global_Var.ConnectionString; //_mainViewModel._connectionString;  
@@ -234,6 +237,7 @@ namespace FlowEvents
                     {
                         UpdateSelectedUnitsText();
                         OnPropertyChanged(nameof(SelectedIds));
+                        OnPropertyChanged(nameof(N_SelectedIds));
                     }
                 };
             }
@@ -420,7 +424,7 @@ namespace FlowEvents
         }
 
         //Сохранение новой записи 
-        private void SaveNewEvent(object parameters)
+        private async Task SaveNewEvent(object parameters)
         {
             if (!ValidateEvent())
                 return;
@@ -436,7 +440,9 @@ namespace FlowEvents
                 Creator = userName
             };
             // Сохраняем событие и получаем его ID
-            _currentEventId = AddEventAndGetId(newEvent);
+           //  _currentEventId = AddEventAndGetId(newEvent);
+
+            _currentEventId = await _eventRepository.AddEventWithUnitsAsync(newEvent, SelectedIds); // Сохраняем событие и получаем его ID
 
             WriteAttachFile(AttachedFilesDocument);
             WriteAttachFile(AttachedFilesMonitoring);
