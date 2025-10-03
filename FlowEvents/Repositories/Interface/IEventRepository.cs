@@ -11,9 +11,6 @@ namespace FlowEvents.Repositories.Interface
         List<EventForView> GetEvents(string queryEvent);
         Task<List<EventForView>> GetEventsAsync(string queryEvent);
 
-        ObservableCollection<Unit> GetUnitFromDatabase();  //Загрузка перечня установок из ДБ
-        Task<ObservableCollection<Unit>> GetUnitFromDatabaseAsync();
-
         List<AttachedFileForEvent> GetIdFilesOnEvent(int EventId); //Получение списка файлов, прикрепленных к событию
         
         string BuildSQLQueryEvents(Unit selectedUnit, DateTime? startDate, DateTime? endDate, bool isAllEvents); // Формирует строку SQL запроса для вывода данных в таблицу
@@ -21,5 +18,7 @@ namespace FlowEvents.Repositories.Interface
         Task<bool> DeleteEventAsync(int eventId); // Удалить событие по Id
 
         Task<long> AddEventWithUnitsAsync(Event newEvent, IEnumerable<int> unitIds); // Добавдяем событие и связь между событием и обьектами
+
+        Task<bool> UpdateEventWithUnitsAsync(Event updateEvent, IEnumerable<int> unitIds); // Обновление события 
     }
 }

@@ -1,7 +1,6 @@
 ﻿using FlowEvents.Models;
 using FlowEvents.Models.Enums;
 using FlowEvents.Repositories.Interface;
-using FlowEvents.Services.Interface;
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
@@ -13,7 +12,6 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows;
 
@@ -22,14 +20,14 @@ namespace FlowEvents
     public class EventViewModel : INotifyPropertyChanged
     {
         private readonly string _connectionString;
-        private readonly string userName;
+        private readonly string _userName;
         private Category _selectedCategory;
         private DateTime _selectedDateEvent;
         private string _refining;
         private int _idCategory;
         private string _description;
         private string _action;
-        private string _dateCteate;
+        private string _dateCreate;
         private string _creator;
         private string _selectedUnitsText = "";
         private int _editedEventId;                 // Идентификатор редактируемого события, если есть
@@ -37,7 +35,7 @@ namespace FlowEvents
         private long? _currentEventId;              // Будет установлен после сохранения события
 
 
-        public readonly EventForView _originalEvent;
+        private readonly EventForView _originalEvent;
 
         public Category SelectedCategory
         {
@@ -70,7 +68,7 @@ namespace FlowEvents
             }
         }
 
-        public int Id_Category
+        public int IdCategory
         {
             get => _idCategory;
             set
@@ -103,10 +101,10 @@ namespace FlowEvents
 
         public string DateCreate
         {
-            get => _dateCteate;
+            get => _dateCreate;
             set
             {
-                _dateCteate = value;
+                _dateCreate = value;
                 OnPropertyChanged();
             }
         }
@@ -135,8 +133,7 @@ namespace FlowEvents
         };
 
         // Свойство с Id выбранных элементов
-        public List<int> SelectedIds => Units.Where(u => u.IsSelected).Select(u => u.Id).ToList();
-        public IEnumerable<int> N_SelectedIds => Units.Where(u => u.IsSelected).Select(u => u.Id).ToList();
+        public IEnumerable<int> SelectedIds => Units.Where(u => u.IsSelected).Select(u => u.Id).ToList();
 
         //----------------------------------------
 
@@ -159,23 +156,22 @@ namespace FlowEvents
         private readonly IEventRepository _eventRepository;
 
 
-        // Конструктор класса инициализации ViewModel для добавления события
+        // Конструктор ViewModel для Добавлениия события
         public EventViewModel(IUnitRepository unitRepository, ICategoryRepository categoryRepository,IEventRepository  eventRepository )
         {
+           
+            
             _unitRepository = unitRepository;
             _categoryRepository = categoryRepository;       
             _eventRepository = eventRepository;
 
-
-            _connectionString = Global_Var.ConnectionString; //_mainViewModel._connectionString;  
-
-            userName = Global_Var.UserName; //_mainViewModel.UserName;
+            _connectionString = Global_Var.ConnectionString;  
+            _userName = Global_Var.UserName; 
 
             AttachFileCommand = new RelayCommand(AttachFile);
-            SaveCommand = new RelayCommand(SaveNewEvent);
+            SaveCommand = new RelayCommand(AddEvent);
             CancelCommand = new RelayCommand(Cancel);
 
-            //НАДО СДЕЛАТЬ АСИНХРОННЫМ
             _ = InitializeAsync(); // Первоначальная инициализация перечней объектов и категорий
 
             SelectedCategory = Categories.FirstOrDefault(); // Установка категории по умолчанию
@@ -188,19 +184,20 @@ namespace FlowEvents
         }
 
 
-        // Конструктор класса инициализации ViewModel для РЕДАКТИРОВАНИЯ события
+        // Конструктор ViewModel для РЕДАКТИРОВАНИЯ события
         //public EventViewModel(MainViewModel mainViewModel, EventForView eventToEdit)
-        public EventViewModel(EventForView eventToEdit, IUnitRepository unitRepository, ICategoryRepository categoryRepository,IEventUnitRepository eventUnitRepository)
+        public EventViewModel(EventForView eventToEdit, IUnitRepository unitRepository, ICategoryRepository categoryRepository,IEventUnitRepository eventUnitRepository, IEventRepository eventRepository)
         {
             _unitRepository = unitRepository;
             _categoryRepository = categoryRepository;
             _eventUnitRepository = eventUnitRepository;
+            _eventRepository = eventRepository;
 
             _originalEvent = eventToEdit;
             _connectionString = Global_Var.ConnectionString;
 
             AttachFileCommand = new RelayCommand(AttachFile);
-            SaveCommand = new RelayCommand(SaveUpdatedEvents);
+            SaveCommand = new RelayCommand(UpdatedEvent);
             CancelCommand = new RelayCommand(Cancel);
 
             _editedEventId = _originalEvent.Id; // Сохраняем ID редактируемого события
@@ -237,7 +234,6 @@ namespace FlowEvents
                     {
                         UpdateSelectedUnitsText();
                         OnPropertyChanged(nameof(SelectedIds));
-                        OnPropertyChanged(nameof(N_SelectedIds));
                     }
                 };
             }
@@ -269,7 +265,6 @@ namespace FlowEvents
                 // Логирование ошибки
                 Debug.WriteLine($"InitializeAsync error: {ex.Message}");
             }
-
         }
 
 
@@ -358,8 +353,7 @@ namespace FlowEvents
                     return;
                 }
 
-                // Гененрируем путь для хранения файла
-                _storagePath = GetAttachmentsFolderPath(SelectedDateEvent);
+                _storagePath = GetAttachmentsFolderPath(SelectedDateEvent); // Гененрируем путь для хранения файла
 
                 // Генерируем уникальное имя файла
                 string originalFileName = fileInfo.Name;
@@ -390,7 +384,6 @@ namespace FlowEvents
                 {
                     AttachedFilesMonitoring.Add(newFile);
                 }
-
             }
             catch (Exception ex)
             {
@@ -424,7 +417,7 @@ namespace FlowEvents
         }
 
         //Сохранение новой записи 
-        private async Task SaveNewEvent(object parameters)
+        private async Task AddEvent(object parameters)
         {
             if (!ValidateEvent())
                 return;
@@ -437,15 +430,35 @@ namespace FlowEvents
                 Description = Description,
                 Action = Action,
                 DateCreate = DateTime.Now.ToString(formatDateTime, culture), // Получить текущую дату и время
-                Creator = userName
+                Creator = _userName
             };
             // Сохраняем событие и получаем его ID
-           //  _currentEventId = AddEventAndGetId(newEvent);
-
             _currentEventId = await _eventRepository.AddEventWithUnitsAsync(newEvent, SelectedIds); // Сохраняем событие и получаем его ID
 
             WriteAttachFile(AttachedFilesDocument);
             WriteAttachFile(AttachedFilesMonitoring);
+
+            CloseWindow();
+        }
+
+        // Обновление записи события
+        private void UpdatedEvent(object parameters)
+        {
+            if (!ValidateEvent()) return;
+            // Создание экземпляра для хранения нового Event
+            var _updateEvent = new Event
+            {
+                Id = this._editedEventId,
+                DateEvent = SelectedDateEvent.ToString(AppBaseConfig.formatDate),
+                OilRefining = Refining,
+                Id_Category = _selectedCategory.Id,
+                Description = Description,
+                Action = Action
+            };
+            _eventRepository.UpdateEventWithUnitsAsync(_updateEvent, SelectedIds);//Обновление данных по событию и обьектам в БД 
+
+            CommitAttachmentChanges(AttachedFilesDocument);
+            CommitAttachmentChanges(AttachedFilesMonitoring);
 
             CloseWindow();
         }
@@ -458,12 +471,10 @@ namespace FlowEvents
                 var hasValidFiles = RemoveNonNewFiles(attachedFiles);
 
                 if (hasValidFiles)
-                {
-                    // Копируем в папку закрепленные файлы
-                    CopyFileToPath(attachedFiles);
-
-                    // Если событие есть, то записваем информацию о рикрепелнных к нему файлов в БД
-                    if (_currentEventId.HasValue)
+                {                    
+                    CopyFileToPath(attachedFiles); // Копируем в папку закрепленные файлы
+                    
+                    if (_currentEventId.HasValue)   // Если событие есть, то записваем информацию о рикрепелнных к нему файлов в БД
                     {
                         SaveAttachedFilesToDatabase(_currentEventId.Value, attachedFiles);
                     }
@@ -487,84 +498,64 @@ namespace FlowEvents
                     attachedFiles.RemoveAt(i);
                 }
             }
-
             return hasNewFiles;
         }
 
         //Копирование файла 
-        private void CopyFileToPath(ObservableCollection<AttachedFileModel> attachedFile)
-        {
-            var failedFiles = new List<AttachedFileModel>();
+        //private void CopyFileToPath(ObservableCollection<AttachedFileModel> attachedFile)
+        //{
+        //    var failedFiles = new List<AttachedFileModel>();
 
-            foreach (var file in attachedFile.ToList())
-            {
-                if (file.Status != FileStatus.New) continue; // если файл в коллекции не является новым , то пропускаем его.
+        //    foreach (var file in attachedFile.ToList())
+        //    {
+        //        if (file.Status != FileStatus.New) continue; // если файл в коллекции не является новым , то пропускаем его.
 
-                try
-                {
-                    Directory.CreateDirectory(Path.GetDirectoryName(file.FilePath));
-                    File.Copy(file.SourceFilePath, file.FilePath, overwrite: true); // overwrite на случай повторной попытки
-                }
-                catch (Exception ex)
-                {
-                    failedFiles.Add(file); //Если файл не удалось скопирорвать, то помечаем его для дальнейшего исключения из записи о нем в БД
-                    MessageBox.Show($"Не удалось сохранить {file.FileName}: {ex.Message}");
-                }
-            }
+        //        try
+        //        {
+        //            Directory.CreateDirectory(Path.GetDirectoryName(file.FilePath));
+        //            File.Copy(file.SourceFilePath, file.FilePath, overwrite: true); // overwrite на случай повторной попытки
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            failedFiles.Add(file); //Если файл не удалось скопирорвать, то помечаем его для дальнейшего исключения из записи о нем в БД
+        //            MessageBox.Show($"Не удалось сохранить {file.FileName}: {ex.Message}");
+        //        }
+        //    }
 
-            // Удаляем проблемные файлы из коллекции
-            foreach (var badFile in failedFiles)
-            {
-                attachedFile.Remove(badFile);
-            }
-        }
+        //    // Удаляем проблемные файлы из коллекции
+        //    foreach (var badFile in failedFiles)
+        //    {
+        //        attachedFile.Remove(badFile);
+        //    }
+        //}
 
-        private void CopyFilesToPath(List<AttachedFileModel> files)
-        {
+        //private void CopyFilesToPath(List<AttachedFileModel> files)
+        //{
 
-            var failedFiles = new List<AttachedFileModel>();
+        //    var failedFiles = new List<AttachedFileModel>();
 
-            foreach (var file in files.ToList())
-            {
-                try
-                {
-                    Directory.CreateDirectory(Path.GetDirectoryName(file.FilePath));
-                    File.Copy(file.SourceFilePath, file.FilePath, overwrite: true); // overwrite на случай повторной попытки
-                }
-                catch (Exception ex)
-                {
-                    failedFiles.Add(file); //Если файл не удалось скопирорвать, то помечаем его для дальнейшего исключения из записи о нем в БД
-                    MessageBox.Show($"Не удалось сохранить {file.FileName}: {ex.Message}");
-                }
-            }
+        //    foreach (var file in files.ToList())
+        //    {
+        //        try
+        //        {
+        //            Directory.CreateDirectory(Path.GetDirectoryName(file.FilePath));
+        //            File.Copy(file.SourceFilePath, file.FilePath, overwrite: true); // overwrite на случай повторной попытки
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            failedFiles.Add(file); //Если файл не удалось скопирорвать, то помечаем его для дальнейшего исключения из записи о нем в БД
+        //            MessageBox.Show($"Не удалось сохранить {file.FileName}: {ex.Message}");
+        //        }
+        //    }
 
-            // Удаляем проблемные файлы из коллекции
-            foreach (var badFile in failedFiles)
-            {
-                files.Remove(badFile);
-            }
-        }
+        //    // Удаляем проблемные файлы из коллекции
+        //    foreach (var badFile in failedFiles)
+        //    {
+        //        files.Remove(badFile);
+        //    }
+        //}
 
-        private void SaveUpdatedEvents(object parameters)
-        {
-            if (!ValidateEvent()) return;
-            // Создание экземпляра для хранения нового Event
-            var _updateEvent = new Event
-            {
-                Id = this._editedEventId,
-                DateEvent = SelectedDateEvent.ToString(AppBaseConfig.formatDate),
-                OilRefining = Refining,
-                Id_Category = _selectedCategory.Id,
-                Description = Description,
-                Action = Action
-            };
-            EditEvent(_updateEvent, SelectedIds); //Обновление данных по событию в БД 
 
-            CommitAttachmentChanges(AttachedFilesDocument);
-            CommitAttachmentChanges(AttachedFilesMonitoring);
-
-            CloseWindow();
-        }
 
         //фиксации изменений файлов
         private void CommitAttachmentChanges(ObservableCollection<AttachedFileModel> attachedFiles)
@@ -609,7 +600,6 @@ namespace FlowEvents
                     filesToDelete.Add(file);
                 }
             }
-
             return (filesToSave, filesToDelete);
         }
 
@@ -666,7 +656,7 @@ namespace FlowEvents
         //Валидация перед сохранением:
         private bool ValidateEvent()
         {
-            if (SelectedIds == null || SelectedIds.Count == 0) // Проверка выбранной установки
+            if (SelectedIds == null || !SelectedIds.Any()) // Проверка выбранной установки
             {
                 MessageBox.Show("Не выбрана установка");
                 return false;
@@ -687,144 +677,6 @@ namespace FlowEvents
         }
 
 
-        
-
-        /// <summary>
-        /// Добавление новой строки в таблицу задач 
-        private long AddEventAndGetId(Event newEvent)
-        {
-            using (var connection = new SQLiteConnection(_connectionString))
-            {
-                connection.Open();
-                using (var transaction = connection.BeginTransaction())
-                {
-                    try
-                    {
-                        long eventId = InsertEvent(connection, newEvent);
-                        InsertEventUnit(connection, eventId, SelectedIds);
-                        transaction.Commit();
-                        return eventId;
-                    }
-                    catch
-                    {
-                        transaction.Rollback();
-                        throw;
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// Вставка нового события в базу данных
-        /// </summary>
-        /// <param name="connection"> Открытое соединение с базой данных</param>
-        /// <param name="newEvent"> Модель с данными новой записи </param>
-        /// <returns></returns>
-        private long InsertEvent(SQLiteConnection connection, Event newEvent)
-        {
-            // SQL-запрос для вставки данных
-            var query = @"
-                INSERT INTO Events (DateEvent, OilRefining, id_category, Description, Action, DateCreate, Creator)
-                VALUES (@DateEvent, @OilRefining, @id_category, @Description, @Action, @DateCreate, @Creator);";
-
-            using (var command = new SQLiteCommand(query, connection))
-            {
-                // Добавление параметров
-                command.Parameters.AddWithValue("@DateEvent", newEvent.DateEvent);
-                command.Parameters.AddWithValue("@OilRefining", newEvent.OilRefining ?? (object)DBNull.Value);
-                command.Parameters.AddWithValue("@id_category", newEvent.Id_Category);
-                command.Parameters.AddWithValue("@Description", newEvent.Description ?? (object)DBNull.Value); // Если Description == null, вставляем NULL
-                command.Parameters.AddWithValue("@Action", newEvent.Action ?? (object)DBNull.Value); // Если Action == null, вставляем NULL
-                command.Parameters.AddWithValue("@DateCreate", newEvent.DateCreate);
-                command.Parameters.AddWithValue("@Creator", newEvent.Creator);
-                command.ExecuteNonQuery();
-            }
-            return connection.LastInsertRowId;
-        }
-
-
-        /// <summary>
-        /// Добавление записей в таблицу EventUnits для связывания записей Event и Units
-        /// </summary>
-        /// <param name="eventId"></param>
-        /// <param name="unitId"></param>
-        private void InsertEventUnit(SQLiteConnection connection, long eventId, List<int> unitIds)
-        {
-            string insertTaskUnitsQuery = "INSERT INTO EventUnits (EventID, UnitID) VALUES (@EventID, @UnitID);";
-            foreach (long unitId in unitIds)
-            {
-                using (SQLiteCommand command = new SQLiteCommand(insertTaskUnitsQuery, connection))
-                {
-                    command.Parameters.AddWithValue("@EventID", eventId);
-                    command.Parameters.AddWithValue("@UnitID", unitId);
-                    command.ExecuteNonQuery();
-                }
-            }
-        }
-
-        public void EditEvent(Event updateEvent, List<int> selectedIds)
-        {
-            try
-            {
-                using (var connection = new SQLiteConnection(_connectionString))
-                {
-                    connection.Open();
-
-                    using (SQLiteTransaction transaction = connection.BeginTransaction())
-                    {
-                        try
-                        {
-                            UpdateEvent(connection, updateEvent); // Обновление записи события
-
-                            UpdateEventUnit(connection, _editedEventId, selectedIds); // Обновление данных по объектам
-
-                            transaction.Commit();
-                        }
-                        catch (Exception ex)
-                        {
-                            // В случае ошибки откатить транзакцию
-                            transaction.Rollback();
-                            MessageBox.Show($"Ошибка при сохранении: {ex.Message}");
-                        }
-                    }
-                }
-            }
-            catch (SQLiteException ex)
-            {
-                MessageBox.Show($"Ошибка базы данных: {ex.Message}");
-            }
-        }
-
-        private void UpdateEvent(SQLiteConnection connection, Event updateEvent) // SQL-запрос для обновления данных
-        {
-            var query = "UPDATE Events SET DateEvent = @DateEvent, OilRefining = @OilRefining , id_category = @id_category, Description = @Description, Action = @Action WHERE id = @SelectedRowId ";
-
-            using (var command = new SQLiteCommand(query, connection))
-            {
-                command.Parameters.AddWithValue("@DateEvent", updateEvent.DateEvent);
-                command.Parameters.AddWithValue("@OilRefining", updateEvent.OilRefining ?? (object)DBNull.Value); // Если OilRefining == null, вставляем NULL
-                command.Parameters.AddWithValue("@id_category", updateEvent.Id_Category);
-                command.Parameters.AddWithValue("@Description", updateEvent.Description ?? (object)DBNull.Value); // Если Description == null, вставляем NULL
-                command.Parameters.AddWithValue("@Action", updateEvent.Action ?? (object)DBNull.Value); // Если Action == null, вставляем NULL
-                command.Parameters.AddWithValue("@SelectedRowId", updateEvent.Id);
-                command.ExecuteNonQuery();
-            }
-        }
-
-        private void UpdateEventUnit(SQLiteConnection connection, long eventId, List<int> unitIds)
-        {
-            // Удаляем все существующие связи для данной задачи
-            var deleteQuery = "DELETE FROM EventUnits WHERE EventID = @EventId;";
-            using (var command = new SQLiteCommand(deleteQuery, connection))
-            {
-                command.Parameters.AddWithValue("@EventId", eventId);
-                command.ExecuteNonQuery();
-            }
-            // Вставляем новые связи
-            InsertEventUnit(connection, eventId, unitIds);
-        }
-
-
         private void SaveAttachedFilesToDatabase(long eventId, ObservableCollection<AttachedFileModel> attachedFiles)
         {
             using (var connection = new SQLiteConnection(_connectionString))
@@ -832,8 +684,8 @@ namespace FlowEvents
                 connection.Open();
                 foreach (var file in attachedFiles)
                 {
-                    string query = @" INSERT INTO AttachedFiles (EventId, FileCategory, FileName, FilePath, FileSize, FileType, UploadDate)
-                                      VALUES (@EventId, @FileCategory, @FileName, @FilePath, @FileSize, @FileType, @UploadDate)";
+                    string query = @" INSERT INTO AttachedFiles (EventId, FileCategory, FileName, FilePath, FileSize, FileType, UploadDate)" +
+                                    " VALUES (@EventId, @FileCategory, @FileName, @FilePath, @FileSize, @FileType, @UploadDate)";
 
                     using (var command = new SQLiteCommand(query, connection))
                     {
@@ -857,8 +709,8 @@ namespace FlowEvents
                 connection.Open();
                 foreach (var file in files)
                 {
-                    string query = @" INSERT INTO AttachedFiles (EventId, FileCategory, FileName, FilePath, FileSize, FileType, UploadDate)
-                                      VALUES (@EventId, @FileCategory, @FileName, @FilePath, @FileSize, @FileType, @UploadDate)";
+                    string query = @" INSERT INTO AttachedFiles (EventId, FileCategory, FileName, FilePath, FileSize, FileType, UploadDate)" +
+                                    " VALUES (@EventId, @FileCategory, @FileName, @FilePath, @FileSize, @FileType, @UploadDate)";
 
                     using (var command = new SQLiteCommand(query, connection))
                     {
@@ -925,7 +777,7 @@ namespace FlowEvents
         {
             get
             {
-                return SelectedIds != null && SelectedIds.Count > 0 &&
+                return SelectedIds != null && SelectedIds.Any() &&
                        SelectedCategory != null && SelectedCategory.Id != -1 &&
                        !string.IsNullOrWhiteSpace(Description);
             }

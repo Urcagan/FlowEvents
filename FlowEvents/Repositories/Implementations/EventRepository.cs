@@ -3,11 +3,9 @@ using FlowEvents.Repositories.Interface;
 using FlowEvents.Services.Interface;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Data.SQLite;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Windows;
 
 namespace FlowEvents.Repositories
 {
@@ -19,8 +17,8 @@ namespace FlowEvents.Repositories
             _connectionProvider = connectionProvider;
         }
 
-        // Добавдяем событие и связь между событием и обьектами
-        public async Task<long> AddEventWithUnitsAsync(Event newEvent, IEnumerable<int> unitIds) 
+        // Добавдяем событие и связь между событием и объектами
+        public async Task<long> AddEventWithUnitsAsync(Event newEvent, IEnumerable<int> unitIds)
         {
             var connectionString = _connectionProvider.GetConnectionString();
 
@@ -43,12 +41,52 @@ namespace FlowEvents.Repositories
                 transaction.Commit();
                 return eventId;
             }
-            catch
+            catch (Exception ex)
             {
                 transaction.Rollback();
-                throw;
+                throw new Exception($"Не удалось создать событие: {ex.Message}", ex);
             }
         }
+
+        // Обновление события и его связей с объектами
+        public async Task<bool> UpdateEventWithUnitsAsync(Event updateEvent, IEnumerable<int> unitIds)
+        {
+            var connectionString = _connectionProvider.GetConnectionString();
+
+            using var connection = new SQLiteConnection(connectionString);
+            await connection.OpenAsync();
+
+            using var transaction = connection.BeginTransaction();
+            try
+            {
+                // 1. Обновляем событие
+                var updated = await UpdateEventAsync(connection, transaction, updateEvent);
+                if (!updated)
+                {
+                    throw new Exception("Событие не найдено для обновления");
+                }
+
+                // 2. Удаляем старые связи
+                await DeleteEventUnitsAsync(connection, transaction, updateEvent.Id);
+
+                // 3. Добавляем новые связи
+                if (unitIds?.Any() == true)
+                {
+                    await InsertEventUnitsAsync(connection, transaction, updateEvent.Id, unitIds); // Обновление данных по объектам 
+                }
+
+                transaction.Commit();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                transaction.Rollback();
+                throw new Exception($"Не удалось обновить событие: {ex.Message}", ex);
+            }
+        }
+
+        
+        
 
         // Добавляем событие
         private async Task<long> InsertEventAsync(SQLiteConnection connection, SQLiteTransaction transaction, Event newEvent)
@@ -71,6 +109,30 @@ namespace FlowEvents.Repositories
             return Convert.ToInt64(result);
         }
 
+
+        // Обновление события
+        private async Task<bool> UpdateEventAsync(SQLiteConnection connection, SQLiteTransaction transaction, Event updateEvent) // SQL-запрос для обновления данных
+        {
+            var query = @"" +
+                            "UPDATE Events " +
+                            "SET DateEvent = @DateEvent, OilRefining = @OilRefining, id_category = @id_category, Description = @Description, Action = @Action " +
+                            "WHERE id = @SelectedRowId ";
+
+            using var command = new SQLiteCommand(query, connection, transaction);
+
+            command.Parameters.AddWithValue("@DateEvent", updateEvent.DateEvent);
+            command.Parameters.AddWithValue("@OilRefining", updateEvent.OilRefining ?? (object)DBNull.Value); // Если OilRefining == null, вставляем NULL
+            command.Parameters.AddWithValue("@id_category", updateEvent.Id_Category);
+            command.Parameters.AddWithValue("@Description", updateEvent.Description ?? (object)DBNull.Value); // Если Description == null, вставляем NULL
+            command.Parameters.AddWithValue("@Action", updateEvent.Action ?? (object)DBNull.Value); // Если Action == null, вставляем NULL
+            command.Parameters.AddWithValue("@SelectedRowId", updateEvent.Id);
+            command.ExecuteNonQuery();
+
+            var rowsAffected = await command.ExecuteNonQueryAsync();
+            return rowsAffected > 0;
+        }
+
+
         // Добавдяем связь между событием и обьектами
         private async Task InsertEventUnitsAsync(SQLiteConnection connection, SQLiteTransaction transaction, long eventId, IEnumerable<int> unitIds)
         {
@@ -84,6 +146,17 @@ namespace FlowEvents.Repositories
                 await command.ExecuteNonQueryAsync();
             }
         }
+
+        // Удаление записей о установках связанных с собыьием
+        private async Task DeleteEventUnitsAsync(SQLiteConnection connection, SQLiteTransaction transaction, long eventId)
+        {
+            const string query = "DELETE FROM EventUnits WHERE EventID = @EventID";
+
+            using var command = new SQLiteCommand(query, connection, transaction);
+            command.Parameters.AddWithValue("@EventID", eventId);
+            await command.ExecuteNonQueryAsync();
+        }
+
 
         /// <summary>
         /// Метод для получения событий из базы данных
@@ -201,92 +274,9 @@ namespace FlowEvents.Repositories
             return eventsDict.Values.ToList();
         }
 
-        /// <summary>
-        /// Загрузка перечня установок из ДБ
-        /// </summary>
-        /// <returns></returns>
-
-        public async Task<ObservableCollection<Unit>> GetUnitFromDatabaseAsync()
-        {
-            var _connectionString = _connectionProvider.GetConnectionString(); // Получение актуальной строки подключения
-
-            var units = new ObservableCollection<Unit>();
-
-            try
-            {
-                using (var connection = new SQLiteConnection(_connectionString))
-                {
-                    await connection.OpenAsync();
-
-                    string query = @"SELECT id, Unit, Description FROM Units";
-
-                    using (var command = new SQLiteCommand(query, connection))
-                    using (var reader = await command.ExecuteReaderAsync())
-                    {
-                        while (await reader.ReadAsync())
-                        {
-                            units.Add(new Unit
-                            {
-                                Id = reader.GetInt32(0),
-                                UnitName = reader.GetString(1),
-                                Description = reader.IsDBNull(2) ? null : reader.GetString(2)
-                            });
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Ошибка загрузки данных: {ex.Message}");
-            }
-
-            return units;
-        }
 
 
-        public ObservableCollection<Unit> GetUnitFromDatabase()
-        {
-            var _connectionString = _connectionProvider.GetConnectionString(); // Получение актуальной строки подключения
-
-            var units = new ObservableCollection<Unit>();
-
-            try
-            {
-                using (var connection = new SQLiteConnection(_connectionString))
-                {
-                    connection.Open();
-
-                    string query = @" Select id, Unit, Description From Units ";
-
-                    using (var command = new SQLiteCommand(query, connection))
-                    using (var reader = command.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            units.Add(new Unit
-                            {
-                                Id = reader.GetInt32(0),
-                                UnitName = reader.GetString(1),
-                                Description = reader.IsDBNull(2) ? null : reader.GetString(2)
-                            });
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Ошибка загрузки данных: {ex.Message}");
-            }
-            return units;
-        }
-
-
-
-        /// <summary>
         /// Получить перечень файлов связанных с событием
-        /// </summary>
-        /// <param name="EventId"></param>
-        /// <returns> List<AttachedFileForEvent> </returns>
         public List<AttachedFileForEvent> GetIdFilesOnEvent(int EventId)
         {
             var _connectionString = _connectionProvider.GetConnectionString(); // Получение актуальной строки подключения

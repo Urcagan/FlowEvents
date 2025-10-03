@@ -29,6 +29,7 @@ namespace FlowEvents
         private readonly IEventRepository _eventRepository; //Сервис работы с Event
         private readonly IDatabaseValidationService _validationService; // Сервис проверки базы данных
         private readonly IUserInfoService _userInfoService; // сервис получения данных пользователя windows
+        private readonly IUnitRepository _unitRepository;
 
         //-----------------------------------------------------------------------------------
 
@@ -200,12 +201,13 @@ namespace FlowEvents
 
         //===============================================================================================================================================
 
-        public MainViewModel(IPolicyAuthService authService, IEventRepository eventRepository , IDatabaseValidationService validationService, IUserInfoService userInfoService)
+        public MainViewModel(IPolicyAuthService authService, IEventRepository eventRepository , IDatabaseValidationService validationService, IUserInfoService userInfoService, IUnitRepository unitRepository)
         {
             _authService = authService;
             _eventRepository = eventRepository;
             _validationService = validationService;
             _userInfoService = userInfoService;
+            _unitRepository = unitRepository;
 
             SettingOpenWindow = new RelayCommand(SettingsMenuItem);
             UnitOpenWindow = new RelayCommand(UnitMenuItem);
@@ -373,7 +375,7 @@ namespace FlowEvents
 
             try
             {
-                var unitsFromDb = await _eventRepository.GetUnitFromDatabaseAsync();    // Асинхронно загружаем данные из базы
+                var unitsFromDb = await _unitRepository.GetAllUnitsAsync();    // Асинхронно загружаем данные из базы
 
                 foreach (var unit in unitsFromDb)   // Добавляем загруженные данные в коллекцию
                 {

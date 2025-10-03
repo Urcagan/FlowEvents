@@ -56,7 +56,7 @@ namespace FlowEvents.Repositories.Implementations
         }
 
 
-        public async Task InsertEventUnitsAsync(long eventId, IEnumerable<int> unitIds) // Добавдяем связь между событием и обьектами
+        public async Task AddEventUnitsAsync(long eventId, IEnumerable<int> unitIds) // Добавдяем связь между событием и обьектами
         {
             var connectionString = _connectionProvider.GetConnectionString();
 

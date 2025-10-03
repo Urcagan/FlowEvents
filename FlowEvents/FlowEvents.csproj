@@ -86,9 +86,11 @@
     <Compile Include="Repositories\Implementations\EventUnitRepository.cs" />
     <Compile Include="Repositories\Interface\IEventUnitRepository.cs" />
     <Compile Include="Services\Implementations\EventService.cs" />
+    <Compile Include="Services\Implementations\FileService.cs" />
     <Compile Include="Services\Implementations\PermissionService.cs" />
     <Compile Include="Services\Implementations\RoleServices.cs" />
     <Compile Include="Services\Interface\IEventService.cs" />
+    <Compile Include="Services\Interface\IFileService.cs" />
     <Compile Include="Services\Interface\IPermissionService.cs" />
     <Compile Include="Services\Interface\IRoleServices.cs" />
     <Compile Include="Services\Interface\IUserInfoService.cs" />
