@@ -8,14 +8,17 @@ namespace FlowEvents.Services.Implementations
 {
     public class FileService : IFileService
     {
-        public async Task<bool> CopyFileAsync(string sourcePath, string targetPath)
+        public async Task<bool> CopyFileAsync(string sourcePath, string targetPath) // Асинхронное копирование файла с обработкой ошибок
         {
             try
             {
-                // Создаем директорию если не существует
-                EnsureDirectoryExists(Path.GetDirectoryName(targetPath));
+                EnsureDirectoryExists(Path.GetDirectoryName(targetPath)); // Создаем директорию если не существует
 
                 // Используем асинхронное копирование
+                // 1. Создаются два файловых потока
+                // 2. Данные читаются из исходного файла и пишутся в целевой
+                // 3. При завершении операции ресурсы автоматически освобождаются
+                //Это эффективный способ копирования файлов с поддержкой асинхронных операций.
                 using (var sourceStream = new FileStream(sourcePath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, true))
                 using (var destinationStream = new FileStream(targetPath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, true))
                 {

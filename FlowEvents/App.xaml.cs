@@ -125,6 +125,7 @@ namespace FlowEvents
             services.AddSingleton<IUserInfoService, UserInfoService>();
             services.AddSingleton<IRoleServices, RoleServices>();
             services.AddSingleton<IPermissionService, PermissionService>();
+            services.AddSingleton<IFileService, FileService>();
 
             // Регистрация репозиториев
             services.AddSingleton<IEventRepository, EventRepository>();

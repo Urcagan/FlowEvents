@@ -136,7 +136,7 @@
     <Compile Include="Views\EventWindow.xaml.cs">
       <DependentUpon>EventWindow.xaml</DependentUpon>
     </Compile>
-    <Compile Include="ViewModels\AttachedFileModel.cs" />
+    <Compile Include="Models\AttachedFileModel.cs" />
     <Compile Include="Models\Permission.cs" />
     <Compile Include="Models\Role.cs" />
     <Compile Include="Models\User.cs" />

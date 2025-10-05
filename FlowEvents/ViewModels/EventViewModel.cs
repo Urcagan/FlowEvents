@@ -1,6 +1,7 @@
 ﻿using FlowEvents.Models;
 using FlowEvents.Models.Enums;
 using FlowEvents.Repositories.Interface;
+using FlowEvents.Services.Interface;
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
@@ -150,20 +151,29 @@ namespace FlowEvents
         public RelayCommand SaveCommand { get; }
         public RelayCommand CancelCommand { get; }
 
+        // --- Репозитории ---
         private readonly IUnitRepository _unitRepository;
         private readonly ICategoryRepository _categoryRepository;
         private readonly IEventUnitRepository _eventUnitRepository;
         private readonly IEventRepository _eventRepository;
 
+        // --- Сервисы ---
+        private readonly IFileService _fileService;
+
 
         // Конструктор ViewModel для Добавлениия события
-        public EventViewModel(IUnitRepository unitRepository, ICategoryRepository categoryRepository,IEventRepository  eventRepository )
+        public EventViewModel(IUnitRepository unitRepository, 
+                                ICategoryRepository categoryRepository,
+                                IEventRepository  eventRepository, 
+                                IFileService fileService)
         {
-           
-            
+            // Инициализация репозиториев
             _unitRepository = unitRepository;
             _categoryRepository = categoryRepository;       
             _eventRepository = eventRepository;
+
+            // Инициализация сервиса файлов
+            _fileService = fileService;
 
             _connectionString = Global_Var.ConnectionString;  
             _userName = Global_Var.UserName; 
@@ -186,12 +196,21 @@ namespace FlowEvents
 
         // Конструктор ViewModel для РЕДАКТИРОВАНИЯ события
         //public EventViewModel(MainViewModel mainViewModel, EventForView eventToEdit)
-        public EventViewModel(EventForView eventToEdit, IUnitRepository unitRepository, ICategoryRepository categoryRepository,IEventUnitRepository eventUnitRepository, IEventRepository eventRepository)
+        public EventViewModel(EventForView eventToEdit, 
+                                IUnitRepository unitRepository, 
+                                ICategoryRepository categoryRepository,
+                                IEventUnitRepository eventUnitRepository, 
+                                IEventRepository eventRepository,
+                                IFileService fileService)
         {
+            // Инициализация репозиториев
             _unitRepository = unitRepository;
             _categoryRepository = categoryRepository;
             _eventUnitRepository = eventUnitRepository;
             _eventRepository = eventRepository;
+
+            // Инициализация сервиса файлов
+            _fileService = fileService;
 
             _originalEvent = eventToEdit;
             _connectionString = Global_Var.ConnectionString;
@@ -303,38 +322,6 @@ namespace FlowEvents
             }
         }
 
-        /// <summary>
-        /// Возвращает путь к папке "Attachments" в той же директории, где находится указанный файл.
-        /// </summary>
-        /// <param name="filePath">Полный путь к файлу.</param>
-        /// <returns>Путь к папке Attachments.</returns>
-        //public string GetAttachmentsFolderPath(string filePath)
-        //{
-        //    if (string.IsNullOrEmpty(filePath))
-        //        throw new ArgumentException("File path cannot be null or empty.", nameof(filePath));
-
-        //    string basePath = Path.GetDirectoryName(filePath);
-        //    string attachmentsFolder = "Attachments";
-
-        //    return Path.Combine(basePath, attachmentsFolder);
-        //}
-
-        public string GetAttachmentsFolderPath(DateTime eventDate)
-        {
-            string filePath = Global_Var.pathToDB;
-            if (string.IsNullOrEmpty(filePath))
-                throw new ArgumentException("File path cannot be null or empty.", nameof(filePath));
-
-            string basePath = Path.GetDirectoryName(filePath);
-            string attachmentsRoot = "Attachments";
-            string yearFolder = eventDate.Year.ToString();
-            string monthFolder = eventDate.Month.ToString("00"); // Форматируем с ведущим нулем
-
-            // Комбинируем все части пути
-            return Path.Combine(basePath, attachmentsRoot, yearFolder, monthFolder);
-        }
-
-
         private void AttachFile(object parameter)
         {
             var fileCategory = parameter as string;
@@ -344,16 +331,16 @@ namespace FlowEvents
 
             try
             {
-                var fileInfo = new FileInfo(filePath);
+                var fileInfo = _fileService.GetFileInfo(filePath);  
 
-                // Проверка размера файла (например, до 10MB)
+                // Порог размера файла в МБ устанавливается в настройках приложения
                 if (fileInfo.Length > App.Settings.SizeFileAttachment * 1024 * 1024)
                 {
                     MessageBox.Show($"Файл слишком большой. Максимальный размер: {App.Settings.SizeFileAttachment} МБ.");
                     return;
                 }
 
-                _storagePath = GetAttachmentsFolderPath(SelectedDateEvent); // Гененрируем путь для хранения файла
+                _storagePath = _fileService.GenerateAttachmentsPath(SelectedDateEvent);  // Гененрируем путь для хранения файла
 
                 // Генерируем уникальное имя файла
                 string originalFileName = fileInfo.Name;
@@ -375,6 +362,7 @@ namespace FlowEvents
 
                 // Подписываемся на событие удаления файла
                 newFile.FileDeleted += RemoveAttachedFile; //Подписываем событие FileDeleted на выполнение метода RemoveAttachedFile;
+
                 // Добавляем запись в коллекцию (пока без EventId)
                 if (fileCategory == FileCategory.document.ToString())
                 {
@@ -501,7 +489,35 @@ namespace FlowEvents
             return hasNewFiles;
         }
 
-        //Копирование файла 
+        //Копирование файла КОГДА СОЗДАЕМ НОВОЕ СОБЫТИЕ
+        private async Task CopyFileToPath(ObservableCollection<AttachedFileModel> attachedFile)
+        {
+            var failedFiles = new List<AttachedFileModel>();
+
+            foreach (var file in attachedFile.ToList())
+            {
+                if (file.Status != FileStatus.New) continue; // если файл в коллекции не является новым , то пропускаем его.
+
+                try
+                {                       
+                    bool success = await _fileService.CopyFileAsync(file.SourceFilePath, file.FilePath);    // Копируем файл с помощью сервиса
+                    if (!success)
+                    {
+                        failedFiles.Add(file); //Если файл не удалось скопирорвать, то помечаем его для дальнейшего исключения из записи о нем в БД
+                    }
+                }
+                catch (Exception ex)
+                {
+                    failedFiles.Add(file);
+                    MessageBox.Show($"Не удалось сохранить {file.FileName}: {ex.Message}");
+                }
+            }
+            foreach (var badFile in failedFiles) // удаляем файлы которые не удалось скопировать
+            {
+                attachedFile.Remove(badFile); // Удаляем проблемные файлы из коллекции
+            }
+        }
+
         //private void CopyFileToPath(ObservableCollection<AttachedFileModel> attachedFile)
         //{
         //    var failedFiles = new List<AttachedFileModel>();
@@ -529,31 +545,32 @@ namespace FlowEvents
         //    }
         //}
 
-        //private void CopyFilesToPath(List<AttachedFileModel> files)
-        //{
+        // Копирование файлов КОГДА РЕДАКТИРУЕМ СОБЫТИЕ
+        private void CopyFilesToPath(List<AttachedFileModel> files) // Копирование файлов на диск
+        {
 
-        //    var failedFiles = new List<AttachedFileModel>();
+            var failedFiles = new List<AttachedFileModel>(); // Список для хранения файлов, которые не удалось скопировать
 
-        //    foreach (var file in files.ToList())
-        //    {
-        //        try
-        //        {
-        //            Directory.CreateDirectory(Path.GetDirectoryName(file.FilePath));
-        //            File.Copy(file.SourceFilePath, file.FilePath, overwrite: true); // overwrite на случай повторной попытки
-        //        }
-        //        catch (Exception ex)
-        //        {
-        //            failedFiles.Add(file); //Если файл не удалось скопирорвать, то помечаем его для дальнейшего исключения из записи о нем в БД
-        //            MessageBox.Show($"Не удалось сохранить {file.FileName}: {ex.Message}");
-        //        }
-        //    }
+            foreach (var file in files.ToList()) // Проходим по копии списка, чтобы избежать проблем с изменением коллекции во время итерации
+            {
+                try
+                {
+                    Directory.CreateDirectory(Path.GetDirectoryName(file.FilePath)); // Создаем директорию, если ее нет
+                    File.Copy(file.SourceFilePath, file.FilePath, overwrite: true); // Копируем файл с перезаписью
+                }
+                catch (Exception ex)
+                {
+                    failedFiles.Add(file); //Если файл не удалось скопирорвать, то помечаем его для дальнейшего исключения из записи о нем в БД
+                    MessageBox.Show($"Не удалось сохранить {file.FileName}: {ex.Message}");
+                }
+            }
 
-        //    // Удаляем проблемные файлы из коллекции
-        //    foreach (var badFile in failedFiles)
-        //    {
-        //        files.Remove(badFile);
-        //    }
-        //}
+            // Удаляем проблемные файлы из коллекции
+            foreach (var badFile in failedFiles)
+            {
+                files.Remove(badFile);
+            }
+        }
 
 
 
@@ -636,21 +653,32 @@ namespace FlowEvents
 
         // Вспомогательные методы
 
-        private void DeleteFileFromDisk(string path)
+        private async Task DeleteFileFromDisk(string path)
         {
             try
             {
-                // 1. Удаление файла с диска
-                if (File.Exists(path))
-                {
-                    File.Delete(path);
-                }
+                await _fileService.DeleteFileAsync(path);
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Не удалось удалить файл: {ex.Message}");
             }
         }
+        //private void DeleteFileFromDisk(string path)
+        //{
+        //    try
+        //    {
+        //        // 1. Удаление файла с диска
+        //        if (File.Exists(path))
+        //        {
+        //            File.Delete(path);
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        MessageBox.Show($"Не удалось удалить файл: {ex.Message}");
+        //    }
+        //}
 
 
         //Валидация перед сохранением:
