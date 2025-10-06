@@ -1,4 +1,5 @@
-﻿using FlowEvents.Services.Interface;
+﻿using FlowEvents.Repositories.Interface;
+using FlowEvents.Services.Interface;
 using System;
 using System.IO;
 using System.Threading.Tasks;
@@ -8,6 +9,16 @@ namespace FlowEvents.Services.Implementations
 {
     public class FileService : IFileService
     {
+        private readonly IAttachFilesRepository _attachFilesRepository;
+
+        public FileService(IAttachFilesRepository attachFilesRepository)
+        {
+            _attachFilesRepository = attachFilesRepository;
+        }
+
+
+
+
         public async Task<bool> CopyFileAsync(string sourcePath, string targetPath) // Асинхронное копирование файла с обработкой ошибок
         {
             try
@@ -98,6 +109,25 @@ namespace FlowEvents.Services.Implementations
         public FileInfo GetFileInfo(string filePath)
         {
             return new FileInfo(filePath);
+        }
+
+
+        // Удаление файла из БД и HDD  
+        public async Task DeleteFileWithConfirmation(int fileId, string filePath)
+        {
+            // Сначала удаляем из БД
+            bool isDeletedFromDb = await _attachFilesRepository.DeleteAsync(fileId);
+
+            if (isDeletedFromDb)
+            {
+                // Только если удаление из БД успешно - удаляем физический файл
+                await DeleteFileAsync(filePath);
+
+            }
+            else
+            {
+                throw new InvalidOperationException($"Файд с ID {fileId} не найден в базе данных");
+            }
         }
     }
 }

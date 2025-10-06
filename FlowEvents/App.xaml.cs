@@ -138,6 +138,7 @@ namespace FlowEvents
             services.AddSingleton<IUnitRepository, UnitRepository>();
             services.AddSingleton<IUserRepository, UserRepository>();
             services.AddSingleton<IEventUnitRepository, EventUnitRepository>();
+            services.AddSingleton<IAttachFilesRepository, AttachFilesRepository>();
 
 
 

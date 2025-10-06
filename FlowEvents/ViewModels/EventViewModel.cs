@@ -31,10 +31,11 @@ namespace FlowEvents
         private string _dateCreate;
         private string _creator;
         private string _selectedUnitsText = "";
-        private int _editedEventId;                 // Идентификатор редактируемого события, если есть
+        
         private string _storagePath;                // = "C:\\temp\\Attachments";  // Путь для хранения файлов
-        private long? _currentEventId;              // Будет установлен после сохранения события
 
+        private int? _currentEventId;              // Будет установлен после сохранения события
+        private int _editedEventId;                 // Идентификатор редактируемого события, если есть
 
         private readonly EventForView _originalEvent;
 
@@ -162,21 +163,21 @@ namespace FlowEvents
 
 
         // Конструктор ViewModel для Добавлениия события
-        public EventViewModel(IUnitRepository unitRepository, 
+        public EventViewModel(IUnitRepository unitRepository,
                                 ICategoryRepository categoryRepository,
-                                IEventRepository  eventRepository, 
+                                IEventRepository eventRepository,
                                 IFileService fileService)
         {
             // Инициализация репозиториев
             _unitRepository = unitRepository;
-            _categoryRepository = categoryRepository;       
+            _categoryRepository = categoryRepository;
             _eventRepository = eventRepository;
 
             // Инициализация сервиса файлов
             _fileService = fileService;
 
-            _connectionString = Global_Var.ConnectionString;  
-            _userName = Global_Var.UserName; 
+            _connectionString = Global_Var.ConnectionString;
+            _userName = Global_Var.UserName;
 
             AttachFileCommand = new RelayCommand(AttachFile);
             SaveCommand = new RelayCommand(AddEvent);
@@ -196,10 +197,10 @@ namespace FlowEvents
 
         // Конструктор ViewModel для РЕДАКТИРОВАНИЯ события
         //public EventViewModel(MainViewModel mainViewModel, EventForView eventToEdit)
-        public EventViewModel(EventForView eventToEdit, 
-                                IUnitRepository unitRepository, 
+        public EventViewModel(EventForView eventToEdit,
+                                IUnitRepository unitRepository,
                                 ICategoryRepository categoryRepository,
-                                IEventUnitRepository eventUnitRepository, 
+                                IEventUnitRepository eventUnitRepository,
                                 IEventRepository eventRepository,
                                 IFileService fileService)
         {
@@ -234,9 +235,9 @@ namespace FlowEvents
                 // Этот код выполнится после завершения InitializeAsync
                 SelectedCategory = Categories.FirstOrDefault(c => c.Name == _originalEvent.Category);
             }, TaskScheduler.FromCurrentSynchronizationContext());
-                       
+
             LoadSelectedUnitsForEvent(_editedEventId); // Получение перечень установок связанных с этим событием
-            
+
             LoadAttachedFiles(_editedEventId); // Получаем перечень прикрепленных файлов.
 
             SubscribeToUnitsPropertyChanged(); // Подписка на изменение IsSelected (чтобы Label обновлялся автоматически)
@@ -292,7 +293,7 @@ namespace FlowEvents
         public async Task LoadSelectedUnitsForEvent(int eventId)
         {
             // 1. Получаем список UnitID, связанных с этим EventID из базы
-            List<int> selectedUnitIds = await _eventUnitRepository.GetIdUnitForEventAsync(eventId);  
+            List<int> selectedUnitIds = await _eventUnitRepository.GetIdUnitForEventAsync(eventId);
 
             // 2. Обновляем флаги IsSelected в коллекции Units
             foreach (var unit in Units)
@@ -331,7 +332,7 @@ namespace FlowEvents
 
             try
             {
-                var fileInfo = _fileService.GetFileInfo(filePath);  
+                var fileInfo = _fileService.GetFileInfo(filePath);
 
                 // Порог размера файла в МБ устанавливается в настройках приложения
                 if (fileInfo.Length > App.Settings.SizeFileAttachment * 1024 * 1024)
@@ -407,7 +408,7 @@ namespace FlowEvents
         //Сохранение новой записи 
         private async Task AddEvent(object parameters)
         {
-            if (!ValidateEvent())
+            if (!ValidateEvent())   //Проверка на обязательные пункты в заполнении о событии
                 return;
 
             var newEvent = new Event // Создание экземпляра для хранения нового Event
@@ -423,8 +424,10 @@ namespace FlowEvents
             // Сохраняем событие и получаем его ID
             _currentEventId = await _eventRepository.AddEventWithUnitsAsync(newEvent, SelectedIds); // Сохраняем событие и получаем его ID
 
-            WriteAttachFile(AttachedFilesDocument);
-            WriteAttachFile(AttachedFilesMonitoring);
+            //WriteAttachFile(AttachedFilesDocument);
+            //WriteAttachFile(AttachedFilesMonitoring);
+            await CommitAttachmentChanges(AttachedFilesDocument);
+            await CommitAttachmentChanges(AttachedFilesMonitoring);
 
             CloseWindow();
         }
@@ -432,7 +435,8 @@ namespace FlowEvents
         // Обновление записи события
         private void UpdatedEvent(object parameters)
         {
-            if (!ValidateEvent()) return;
+            if (!ValidateEvent())    //Проверка на обязательные пункты в заполнении о событии
+                return;
             // Создание экземпляра для хранения нового Event
             var _updateEvent = new Event
             {
@@ -451,6 +455,7 @@ namespace FlowEvents
             CloseWindow();
         }
 
+        // Используется при сохранении нового события для добавления прикрепленных файлов
         private void WriteAttachFile(ObservableCollection<AttachedFileModel> attachedFiles)
         {
             if (attachedFiles.Any()) // Проверяем наличие записей о файлах
@@ -459,13 +464,47 @@ namespace FlowEvents
                 var hasValidFiles = RemoveNonNewFiles(attachedFiles);
 
                 if (hasValidFiles)
-                {                    
+                {
                     CopyFileToPath(attachedFiles); // Копируем в папку закрепленные файлы
-                    
-                    if (_currentEventId.HasValue)   // Если событие есть, то записваем информацию о рикрепелнных к нему файлов в БД
+
+                    if (_currentEventId.HasValue)   // Если событие есть, то записваем информацию о прикрепелнных к нему файлов в БД
                     {
                         SaveAttachedFilesToDatabase(_currentEventId.Value, attachedFiles);
                     }
+                }
+            }
+        }
+
+        //Используется для сохранения и удаления прикрепленных файлов при редактировании события 
+        private async Task CommitAttachmentChanges(ObservableCollection<AttachedFileModel> attachedFiles)
+        {
+            if (attachedFiles.Any()) // Проверяем наличие записей о файлах
+            {
+                // Разделяем файлы на группы
+                var (filesToSave, filesToDelete) = SeparateAttachments(attachedFiles);
+
+                // Обрабатываем файлы для сохранения
+                if (filesToSave.Any())
+                {
+                    await CopyFilesToPath(filesToSave); // Копируем только новые файлы
+                    await SaveAttachedFilesToDatabase(_editedEventId, filesToSave);
+                }
+
+                // Обрабатываем файлы для удаления
+                if (filesToDelete.Any())
+                {
+                    await DeleteAttachments(filesToDelete);
+                }
+            }
+        }
+
+        private async Task DeleteAttachments(List<AttachedFileModel> filesToDelete)
+        {
+            foreach (var file in filesToDelete)
+            {
+                if (file.FileId > 0) // Если файл уже был в БД
+                {
+                    await _fileService.DeleteFileWithConfirmation(file.FileId, file.FilePath);
                 }
             }
         }
@@ -499,8 +538,8 @@ namespace FlowEvents
                 if (file.Status != FileStatus.New) continue; // если файл в коллекции не является новым , то пропускаем его.
 
                 try
-                {                       
-                    bool success = await _fileService.CopyFileAsync(file.SourceFilePath, file.FilePath);    // Копируем файл с помощью сервиса
+                {
+                    bool success = await _fileService.CopyFileAsync(file.SourceFilePath, file.FilePath);    
                     if (!success)
                     {
                         failedFiles.Add(file); //Если файл не удалось скопирорвать, то помечаем его для дальнейшего исключения из записи о нем в БД
@@ -517,6 +556,36 @@ namespace FlowEvents
                 attachedFile.Remove(badFile); // Удаляем проблемные файлы из коллекции
             }
         }
+
+
+        // Копирование файлов КОГДА РЕДАКТИРУЕМ СОБЫТИЕ
+        private async Task CopyFilesToPath(List<AttachedFileModel> files) // Копирование файлов на диск
+        {
+
+            var failedFiles = new List<AttachedFileModel>(); // Список для хранения файлов, которые не удалось скопировать
+
+            foreach (var file in files.ToList()) // Проходим по копии списка, чтобы избежать проблем с изменением коллекции во время итерации
+            {
+                try
+                {
+                    bool success = await _fileService.CopyFileAsync(file.SourceFilePath, file.FilePath);
+                    if (!success)
+                    {
+                        failedFiles.Add(file); //Если файл не удалось скопирорвать, то помечаем его для дальнейшего исключения из записи о нем в БД
+                    }
+                }
+                catch (Exception ex)
+                {
+                    failedFiles.Add(file); //Если файл не удалось скопирорвать, то помечаем его для дальнейшего исключения из записи о нем в БД
+                    MessageBox.Show($"Не удалось сохранить {file.FileName}: {ex.Message}");
+                }
+            }            
+            foreach (var badFile in failedFiles)    // Удаляем проблемные файлы из коллекции
+            {
+                files.Remove(badFile);
+            }
+        }
+
 
         //private void CopyFileToPath(ObservableCollection<AttachedFileModel> attachedFile)
         //{
@@ -545,56 +614,6 @@ namespace FlowEvents
         //    }
         //}
 
-        // Копирование файлов КОГДА РЕДАКТИРУЕМ СОБЫТИЕ
-        private void CopyFilesToPath(List<AttachedFileModel> files) // Копирование файлов на диск
-        {
-
-            var failedFiles = new List<AttachedFileModel>(); // Список для хранения файлов, которые не удалось скопировать
-
-            foreach (var file in files.ToList()) // Проходим по копии списка, чтобы избежать проблем с изменением коллекции во время итерации
-            {
-                try
-                {
-                    Directory.CreateDirectory(Path.GetDirectoryName(file.FilePath)); // Создаем директорию, если ее нет
-                    File.Copy(file.SourceFilePath, file.FilePath, overwrite: true); // Копируем файл с перезаписью
-                }
-                catch (Exception ex)
-                {
-                    failedFiles.Add(file); //Если файл не удалось скопирорвать, то помечаем его для дальнейшего исключения из записи о нем в БД
-                    MessageBox.Show($"Не удалось сохранить {file.FileName}: {ex.Message}");
-                }
-            }
-
-            // Удаляем проблемные файлы из коллекции
-            foreach (var badFile in failedFiles)
-            {
-                files.Remove(badFile);
-            }
-        }
-
-
-
-        //фиксации изменений файлов
-        private void CommitAttachmentChanges(ObservableCollection<AttachedFileModel> attachedFiles)
-        {
-            if (attachedFiles.Any()) // Проверяем наличие записей о файлах
-            {
-                // Разделяем файлы на группы
-                var (filesToSave, filesToDelete) = SeparateAttachments(attachedFiles);
-
-                // Обрабатываем файлы для сохранения
-                if (filesToSave.Any())
-                {
-                    SaveAttachments(filesToSave);
-                }
-
-                // Обрабатываем файлы для удаления
-                if (filesToDelete.Any())
-                {
-                    DeleteAttachments(filesToDelete);
-                }
-            }
-        }
 
         /// <summary>
         /// Разделение записей на группы новых и удаляемых файлов
@@ -620,65 +639,10 @@ namespace FlowEvents
             return (filesToSave, filesToDelete);
         }
 
-        private void SaveAttachments(List<AttachedFileModel> filesToSave)
-        {
-            CopyFilesToPath(filesToSave); // Копируем только новые файлы
-            SaveAttachedFilesToDatabase(_editedEventId, filesToSave);
-        }
-
-        private void DeleteAttachments(List<AttachedFileModel> filesToDelete)
-        {
-            foreach (var file in filesToDelete)
-            {
-                if (file.FileId > 0) // Если файл уже был в БД
-                {
-                    DeleteFileFromDatabase(file.FileId);
-                }
-                DeleteFileFromDisk(file.FilePath);
-            }
-        }
-
-        // Удаляем запись из БД 
-        private void DeleteFileFromDatabase(int fileId)
-        {
-            using (var connection = new SQLiteConnection(_connectionString))
-            {
-                connection.Open();
-                var cmd = new SQLiteCommand("DELETE FROM AttachedFiles WHERE FileId = @id", connection);
-                cmd.Parameters.AddWithValue("@id", fileId);
-                cmd.ExecuteNonQuery();
-            }
-        }
 
 
-        // Вспомогательные методы
+       
 
-        private async Task DeleteFileFromDisk(string path)
-        {
-            try
-            {
-                await _fileService.DeleteFileAsync(path);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Не удалось удалить файл: {ex.Message}");
-            }
-        }
-        //private void DeleteFileFromDisk(string path)
-        //{
-        //    try
-        //    {
-        //        // 1. Удаление файла с диска
-        //        if (File.Exists(path))
-        //        {
-        //            File.Delete(path);
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        MessageBox.Show($"Не удалось удалить файл: {ex.Message}");
-        //    }
-        //}
 
 
         //Валидация перед сохранением:
@@ -705,11 +669,13 @@ namespace FlowEvents
         }
 
 
-        private void SaveAttachedFilesToDatabase(long eventId, ObservableCollection<AttachedFileModel> attachedFiles)
+
+
+        private async Task SaveAttachedFilesToDatabase(long eventId, IEnumerable<AttachedFileModel> attachedFiles)
         {
             using (var connection = new SQLiteConnection(_connectionString))
             {
-                connection.Open();
+                await connection.OpenAsync();
                 foreach (var file in attachedFiles)
                 {
                     string query = @" INSERT INTO AttachedFiles (EventId, FileCategory, FileName, FilePath, FileSize, FileType, UploadDate)" +
@@ -724,32 +690,7 @@ namespace FlowEvents
                         command.Parameters.AddWithValue("@FileSize", file.FileSize);
                         command.Parameters.AddWithValue("@FileType", file.FileType);
                         command.Parameters.AddWithValue("@UploadDate", file.UploadDate.ToString("yyyy-MM-dd HH:mm:ss"));
-                        command.ExecuteNonQuery();
-                    }
-                }
-            }
-        }
-
-        private void SaveAttachedFilesToDatabase(long eventId, List<AttachedFileModel> files)
-        {
-            using (var connection = new SQLiteConnection(_connectionString))
-            {
-                connection.Open();
-                foreach (var file in files)
-                {
-                    string query = @" INSERT INTO AttachedFiles (EventId, FileCategory, FileName, FilePath, FileSize, FileType, UploadDate)" +
-                                    " VALUES (@EventId, @FileCategory, @FileName, @FilePath, @FileSize, @FileType, @UploadDate)";
-
-                    using (var command = new SQLiteCommand(query, connection))
-                    {
-                        command.Parameters.AddWithValue("@EventId", eventId);
-                        command.Parameters.AddWithValue("@FileCategory", file.FileCategory);
-                        command.Parameters.AddWithValue("@FileName", file.FileName);
-                        command.Parameters.AddWithValue("@FilePath", file.FilePath);
-                        command.Parameters.AddWithValue("@FileSize", file.FileSize);
-                        command.Parameters.AddWithValue("@FileType", file.FileType);
-                        command.Parameters.AddWithValue("@UploadDate", file.UploadDate.ToString("yyyy-MM-dd HH:mm:ss"));
-                        command.ExecuteNonQuery();
+                        await command.ExecuteNonQueryAsync();
                     }
                 }
             }

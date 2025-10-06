@@ -26,5 +26,9 @@ namespace FlowEvents.Services.Interface
 
         // Получение информации о файле
         FileInfo GetFileInfo(string filePath);
+
+
+        // Удаление информации о файле из БД и HDD
+        Task DeleteFileWithConfirmation(int fileId, string filePath);
     }
 }
