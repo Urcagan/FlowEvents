@@ -1,6 +1,10 @@
-﻿using FlowEvents.Repositories.Interface;
+﻿using FlowEvents.Models;
+using FlowEvents.Repositories.Interface;
 using FlowEvents.Services.Interface;
 using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
@@ -17,6 +21,10 @@ namespace FlowEvents.Services.Implementations
         }
 
 
+       public async Task SaveAttachedFilesToDatabase(long eventId, IEnumerable<AttachedFileModel> attachedFiles)
+        {
+            await _attachFilesRepository.InsertEventAttachmentsAsync(eventId, attachedFiles);
+        }
 
 
         public async Task<bool> CopyFileAsync(string sourcePath, string targetPath) // Асинхронное копирование файла с обработкой ошибок

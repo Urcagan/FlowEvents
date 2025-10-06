@@ -8,8 +8,7 @@ namespace FlowEvents.Views
     /// Логика взаимодействия для UserInfoWindow.xaml
     /// </summary>
     public partial class UserInfoWindow : Window
-    {
-        private UserInfo _userInfo;
+    {        
         public UserInfoWindow()
         {
             InitializeComponent();

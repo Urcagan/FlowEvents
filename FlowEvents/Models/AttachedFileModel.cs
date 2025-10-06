@@ -13,11 +13,7 @@ namespace FlowEvents.Models
 {
     public class AttachedFileModel : INotifyPropertyChanged
     {
-        private readonly string _connectionString;
-        public AttachedFileModel(string connectionString)
-        {
-            _connectionString = connectionString;
-        }
+               
 
         private FileStatus _status; // Статус файла (новый, существующий, изменённый, удалённый)
                                     
@@ -122,37 +118,8 @@ namespace FlowEvents.Models
             {
                 return; // Если пользователь отменил действие, выходим из метода
             }
-
-            //try
-            //{
-            //    // 1. Удаление файла с диска
-            //    if (File.Exists(FilePath))
-            //    {
-            //        File.Delete(FilePath);
-            //    }
-            //    // 2. Удаляем запись из БД (если FileId задан)
-            //    if (FileId > 0)
-            //    {
-            //        using (var connection = new SQLiteConnection(_connectionString)) // Используем переданную строку
-            //        {
-            //            connection.Open();
-            //            string query = "DELETE FROM AttachedFiles WHERE FileId = @FileId";
-            //            using (var command = new SQLiteCommand(query, connection))
-            //            {
-            //                command.Parameters.AddWithValue("@FileId", FileId);
-            //                command.ExecuteNonQuery();
-            //            }
-            //        }
-            //    }
-
-            //    // 3. Вызываем событие, чтобы уведомить ViewModel
-                FileDeleted?.Invoke(this);
-
-            //}
-            //catch (Exception ex)
-            //{
-            //    MessageBox.Show($"Не удалось удалить файл: {ex.Message}");
-            //}
+                // 3. Вызываем событие, чтобы уведомить ViewModel
+                FileDeleted?.Invoke(this);                       
         }
 
         // Отмена удаления файла

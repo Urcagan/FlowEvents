@@ -106,7 +106,7 @@ namespace FlowEvents.Services.Implementations
                                     });
                                 }
                             }
-                            catch (Exception ex)
+                            catch (Exception )
                             {
                                 // 🚨 ЛОГИРУЕМ ОШИБКУ ОДНОГО ПОЛЬЗОВАТЕЛЯ
                                 //System.Diagnostics.Debug.WriteLine($"Ошибка обработки пользователя: {ex.Message}");

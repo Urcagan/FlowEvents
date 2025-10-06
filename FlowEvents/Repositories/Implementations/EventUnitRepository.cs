@@ -23,7 +23,7 @@ namespace FlowEvents.Repositories.Implementations
         /// </summary>
         /// <param name="connectionProvider"></param>
         /// <exception cref="ArgumentNullException"></exception>
-        public async Task<List<int>> GetIdUnitForEventAsync(int eventId)
+        public async Task<List<int>> GetIdUnitForEventAsync(long eventId)
         {
             // Валидация входных параметров
             if (eventId <= 0)

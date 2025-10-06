@@ -46,7 +46,7 @@ namespace FlowEvents.Models
 
     public class Event
     {
-        public int Id { get; set; }
+        public long Id { get; set; }
         public string DateEvent { get; set; }
         public string OilRefining { get; set; }
         public int Id_Category { get; set; }

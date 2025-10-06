@@ -1,5 +1,7 @@
-﻿using System;
+﻿using FlowEvents.Models;
+using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -30,5 +32,7 @@ namespace FlowEvents.Services.Interface
 
         // Удаление информации о файле из БД и HDD
         Task DeleteFileWithConfirmation(int fileId, string filePath);
+
+        Task SaveAttachedFilesToDatabase(long eventId, IEnumerable<AttachedFileModel> attachedFiles);// Сохранение информации о вложенных файлах в БД
     }
 }

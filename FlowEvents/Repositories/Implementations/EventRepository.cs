@@ -17,6 +17,8 @@ namespace FlowEvents.Repositories
             _connectionProvider = connectionProvider;
         }
 
+
+
         // Добавдяем событие и связь между событием и объектами
         public async Task<long> AddEventWithUnitsAsync(Event newEvent, IEnumerable<int> unitIds)
         {
@@ -202,7 +204,7 @@ namespace FlowEvents.Repositories
                         //if (!reader.IsDBNull(reader.GetOrdinal("FileId")))
                         if (!await reader.IsDBNullAsync(reader.GetOrdinal("FileId")).ConfigureAwait(false))
                         {
-                            eventModel.AttachedFiles.Add(new AttachedFileModel(_connectionString) // Передаем строку подключения
+                            eventModel.AttachedFiles.Add(new AttachedFileModel() // Передаем строку подключения
                             {
                                 FileId = reader.GetInt32(reader.GetOrdinal("FileId")),
                                 FileCategory = reader.GetString(reader.GetOrdinal("FileCategory")),
@@ -257,7 +259,7 @@ namespace FlowEvents.Repositories
                         // Если есть прикрепленный файл, добавляем его
                         if (!reader.IsDBNull(reader.GetOrdinal("FileId")))
                         {
-                            eventModel.AttachedFiles.Add(new AttachedFileModel(_connectionString) // Передаем строку подключения
+                            eventModel.AttachedFiles.Add(new AttachedFileModel() // Передаем строку подключения
                             {
                                 FileId = reader.GetInt32(reader.GetOrdinal("FileId")),
                                 FileCategory = reader.GetString(reader.GetOrdinal("FileCategory")),
@@ -403,5 +405,7 @@ namespace FlowEvents.Repositories
                 await command.ExecuteNonQueryAsync();
             }
         }
+
+        
     }
 }

@@ -10,7 +10,7 @@ namespace FlowEvents.Repositories.Interface
     public interface IEventUnitRepository
     {
         //Task UpdateEventUnitsAsync(long eventId, List<int> unitIds);
-        Task<List<int>> GetIdUnitForEventAsync(int eventId); // Возвращает список UnitID для данного EventID
+        Task<List<int>> GetIdUnitForEventAsync(long eventId); // Возвращает список UnitID для данного EventID
         Task AddEventUnitsAsync(long eventId, IEnumerable<int> unitIds); // Добавдяем связь между событием и обьектами
         //Task DeleteEventUnitsAsync(long eventId);
     }
