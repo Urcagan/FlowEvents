@@ -50,7 +50,7 @@ namespace FlowEvents
     //        }
     //    }
 
-        private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
             // Загружаем настройки ширины столбцов
             LoadDataGridColumnsSettings();

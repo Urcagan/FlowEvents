@@ -15,6 +15,7 @@ namespace FlowEvents.Models
         private int _IsAllowed;
         private string _password;
         private string _Salt;
+        private int _IsLocal;
 
 
         public int Id
@@ -128,6 +129,17 @@ namespace FlowEvents.Models
             }
         }
         public bool IsAuthenticated { get; set; }
+
+
+        public int IsLocal
+        {
+            get => _IsLocal;
+            set
+            {
+                _IsLocal = value;
+                OnPropertyChanged(nameof(IsLocal));
+            }
+        }
 
         // публичный метод для обновления RoleName
         public void RefreshRoleName()

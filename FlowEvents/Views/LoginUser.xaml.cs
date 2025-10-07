@@ -14,15 +14,6 @@ namespace FlowEvents.Users
         {
             InitializeComponent();
             
-            LoginViewModel loginViewModel = new LoginViewModel();
-
-            loginViewModel.CloseAction = (result) =>
-            {
-                DialogResult = result;
-
-                Close();
-            };
-            DataContext = loginViewModel;
         }
 
         private void DragArea_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)

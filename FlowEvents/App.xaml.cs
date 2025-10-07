@@ -93,8 +93,6 @@ namespace FlowEvents
         private void LoadDatabaseConfiguration()
         {
             // Здесь должен быть код загрузки конфигурации
-            Global_Var.pathToDB = App.Settings.pathDB;
-            Global_Var.ConnectionString = GetConnectionString();
         }
 
         //-------------------------------------------------------------------------------------------------------------------------
@@ -153,6 +151,7 @@ namespace FlowEvents
             services.AddTransient<UserDomainSearchViewModel>();
             services.AddTransient<UserInfoViewModel>();
             services.AddTransient<EventViewModel>();
+            services.AddTransient<LoginViewModel>();
 
             // Регистрация окон
             services.AddTransient<MainWindow>();

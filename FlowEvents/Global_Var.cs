@@ -7,12 +7,8 @@ namespace FlowEvents
 {
     public static class Global_Var
     {
-        public static string ConnectionString;
         public static string UserName;
-        public static string pathToDB;
-
-
-
+        
         public const Int32 BUFFER_SIZE = 512; // Unmodifiable
         public static String FILE_NAME = "Output.txt"; // Modifiable
         public static readonly String CODE_PREFIX = "US-"; // Unmodifiable

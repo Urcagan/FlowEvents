@@ -1,4 +1,5 @@
 ﻿using FlowEvents.Models;
+using FlowEvents.Services.Interface;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -16,10 +17,10 @@ namespace FlowEvents.ViewModels
     public class LoginViewModel : INotifyPropertyChanged
     {
         private string _username;
-        private string _connectionString = Global_Var.ConnectionString;
 
         public User CurrentUser { get; private set; }
-        public Action<bool> CloseAction { get; set; }
+        //public Action<bool> CloseAction { get; set; }
+        public Action CloseAction { get; set; }
 
         public string Username
         {
@@ -31,12 +32,13 @@ namespace FlowEvents.ViewModels
             }
         }
 
-
+        private readonly IConnectionStringProvider _connectionStringProvider;
 
         public ICommand LoginCommand { get; }
 
-        public LoginViewModel()
+        public LoginViewModel(IConnectionStringProvider connectionStringProvider)
         {
+            _connectionStringProvider = connectionStringProvider;
             LoginCommand = new RelayCommand(ExecuteLoginCommand, CanExecuteLoginCommand);
         }
 
@@ -54,10 +56,11 @@ namespace FlowEvents.ViewModels
 
             try
             {
+                var _connectionString = _connectionStringProvider.GetConnectionString();
                 using (var connection = new SQLiteConnection(_connectionString))
                 {
                     connection.Open();
-                    string query = @"SELECT Password, Salt, IsAllowed, RoleId, DisplayName, Email 
+                    string query = @"SELECT UserName, Password, Salt, IsAllowed, RoleId, DisplayName, Email, IsLocal 
                                     FROM Users 
                                     WHERE UserName = @username";
 
@@ -86,18 +89,19 @@ namespace FlowEvents.ViewModels
                             {
                                 CurrentUser = new User
                                 {
-                                    UserName = Username,
+                                    UserName = reader["UserName"].ToString(),
                                     RoleId = roleId,
                                     IsAuthenticated = true,
                                     DisplayName = reader["DisplayName"].ToString(),
-                                    Email = reader["Email"].ToString()
+                                    Email = reader["Email"].ToString(),
+                                    IsLocal = Convert.ToInt32(reader["IsLocal"])
                                 };
 
                                 MessageBox.Show($"Добро пожаловать, {Username}!", "Успех",
                                     MessageBoxButton.OK, MessageBoxImage.Information);
 
                                 // Закрываем окно с успешным результатом
-                                CloseAction?.Invoke(true);
+                                CloseAction?.Invoke();
                             }
                             else
                             {

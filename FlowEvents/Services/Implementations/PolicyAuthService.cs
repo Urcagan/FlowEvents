@@ -1,4 +1,5 @@
 ﻿using FlowEvents.Models;
+using FlowEvents.Services.Interface;
 using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
@@ -10,6 +11,12 @@ namespace FlowEvents.Services
 {
     public class PolicyAuthService : IPolicyAuthService
     {
+        private readonly IConnectionStringProvider _connectionProvider;
+
+        public PolicyAuthService(IConnectionStringProvider connectionStringProvider)
+        {
+            _connectionProvider = connectionStringProvider;
+        }
 
         // Кэш политик (если нужен)
         private Dictionary<string, Dictionary<string, HashSet<string>>> _policyCache = new Dictionary<string, Dictionary<string, HashSet<string>>>();
@@ -17,20 +24,19 @@ namespace FlowEvents.Services
       
         public bool HasPermission(string dbPath, string username, string permissionName)
         {
-            var user = GetUser(dbPath, username);
+            var user = GetUser( username);
             if (user == null || user.IsAllowed == 0)
                 return false;
 
             // Загружаем политики для БД, если их нет в кэше
             if (!_policyCache.ContainsKey(dbPath))
-                ReloadPolicies(dbPath);
+                ReloadPolicies();
 
             if (_policyCache.TryGetValue(dbPath, out var dbPolicies) &&
                 dbPolicies.TryGetValue(permissionName, out var allowedRoles))
             {
                 return allowedRoles.Contains(user.Role.RoleName);
             }
-
             return false;
         }
 
@@ -47,11 +53,13 @@ namespace FlowEvents.Services
             return false;
         }
 
-        public List<string> GetUserPermissions(string dbPath, string username)
+        public List<string> GetUserPermissions(string username)
         {
+            var _connectionString = _connectionProvider.GetConnectionString();
             var permissions = new List<string>();
 
-            using (var connection = new SQLiteConnection($"Data Source={dbPath}"))
+            //using (var connection = new SQLiteConnection($"Data Source={dbPath}"))
+            using (var connection = new SQLiteConnection(_connectionString))
             {
                 connection.Open();
                 var command = connection.CreateCommand();
@@ -71,18 +79,18 @@ namespace FlowEvents.Services
                     }
                 }
             }
-
             return permissions;
         }
 
-        public User GetUser(string dbPath, string username)
+        public User GetUser(string username)
         {
-            using (var connection = new SQLiteConnection($"Data Source={dbPath};Version=3;foreign keys=true;"))
+            var _connectionString = _connectionProvider.GetConnectionString();
+            using (var connection = new SQLiteConnection(_connectionString))
             {
                 connection.Open();
                 var command = connection.CreateCommand();
                 command.CommandText = @"
-                SELECT u.UserName, u.IsAllowed, r.RoleId, r.RoleName
+                SELECT u.UserName, u.IsAllowed, r.RoleId, r.RoleName, u.IsLocal
                 FROM Users u
                 JOIN Roles r ON u.RoleId = r.RoleId
                 WHERE u.UserName = @username";
@@ -100,22 +108,22 @@ namespace FlowEvents.Services
                             {
                                 RoleId = reader.GetInt32(2),
                                 RoleName = reader.GetString(3)
-                            }
+                            },
+                            IsLocal = reader.GetInt32(4),
                         };
                     }
                 }
             }
             return null;
-
-
-
         }
 
-        public void ReloadPolicies(string dbPath)
+        public void ReloadPolicies()
         {
+            var _connectionString = _connectionProvider.GetConnectionString();
             var policies = new Dictionary<string, HashSet<string>>();
 
-            using (var connection = new SQLiteConnection($"Data Source={dbPath}"))
+            //using (var connection = new SQLiteConnection($"Data Source={dbPath}"))
+            using (var connection = new SQLiteConnection(_connectionString))
             {
                 connection.Open();
                 var command = connection.CreateCommand();
@@ -139,8 +147,7 @@ namespace FlowEvents.Services
                     }
                 }
             }
-
-            _policyCache[dbPath] = policies;
+            // _policyCache[dbPath] = policies;
         }
     }
 }

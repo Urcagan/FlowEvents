@@ -91,7 +91,7 @@ namespace FlowEvents.Services.Implementations
         {
             try
             {
-                string filePath = Global_Var.pathToDB;
+                string filePath = App.Settings.pathDB; 
                 if (string.IsNullOrEmpty(filePath))
                     throw new ArgumentException("File path cannot be null or empty.", nameof(filePath));
 

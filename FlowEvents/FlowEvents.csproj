@@ -150,7 +150,6 @@
     <Compile Include="Repositories\Interface\IUserRepository.cs" />
     <Compile Include="Repositories\Implementations\EventRepository.cs" />
     <Compile Include="Repositories\Implementations\UserRepository.cs" />
-    <Compile Include="Services\Implementations\FileAttachmentService Удалить.cs" />
     <Compile Include="Services\Interface\IPolicyAuthService.cs" />
     <Compile Include="Services\Implementations\PolicyAuthService.cs" />
     <Compile Include="ViewModels\SettingsViewModel.cs" />

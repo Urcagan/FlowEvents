@@ -33,7 +33,7 @@ namespace FlowEvents.Repositories
                 var command = connection.CreateCommand();
                 command.CommandText = @"
                     SELECT u.id, u.UserName, u.DomainName, u.DisplayName, u.Email, 
-                           u.RoleId, u.IsAllowed, r.RoleName
+                           u.RoleId, u.IsAllowed, u.IsLocal, r.RoleName
                     FROM Users u
                     LEFT JOIN Roles r ON u.RoleId = r.RoleId
                     ORDER BY u.UserName";
@@ -47,7 +47,8 @@ namespace FlowEvents.Repositories
                             Id = reader.GetInt32(0),
                             UserName = reader.GetString(1),
                             RoleId = reader.GetInt32(5),
-                            IsAllowed = reader.GetInt32(6) == 1 ? 1 : 0
+                            IsAllowed = reader.GetInt32(6) == 1 ? 1 : 0,
+                            IsLocal = reader.GetInt32(7) == 1 ? 1 : 0
                         };
 
                         // Обрабатываем возможные NULL значения
@@ -95,9 +96,9 @@ namespace FlowEvents.Repositories
                 await connection.OpenAsync();
 
                 string query = @"INSERT INTO Users 
-                (UserName, DomainName, DisplayName, Email, RoleId, IsAllowed, Password, Salt) 
+                (UserName, DomainName, DisplayName, Email, RoleId, IsAllowed, Password, Salt, IsLocal) 
                 VALUES 
-                (@username, '', @username, '', @roleId, 1, @password, @salt);
+                (@username, '', @username, '', @roleId, 1, @password, @salt, 1);
                 SELECT last_insert_rowid();";
 
                 using (var command = new SQLiteCommand(query, connection))

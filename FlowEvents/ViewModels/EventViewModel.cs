@@ -20,7 +20,6 @@ namespace FlowEvents
 {
     public class EventViewModel : INotifyPropertyChanged
     {
-        private readonly string _connectionString;
         private readonly string _userName;
         private Category _selectedCategory;
         private DateTime _selectedDateEvent;
@@ -31,7 +30,7 @@ namespace FlowEvents
         private string _dateCreate;
         private string _creator;
         private string _selectedUnitsText = "";
-        
+
         private string _storagePath;                // = "C:\\temp\\Attachments";  // Путь для хранения файлов
 
         private long _currentEventId;              // Будет установлен после сохранения события
@@ -119,7 +118,7 @@ namespace FlowEvents
             set => _creator = value;
         }
 
-        public string SelectedUnitsText
+        public string SelectedUnitsText // Текст выбраных объектов
         {
             get => _selectedUnitsText;
             set
@@ -175,7 +174,7 @@ namespace FlowEvents
         private readonly IFileService _fileService;
 
 
-        // Конструктор ViewModel для Добавлениия события
+        // Конструктор ViewModel для НОВЫХ события
         public EventViewModel(IUnitRepository unitRepository,
                                 ICategoryRepository categoryRepository,
                                 IEventRepository eventRepository,
@@ -189,7 +188,6 @@ namespace FlowEvents
             // Инициализация сервиса файлов
             _fileService = fileService;
 
-            _connectionString = Global_Var.ConnectionString;
             _userName = Global_Var.UserName;
 
             AttachFileCommand = new RelayCommand(AttachFile);
@@ -229,7 +227,6 @@ namespace FlowEvents
             _fileService = fileService;
 
             _originalEvent = eventToEdit;
-            _connectionString = Global_Var.ConnectionString;
 
             AttachFileCommand = new RelayCommand(AttachFile);
             SaveCommand = new RelayCommand(UpdatedEvent);
@@ -241,22 +238,20 @@ namespace FlowEvents
             Description = _originalEvent.Description;
             Action = _originalEvent.Action;
 
-
             // Запускаем инициализацию без блокировки конструктора
-            // Первоначальная инициализация перечней объектов и категорий
-            // Ждем завершения инициализации перед установкой SelectedCategory
-            InitializeAsync().ContinueWith(t =>
-            {
-                // Этот код выполнится после завершения InitializeAsync
-                SelectedCategory = Categories.FirstOrDefault(c => c.Name == _originalEvent.Category);
-            }, TaskScheduler.FromCurrentSynchronizationContext());
+            _ = InitializeForEditAsync();
 
-            LoadSelectedUnitsForEvent(_editedEventId); // Получение перечень установок связанных с этим событием
+            SubscribeToUnitsPropertyChanged(); // Подписка на изменение IsSelected (чтобы Label обновлялся автоматически при выборе или снятии чекбокса установки)
+            UpdateSelectedUnitsText(); // Инициализация текстового перечня выделенных объектов для события
+        }
 
-            LoadAttachedFiles(_editedEventId); // Получаем перечень прикрепленных файлов.
-
-            SubscribeToUnitsPropertyChanged(); // Подписка на изменение IsSelected (чтобы Label обновлялся автоматически)
+        private async Task InitializeForEditAsync()
+        {
+            await InitializeAsync();
+            SelectedCategory = Categories.FirstOrDefault(c => c.Name == _originalEvent.Category);
             
+            await LoadSelectedUnitsForEvent(_editedEventId); // Получение перечень установок связанных с этим событием
+            await LoadAttachedFiles(_editedEventId); // Получаем перечень прикрепленных файлов.
         }
 
 
@@ -413,7 +408,7 @@ namespace FlowEvents
             return null;
         }
 
-        private void UpdateSelectedUnitsText()
+        private void UpdateSelectedUnitsText() // Формирование перечня выбранных установок
         {
             var selectedUnits = Units.Where(u => u.IsSelected).Select(u => u.UnitName);
             SelectedUnitsText = selectedUnits.Any()
@@ -469,7 +464,7 @@ namespace FlowEvents
             CloseWindow();
         }
 
-        
+
 
         //Используется для сохранения и удаления прикрепленных файлов при редактировании события 
         private async Task CommitAttachmentChanges(long eventID, ObservableCollection<AttachedFileModel> attachedFiles)
@@ -500,8 +495,8 @@ namespace FlowEvents
             }
         }
 
-    
-        // Копирование файлов КОГДА РЕДАКТИРУЕМ СОБЫТИЕ
+
+        // Копирование файлов 
         private async Task CopyFilesToPath(List<AttachedFileModel> files) // Копирование файлов на диск
         {
 
@@ -522,7 +517,7 @@ namespace FlowEvents
                     failedFiles.Add(file); //Если файл не удалось скопирорвать, то помечаем его для дальнейшего исключения из записи о нем в БД
                     MessageBox.Show($"Не удалось сохранить {file.FileName}: {ex.Message}");
                 }
-            }            
+            }
             foreach (var badFile in failedFiles)    // Удаляем проблемные файлы из коллекции
             {
                 files.Remove(badFile);
@@ -604,12 +599,12 @@ namespace FlowEvents
                     }
                 }
             }
-            catch (Exception )
+            catch (Exception)
             {
                 MessageBox.Show("Не удалось загрузить прикрепленные файлы");
             }
         }
-        
+
 
         public bool CanSave //свойство, которое проверяет все обязательные поля:
         {
