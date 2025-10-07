@@ -55,33 +55,33 @@
             <MenuItem Header="Меню" >
                 
                 <MenuItem Header="Установки" Command="{Binding UnitOpenWindow}">
-                    <MenuItem.IsEnabled>
+                    <!--<MenuItem.IsEnabled>
                         <MultiBinding Converter="{StaticResource PermissionsConverter}">
                             <Binding Path="CurrentUserPermissions"/>
-                            <Binding Source="ManageProduct, ConfigureSystem"/> <!-- Перечисление прав через запятую -->
+                            <Binding Source="ManageProduct, ConfigureSystem"/> --><!-- Перечисление прав через запятую --><!--
                         </MultiBinding>
-                    </MenuItem.IsEnabled>
+                    </MenuItem.IsEnabled>-->
                 </MenuItem>
 
                 <MenuItem Header="Категории событий" Command="{Binding CategoryOpenWindow}">
-                    <MenuItem.IsEnabled>
+                    <!--<MenuItem.IsEnabled>
                         <MultiBinding Converter="{StaticResource PermissionsConverter}">
                             <Binding Path="CurrentUserPermissions"/>
-                            <Binding Source="ManageProduct, ConfigureSystem"/> <!-- Перечисление прав через запятую -->
+                            <Binding Source="ManageProduct, ConfigureSystem"/> --><!-- Перечисление прав через запятую --><!--
                         </MultiBinding>
-                    </MenuItem.IsEnabled>
+                    </MenuItem.IsEnabled>-->
                 </MenuItem>
                     
                     <Separator/>
 
                 <MenuItem Header="Пользователи" Command="{Binding OpenPermissionWindowCommand}">
-                    <MenuItem.IsEnabled>
-                        <MultiBinding Converter="{StaticResource PermissionsConverter}">
-                            <Binding Path="CurrentUserPermissions"/>
-                            <Binding Source="ManageUsers, ConfigureSystem"/>
+                    <!--<MenuItem.IsEnabled>-->
+                        <!--<MultiBinding Converter="{StaticResource PermissionsConverter}">-->
+                            <!--<Binding Path="CurrentUserPermissions"/>-->
+                            <!--<Binding Source="ManageUsers, ConfigureSystem"/>-->
                             <!-- Перечисление прав через запятую -->
-                        </MultiBinding>
-                    </MenuItem.IsEnabled>
+                        <!--</MultiBinding>-->
+                    <!--</MenuItem.IsEnabled>-->
                 </MenuItem>
 
                 <MenuItem Header="О пользователе" Command="{Binding UserWindowCommand}"/>
@@ -111,9 +111,11 @@
                 <RowDefinition />
             </Grid.RowDefinitions>
             
-            
+             
 
-            <StackPanel Grid.Column="0" Grid.Row="0" Orientation="Horizontal" Margin="5">
+            <StackPanel Grid.Column="0" Grid.Row="0" Orientation="Horizontal" Margin="5"
+                        IsEnabled="{Binding CanAccess}">
+                
                 <Label Content="Установка:" VerticalAlignment="Center"/>
                 <ComboBox x:Name="CB_Units"
                            ItemsSource="{Binding Units}"
@@ -180,12 +182,12 @@
                         Command="{Binding EventAddWindow}"
                         ToolTip="Добавить событие" >
                     <Image Source="/Resource/Images/Icons/Create.png" />
-                    <Button.Visibility>
+                    <!--<Button.Visibility>
                         <MultiBinding Converter="{StaticResource PermissionsToVisibilityConverter}">
                             <Binding Path="CurrentUserPermissions"/>
-                            <Binding Source="EditDocument"/> <!-- Перечисление прав через запятую -->
+                            <Binding Source="EditDocument"/> --><!-- Перечисление прав через запятую --><!--
                         </MultiBinding>
-                    </Button.Visibility>
+                    </Button.Visibility>-->
                 </Button>
 
                 <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="5,0,10,0"/>

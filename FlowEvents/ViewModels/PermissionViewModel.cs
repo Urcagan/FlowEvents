@@ -289,9 +289,6 @@ namespace FlowEvents.Users
 
             try
             {
-                // Имитация задержки сети - дает пользователю визуальную обратную связь
-                await Task.Delay(1000);
-
                 // Параллельно загружаем все необходимые данные для производительности
                 var usersTask = _userService.GetUsersAsync();                           // Загрузка пользователей из БД
                 var rolesTask = _roleServices.GetRolesAsync();                          // Загрузка ролей из БД  
@@ -355,9 +352,6 @@ namespace FlowEvents.Users
 
         //    try
         //    {
-        //        // Имитация задержки сети (2 секунды)
-        //        await Task.Delay(1000);
-
         //        // Параллельно загружаем все необходимые данные
         //        var users = await _databaseService.GetUsersAsync(); // Загрузка пользователей из БД
 

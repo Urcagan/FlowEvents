@@ -97,6 +97,7 @@
     <Compile Include="Services\Interface\IRoleServices.cs" />
     <Compile Include="Services\Interface\IUserInfoService.cs" />
     <Compile Include="Behaviors\ClearSelectionBehavior.cs" />
+    <Compile Include="Services\temp_PermissionService.cs" />
     <Compile Include="ViewModels\UserInfoViewModel.cs" />
     <Compile Include="Views\UserInfoWindow.xaml.cs">
       <DependentUpon>UserInfoWindow.xaml</DependentUpon>

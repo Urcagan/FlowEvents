@@ -123,8 +123,6 @@ namespace FlowEvents
         {
             IsLoading = true;
 
-            await Task.Delay(500); // Имитация задержки сети (2 секунды)
-
             try
             {
                 Units = await _unitRepository.GetAllUnitsAsync();
@@ -152,8 +150,6 @@ namespace FlowEvents
                 return;
             }
             IsSaving = true;
-
-            await Task.Delay(500); // Имитация задержки сети (2 секунды)
 
             try
             {
@@ -208,7 +204,6 @@ namespace FlowEvents
             }
 
             IsSaving = true;
-            await Task.Delay(500); // Имитация задержки сети
 
             try
             {
@@ -257,7 +252,6 @@ namespace FlowEvents
 
             IsDeleting = true;
 
-            await Task.Delay(500); // Имитация задержки сети (2 секунды)
             
             try
             {

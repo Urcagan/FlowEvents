@@ -178,9 +178,7 @@ namespace FlowEvents
         private async Task LoadCategoriesAsync()
         {
             IsLoading = true;
-
-            await Task.Delay(500); // Имитация задержки сети (2 секунды)
-
+                     
             try
             {
                 Categories = await _categoryRepository.GetAllCategoriesAsync();
@@ -209,8 +207,6 @@ namespace FlowEvents
 
             IsSaving = true;
                         
-            await Task.Delay(500); // Имитация задержки сети (2 секунды)
-
             try
             {
                 // Проверка на уникальность через репозиторий
@@ -269,8 +265,6 @@ namespace FlowEvents
 
             IsSaving = true;
 
-            await Task.Delay(500); // Имитация задержки сети
-
             try
             {
                 // Обновляем данные выбранной записи
@@ -319,8 +313,6 @@ namespace FlowEvents
             if (confirm != MessageBoxResult.Yes) return;
 
             IsDeleting = true;
-
-            await Task.Delay(500); // Имитация задержки сети (2 секунды)
 
             try
             {
