@@ -1,7 +1,4 @@
-﻿using FlowEvents.Services;
-using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -32,23 +29,6 @@ namespace FlowEvents
             Closing += MainWindow_Closing;
         }
 
-
-    //    private void MainWindow_Loaded(object sender, RoutedEventArgs e)
-    //    {
-    //        // Загружаем настройки ширины столбцов
-    //        LoadDataGridColumnsSettings();
-
-    //        // Подписываемся на изменения ширины столбцов
-    //        // ВЫКЛЮЧИЛ ДАБЫ НЕ ПЕРЕПИСЫВАТЬ ФАЙЛ НАСТРОЕК МНОЖЕСТВО РАЗ
-    ////        SubscribeToColumnWidthChanges(); 
-
-    //        // Получаем ViewModel из DataContext
-    //        if (DataContext is MainViewModel viewModel)
-    //        {
-    //            // Вызываем метод загрузки и проверки данных
-    //            viewModel.StartUP();
-    //        }
-    //    }
 
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {

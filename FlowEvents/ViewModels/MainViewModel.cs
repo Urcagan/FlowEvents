@@ -7,6 +7,7 @@ using FlowEvents.Users;
 using FlowEvents.ViewModels;
 using FlowEvents.Views;
 using Microsoft.Extensions.DependencyInjection;
+using Squirrel.SimpleSplat;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -39,7 +40,7 @@ namespace FlowEvents
         private bool _isLoading;
         private string _currentDbPath;
         private string _userName;
-        private List<string> _currentUserPermissions = new List<string> { "ViewDashboard" };
+        private List<string> _currentUserPermissions = new List<string>(); // { "ViewDashboard" };
         private User _currentUser;  // Кэш пользователя (опционально)
         private DateTime _sartDate = DateTime.Now; // Значение по умолчанию
         private DateTime _endDate = DateTime.Now; // Значение по умолчанию
@@ -91,7 +92,6 @@ namespace FlowEvents
             {
                 _currentUserPermissions = value;
                 OnPropertyChanged(nameof(CurrentUserPermissions));
-                OnPropertyChanged(nameof(CanAccess));
             }
         }
         public DateTime StartDate
@@ -176,8 +176,40 @@ namespace FlowEvents
 
         public ObservableCollection<EventForView> Events { get; set; } = new ObservableCollection<EventForView>(); // Коллекция для записей журнала (автоматически уведомляет об изменениях)
 
-        public bool CanAccess => _currentUserPermissions?.Contains("ViewDashboard") == true;
+        //public bool CanAccess => _currentUserPermissions?.Contains("ViewDashboard") == true; // Проверка наличия конкретного права ViewDashboard
 
+        //public bool CanAccess // Проверка что есть хоть одно право, кроме GUEST, READONLY, RESTRICTED
+        //{
+        //    get
+        //    {
+        //        var excluded = new[] { "GUEST", "READONLY", "RESTRICTED" };
+        //        return _currentUserPermissions?.Any(p => !excluded.Contains(p)) == true;
+        //    }
+        //}
+
+        //public bool CanAccess // Проверка что есть хоть одно из основных прав USER, VIEWER, OPERATOR, MANAGER, ADMIN
+        //{
+        //    get
+        //    {
+        //        var basicPermissions = new[] { "USER", "VIEWER", "OPERATOR", "MANAGER", "ADMIN" };
+        //        return _currentUserPermissions?.Any(p => basicPermissions.Contains(p)) == true;
+        //    }
+        //}
+
+        //public bool CanAccess   //
+        //{
+        //    get
+        //    {
+        //        // Должен быть не пустой список и содержать хоть что-то кроме гостевых прав
+        //        var guestPermissions = new[] { "GUEST", "ANONYMOUS" };
+        //        return _currentUserPermissions?.Any() == true &&
+        //               _currentUserPermissions.Any(p => !guestPermissions.Contains(p));
+        //    }
+        //}
+
+        public bool CanAccess => _currentUserPermissions != null && _currentUserPermissions.Any(); // Проверка что есть хоть одно право, кроме ViewDashboard
+
+        public bool IsUserLoggedIn => _currentUser != null && !string.IsNullOrEmpty(UserName); // Проверка что пользователь залогинен
         #endregion
 
         //=======================================================================
@@ -188,12 +220,12 @@ namespace FlowEvents
         public RelayCommand EventAddWindow { get; }
         public RelayCommand EditEventCommand { get; } // команда для редактирования
         public RelayCommand DeleteEventCommand { get; }
-        public RelayCommand UserManagerWindow { get; } // Позже удалить----------------------------
         public RelayCommand OpenPermissionWindowCommand { get; set; }
         public RelayCommand DownDateCommand { get; }
         public RelayCommand UpDateCommand { get; }
         public RelayCommand CheckUpdateAppCommand { get; } // Кнопка проверки обновления программы 
         public RelayCommand LoginCommand { get; }
+        public RelayCommand LogoutCommand { get; }  
         public RelayCommand UserWindowCommand { get; }
         #endregion
 
@@ -221,7 +253,8 @@ namespace FlowEvents
             DeleteEventCommand = new RelayCommand(DeletEvent, CanDeleteEvent);
             OpenPermissionWindowCommand = new RelayCommand(OpenPermissionWindow, CanPermission);
             CheckUpdateAppCommand = new RelayCommand(CheckUpdateApp, CanSettings);
-            LoginCommand = new RelayCommand(Login, CanSettings);
+            LoginCommand = new RelayCommand(Login);
+            LogoutCommand = new RelayCommand(Logout, CanLogout);
             UserWindowCommand = new RelayCommand(UserInfoWindow);
 
             DownDateCommand = new RelayCommand((parameter) =>
@@ -269,18 +302,15 @@ namespace FlowEvents
             var requiredPermissions = new[] { "DeleteDocument", "ManageProduct", "ConfigureSystem" };
             return _currentUserPermissions?.Any(p => requiredPermissions.Contains(p)) == true;
         }
-
+                
+        private bool CanLogout(object parameter) => IsUserLoggedIn; // Проверка возможности выхода
         //private bool CanAccess(object parameter)
         //{
         //    var excludedPermissions = new[] { "ViewDashboard" };
         //    return _currentUserPermissions?.Any(p => !excludedPermissions.Contains(p)) == true;
         //}
 
-        // Метод для обновления при изменении прав
-        public void UpdatePermissions()
-        {
-            OnPropertyChanged(nameof(CanAccess));
-        }
+
 
         //=======================================
         //      ИНИЦИАЛИЗАЦИЯ РАБОТЫ ПРОГРАММЫ   |
@@ -314,6 +344,34 @@ namespace FlowEvents
             }
         }
 
+
+        // Метод для выхода пользователя
+        private async void Logout(object parameter)
+        {
+            // Сбрасываем данные пользователя
+            _currentUser = null;
+            UserName = string.Empty;
+            _currentUserPermissions?.Clear();
+
+            // Уведомляем об изменениях
+            OnPropertyChanged(nameof(CurrentUserPermissions));
+            OnPropertyChanged(nameof(CanAccess));
+            OnPropertyChanged(nameof(IsUserLoggedIn));  
+
+            // Очищаем данные
+            Events.Clear();
+            SelectedEvent = null;
+
+            // Показываем сообщение
+            MessageBox.Show("Вы успешно вышли из системы \n Приложение будет перезапущено...", "Выход",
+                           MessageBoxButton.OK, MessageBoxImage.Information);
+
+            // Автоматически открываем окно входа
+            //Login(parameter);
+            // Перезапускаем приложение
+            System.Diagnostics.Process.Start(Application.ResourceAssembly.Location);
+            Application.Current.Shutdown();
+        }
 
 
         private async Task<DatabaseValidationResult> ValidateAndLoadDatabaseAsync(string databasePath)
@@ -362,6 +420,7 @@ namespace FlowEvents
                     : new ObservableCollection<EventForView> { SelectedEvent };
 
 
+
         //
         private async Task GetCurrentUserFromDB() //Загрузка информауию о текущем пользователе из БД 
         {
@@ -378,8 +437,10 @@ namespace FlowEvents
                 MessageBox.Show($"Ошибка: Пользователя {_userName} нет в перечне допущенных пользователей", "Обработка ошибки", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
-            _currentUser = _authService.GetUser(_userName);
+            _currentUser = _authService.GetUser(_userName); 
             CurrentUserPermissions = _authService.GetUserPermissions(UserName);
+            OnPropertyChanged(nameof(CanAccess));
+            OnPropertyChanged(nameof(IsUserLoggedIn));
         }
 
         // Загрузкак комбобокса установок
@@ -410,6 +471,8 @@ namespace FlowEvents
         // Метод для загрузки данных из базы
         public async Task LoadEvents()
         {
+            if (!CanAccess)
+                return;
             Events.Clear();
 
             if (QueryEvent == null) return;
@@ -493,7 +556,7 @@ namespace FlowEvents
         }
 
 
-        private void Login(object parameter)
+        private async void Login(object parameter)
         {
             var loginViewModel = App.ServiceProvider.GetRequiredService<LoginViewModel>();
             var loginUser = new LoginUser();
@@ -516,7 +579,12 @@ namespace FlowEvents
                     // Используем пользователя в основном окне
                     UserName = authenticatedUser.UserName;
                     GetCurrentUserFromDB();  //Загрузка информауию о текущем пользователе из БД 
+                    await LoadEvents();
+
+                    // Уведомляем об изменениях
+                    OnPropertyChanged(nameof(IsUserLoggedIn));
                     // Другие действия с пользователем...
+
                 }
             }
         }
