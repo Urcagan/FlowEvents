@@ -1,7 +1,8 @@
 ﻿<Application x:Class="FlowEvents.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:FlowEvents">
+             xmlns:local="clr-namespace:FlowEvents"
+             xmlns:converters="clr-namespace:FlowEvents.Converters">
     <!-- " StartupUri="Views/MainWindow.xaml" >-->
     <Application.Resources>
         <!-- Создадим словарь ресурсов для доступа к обьявленным ресурсам во всем приложении        -->
@@ -9,9 +10,13 @@
             <ResourceDictionary.MergedDictionaries>
                 <!-- Отдельный словарь ресурсов -->
                 <ResourceDictionary>
-                    <local:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
-                    <local:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
-                    <local:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
+                    <converters:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
+                    <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+                    <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
+                    <converters:InvertedBooleanToVisibilityConverter x:Key="InvertedBooleanToVisibilityConverter"/>
+                    <converters:PermissionsToBoolConverter x:Key="PermissionsToBoolConverter"/>
+                    <converters:PermissionsToVisibilityConverter x:Key="PermissionsToVisibilityConverter"/>
+                    <converters:InverseNullToVisibilityConverter x:Key="InverseNullToVisibilityConverter"/>
                     <!-- Добавьте здесь другие глобальные конвертеры -->
                 </ResourceDictionary>
             </ResourceDictionary.MergedDictionaries>

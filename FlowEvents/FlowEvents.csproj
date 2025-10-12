@@ -81,6 +81,7 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="App.cs" />
+    <Compile Include="Converters\InvertedBooleanToVisibilityConverter.cs" />
     <Compile Include="Models\DatabaseInfo.cs" />
     <Compile Include="Models\UserInfo.cs" />
     <Compile Include="Repositories\Implementations\AttachFilesRepository.cs" />

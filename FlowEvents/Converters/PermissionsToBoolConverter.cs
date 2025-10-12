@@ -4,7 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Windows.Data;
 
-namespace FlowEvents
+namespace FlowEvents.Converters
 {
     [ValueConversion(typeof(List<string>), typeof(bool))]
     public class PermissionsToBoolConverter : IMultiValueConverter

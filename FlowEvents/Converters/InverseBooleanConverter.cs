@@ -2,7 +2,7 @@
 using System.Globalization;
 using System.Windows.Data;
 
-namespace FlowEvents
+namespace FlowEvents.Converters
 {
     //Конвертер нвертирует булевое значение при привязке данных (binding) в XAML.
     // Пример использования в XAML <Button IsEnabled = "{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}" />

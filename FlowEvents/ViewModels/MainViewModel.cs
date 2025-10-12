@@ -207,7 +207,17 @@ namespace FlowEvents
         //    }
         //}
 
-        public bool CanAccess => _currentUserPermissions != null && _currentUserPermissions.Any(); // Проверка что есть хоть одно право, кроме ViewDashboard
+       // public bool CanAccess => _currentUserPermissions != null && _currentUserPermissions.Any(); // Проверка что есть хоть одно право, кроме ViewDashboard
+
+        public bool CanAccess
+        {
+            get
+            {
+                bool result = _currentUserPermissions != null && _currentUserPermissions.Any();
+                System.Diagnostics.Debug.WriteLine($"CanAccess getter called: {result}, Permissions: {_currentUserPermissions?.Count ?? 0}");
+                return result;
+            }
+        }
 
         public bool IsUserLoggedIn => _currentUser != null && !string.IsNullOrEmpty(UserName); // Проверка что пользователь залогинен
         #endregion
@@ -272,6 +282,8 @@ namespace FlowEvents
             // Полная информация о пользователе windows
             _currentUserWindows = _userInfoService.GetCurrentUserInfo();   // Получает данные о пользователе Windows
             UserName = _currentUserWindows.DisplayName; // Получаем имя текущего пользователя
+
+            System.Diagnostics.Debug.WriteLine($"Initial CanAccess: {CanAccess}");
         }
 
         //==========================================================
@@ -583,6 +595,7 @@ namespace FlowEvents
 
                     // Уведомляем об изменениях
                     OnPropertyChanged(nameof(IsUserLoggedIn));
+                    OnPropertyChanged(nameof(CanAccess));
                     // Другие действия с пользователем...
 
                 }

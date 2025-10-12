@@ -5,7 +5,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Data;
 
-namespace FlowEvents
+namespace FlowEvents.Converters
 {
     public class PermissionsToVisibilityConverter : IMultiValueConverter
     {
