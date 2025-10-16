@@ -105,7 +105,18 @@ namespace FlowEvents.Settings
             }
 
             var newPath = openFileDialog.FileName;
-            await ValidateAndSetDatabasePathAsync(newPath);
+            string Path;
+            //Проверяем не является ли путь сетевым
+            if (newPath.StartsWith("\\"))
+            {
+                Path = "\\\\" + newPath;
+            }
+            else
+            {
+                Path = newPath;
+            }
+
+            await ValidateAndSetDatabasePathAsync(Path);
         }
 
 

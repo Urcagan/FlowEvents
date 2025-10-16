@@ -36,13 +36,14 @@ namespace FlowEvents.Services.Implementations
         // Метод для валидации базы данных по объекту DatabaseInfo
         public async Task<DatabaseValidationResult> ValidateDatabaseAsync(DatabaseInfo databaseInfo)
         {
+            var PathToCheck = ConvertToOriginalPath(databaseInfo.Path);
             // 1. Проверка файла на существование по указанному пути
-            if (!ValidateFile(databaseInfo.Path)) // Если файл не найден
+            if (!ValidateFile(PathToCheck)) // Если файл не найден
             {
                 return new DatabaseValidationResult
                 {
                     IsValid = false,
-                    Message = $"Файл базы данных не найден: {databaseInfo.Path}",
+                    Message = $"Файл базы данных не найден: {PathToCheck}",
                     ErrorType = ValidationErrorType.FileNotFound,
                     DatabaseInfo = databaseInfo
 
@@ -102,6 +103,17 @@ namespace FlowEvents.Services.Implementations
                 DatabaseInfo = databaseInfo,
                 ConnectionString = connectionString
             };
+        }
+
+
+        // Обратное преобразование сетевого пути к файлу БД . Необходим для проверки наличия файла на HDD
+        public string ConvertToOriginalPath(string dbPath)
+        {
+            if (dbPath.StartsWith("\\\\\\\\")) // Если начинается с 4х слешей
+            {
+                return dbPath.Substring(2); // Убираем первые два слеша
+            }
+            return dbPath;
         }
 
         public bool ValidateFile(string databasePath)
