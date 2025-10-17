@@ -13,7 +13,11 @@ namespace FlowEvents.Services.Implementations
 
         public ConnectionStringProvider(string initialConnectionString)
         {
-            _currentConnectionString = initialConnectionString;
+            string _path;
+            _path = NormalizeNetworkPath(initialConnectionString);
+
+            //_currentConnectionString = initialConnectionString;
+            _currentConnectionString = _path; ;
         }
 
         public string GetConnectionString()
@@ -23,7 +27,28 @@ namespace FlowEvents.Services.Implementations
 
         public void UpdateConnectionString(string newConnectionString)
         {
-            _currentConnectionString = newConnectionString;
+            string _path;
+            _path = NormalizeNetworkPath(newConnectionString);
+
+            _currentConnectionString = _path; ;
+        }
+
+
+        // Проверка пути к БД , не является ли он сетевым. В случае сетевого пути выполняем необходимое формотирование.
+        private string NormalizeNetworkPath(string path)
+        {
+            string Path;
+            //Проверяем не является ли путь сетевым
+            if (path.StartsWith("\\"))
+            {
+                Path = "\\\\" + path;
+            }
+            else
+            {
+                Path = path;
+            }
+            return Path;
         }
     }
+
 }

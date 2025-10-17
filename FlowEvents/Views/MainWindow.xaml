@@ -579,7 +579,7 @@
         </DockPanel>
 
         <!-- Overlay блокирующий доступ -->
-        <Border Background="#CCFFFFFF" 
+        <!--<Border Background="#CCFFFFFF" 
                 Visibility="{Binding CanAccess, Converter={StaticResource InvertedBooleanToVisibilityConverter}}">
             <Border.Style>
                 <Style TargetType="Border">
@@ -607,7 +607,7 @@
                         Padding="10,5"
                         HorizontalAlignment="Center"/>
             </StackPanel>
-        </Border>
+        </Border>-->
     </Grid>
 
 </Window>

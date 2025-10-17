@@ -12,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -334,6 +335,9 @@ namespace FlowEvents
             try
             {
                 string pathDB = App.Settings.pathDB;
+
+                Debug.WriteLine($"Полученный путь из файла конфигурации: {pathDB}");
+
                 var validationResult = await ValidateAndLoadDatabaseAsync(pathDB); // Проверка и загрузка БД в одном методе
 
                 if (!validationResult.IsValid)
