@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -31,10 +32,10 @@ namespace FlowEvents
 
 
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
-        {
-            // Загружаем настройки ширины столбцов
-            LoadDataGridColumnsSettings();
+        {            
+            LoadDataGridColumnsSettings(); // Загружаем настройки ширины столбцов
 
+            LoadWindowSettings();           // Загружаем настройки полажения и размера окна программы
         }
 
 
@@ -42,6 +43,11 @@ namespace FlowEvents
         {
             // Сохраняем текущие ширины столбцов
             SaveDataGridColumnsSettings();
+
+            SaveWindowSettings(); // Подготовка к сохранению данных о полажении и размере ркна программы
+
+            // Сохраняем настройки в файл
+            //App.Settings.SaveSettingsApp();
         }
 
         private void LoadDataGridColumnsSettings()
@@ -67,6 +73,40 @@ namespace FlowEvents
             }
         }
 
+        private void LoadWindowSettings()
+        {
+            var mainWindow = Application.Current.MainWindow;
+
+            if (mainWindow != null && App.Settings != null)
+            {
+                // Проверяем, чтобы окно не выходило за пределы экрана
+                var screenWidth = SystemParameters.PrimaryScreenWidth;
+                var screenHeight = SystemParameters.PrimaryScreenHeight;
+
+                // Восстанавливаем размеры с проверкой границ
+                if (App.Settings.WindowWidth > 0 && App.Settings.WindowWidth <= screenWidth)
+                    mainWindow.Width = App.Settings.WindowWidth;
+
+                if (App.Settings.WindowHeight > 0 && App.Settings.WindowHeight <= screenHeight)
+                    mainWindow.Height = App.Settings.WindowHeight;
+
+                // Восстанавливаем положение с проверкой границ
+                if (App.Settings.WindowLeft >= 0 && App.Settings.WindowLeft <= screenWidth - mainWindow.Width)
+                    mainWindow.Left = App.Settings.WindowLeft;
+
+                if (App.Settings.WindowTop >= 0 && App.Settings.WindowTop <= screenHeight - mainWindow.Height)
+                    mainWindow.Top = App.Settings.WindowTop;
+
+                // Восстанавливаем состояние окна
+                if (Enum.TryParse<WindowState>(App.Settings.WindowState, out var windowState))
+                {
+                    mainWindow.WindowState = windowState;
+                }
+
+                System.Diagnostics.Debug.WriteLine($"[WINDOW] Settings loaded: {mainWindow.Left}, {mainWindow.Top}, {mainWindow.Width}x{mainWindow.Height}, State: {mainWindow.WindowState}");
+            }
+        }
+
         private void SaveDataGridColumnsSettings()
         {
             // Очищаем предыдущие настройки
@@ -82,8 +122,26 @@ namespace FlowEvents
                 }
             }
 
-            // Сохраняем настройки в файл
-            App.Settings.SaveSettingsApp();
+            
+        }
+        private void SaveWindowSettings()
+        {
+            var mainWindow = Application.Current.MainWindow;
+
+            if (mainWindow != null && mainWindow.WindowState != WindowState.Minimized && mainWindow.IsVisible)
+            {
+                // Сохраняем только если окно в нормальном состоянии или развернуто
+                if (mainWindow.WindowState == WindowState.Normal || mainWindow.WindowState == WindowState.Maximized)
+                {
+                    App.Settings.WindowLeft = mainWindow.Left;
+                    App.Settings.WindowTop = mainWindow.Top;
+                    App.Settings.WindowWidth = mainWindow.Width;
+                    App.Settings.WindowHeight = mainWindow.Height;
+                }
+                App.Settings.WindowState = mainWindow.WindowState.ToString();
+
+                //System.Diagnostics.Debug.WriteLine($"[WINDOW] Settings saved: {mainWindow.Left}, {mainWindow.Top}, {mainWindow.Width}x{mainWindow.Height}, State: {mainWindow.WindowState}");
+            }
         }
 
         private void SubscribeToColumnWidthChanges()

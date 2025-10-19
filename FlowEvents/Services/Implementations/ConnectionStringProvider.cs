@@ -1,9 +1,4 @@
 ﻿using FlowEvents.Services.Interface;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace FlowEvents.Services.Implementations
 {
@@ -13,11 +8,7 @@ namespace FlowEvents.Services.Implementations
 
         public ConnectionStringProvider(string initialConnectionString)
         {
-            string _path;
-            _path = NormalizeNetworkPath(initialConnectionString);
-
-            //_currentConnectionString = initialConnectionString;
-            _currentConnectionString = _path; ;
+            _currentConnectionString = initialConnectionString;
         }
 
         public string GetConnectionString()
@@ -27,28 +18,28 @@ namespace FlowEvents.Services.Implementations
 
         public void UpdateConnectionString(string newConnectionString)
         {
-            string _path;
-            _path = NormalizeNetworkPath(newConnectionString);
-
-            _currentConnectionString = _path; ;
+            _currentConnectionString = newConnectionString;
         }
 
 
-        // Проверка пути к БД , не является ли он сетевым. В случае сетевого пути выполняем необходимое формотирование.
-        private string NormalizeNetworkPath(string path)
+        public string CreateConnectionString(string databasePath)
         {
+
             string Path;
             //Проверяем не является ли путь сетевым
-            if (path.StartsWith("\\"))
+            if (databasePath.StartsWith("\\"))
             {
-                Path = "\\\\" + path;
+                Path = "\\\\" + databasePath;
             }
             else
             {
-                Path = path;
+                Path = databasePath;
             }
-            return Path;
+
+            return $"Data Source={Path};Version=3;foreign keys=true;";
         }
+
+
     }
 
 }

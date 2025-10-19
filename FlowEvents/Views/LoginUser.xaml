@@ -74,70 +74,76 @@
     </Window.Resources>
     <Border CornerRadius="0" 
             Background="White" 
-            BorderThickness="0"
+            BorderThickness="1"
             BorderBrush="#FFE0E0E0"
             Effect="{StaticResource ShadowEffect}">
+        <!-- Серая внешняя рамка -->
 
-        <Grid>
-            <Grid.RowDefinitions>
+        <Border BorderThickness="1" 
+            BorderBrush="#FF4285F4"  
+            Margin="1"> <!-- Синяя внутренняя рамка -->
+            <!-- Отступ между рамками -->
+
+            <Grid>
+                <Grid.RowDefinitions>
+                    <!-- Шапка для перетаскивания -->
+                    <RowDefinition Height="40"/>
+                    <!-- Заголовок -->
+                    <RowDefinition Height="Auto"/>
+                    <!-- Поле логина -->
+                    <RowDefinition Height="Auto"/>
+                    <!-- Поле пароля -->
+                    <RowDefinition Height="Auto"/>
+                    <!-- Чекбокс "Запомнить" -->
+                    <RowDefinition Height="Auto"/>
+                    <!-- Кнопка входа -->
+                    <RowDefinition Height="Auto"/>
+                    <!-- Ссылка на регистрацию -->
+                    <RowDefinition Height="*"/>
+                    <!-- Кнопки -->
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
                 <!-- Шапка для перетаскивания -->
-                <RowDefinition Height="40"/>
-                <!-- Заголовок -->
-                <RowDefinition Height="Auto"/>
-                <!-- Поле логина -->
-                <RowDefinition Height="Auto"/>
-                <!-- Поле пароля -->
-                <RowDefinition Height="Auto"/>
-                <!-- Чекбокс "Запомнить" -->
-                <RowDefinition Height="Auto"/>
-                <!-- Кнопка входа -->
-                <RowDefinition Height="Auto"/>
-                <!-- Ссылка на регистрацию -->
-                <RowDefinition Height="*"/>
-                <!-- Кнопки -->
-                <RowDefinition Height="Auto"/>
-            </Grid.RowDefinitions>
-
-            <!-- Шапка для перетаскивания -->
-            <Border Grid.Row="0" 
+                <Border Grid.Row="0" 
                     Background="#FF4285F4"  
                     CornerRadius="0"
                     MouseLeftButtonDown="DragArea_MouseLeftButtonDown">
-                <TextBlock Text="Авторизация"
+                    <TextBlock Text="Авторизация"
                            FontSize="16"
                            FontWeight="Bold"
                            Foreground="White"
                            Margin="20,0"
                            VerticalAlignment="Center"/>
-            </Border>
+                </Border>
 
-            <!-- Иконка пользователя -->
-            <Viewbox Grid.Row="1" 
+                <!-- Иконка пользователя -->
+                <Viewbox Grid.Row="1" 
                      Width="60" 
                      Height="60" 
                      Margin="0,10,0,20"
                      HorizontalAlignment="Center">
-                <Path Data="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" 
+                    <Path Data="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" 
                       Fill="#FF4285F4"/>
-            </Viewbox>
+                </Viewbox>
 
-            <!-- Поле логина -->
-            <StackPanel Grid.Row="2" Margin="30,0,30,10">
-                <Label Content="Логин:" Foreground="#FF333333" FontWeight="SemiBold"/>
-                <TextBox x:Name="txtUsername" 
+                <!-- Поле логина -->
+                <StackPanel Grid.Row="2" Margin="30,0,30,10">
+                    <Label Content="Логин:" Foreground="#FF333333" FontWeight="SemiBold"/>
+                    <TextBox x:Name="txtUsername" 
                          Style="{StaticResource MaterialTextBox}"
                          Text="{Binding Username}"/>
-            </StackPanel>
+                </StackPanel>
 
-            <!-- Поле пароля -->
-            <StackPanel Grid.Row="3" Margin="30,0,30,10">
-                <Label Content="Пароль:" Foreground="#FF333333" FontWeight="SemiBold"/>
-                <PasswordBox x:Name="txtPassword" 
+                <!-- Поле пароля -->
+                <StackPanel Grid.Row="3" Margin="30,0,30,10">
+                    <Label Content="Пароль:" Foreground="#FF333333" FontWeight="SemiBold"/>
+                    <PasswordBox x:Name="txtPassword" 
                              Style="{StaticResource MaterialPasswordBox}"/>
-            </StackPanel>
+                </StackPanel>
 
-            <!-- Чекбокс "Запомнить меня" -->
-            <!--
+                <!-- Чекбокс "Запомнить меня" -->
+                <!--
             <CheckBox Grid.Row="4" 
                       Content="Запомнить меня"
                       Margin="30,10"
@@ -145,8 +151,8 @@
                       IsChecked="{Binding RememberMe}"/>
               -->
 
-            <!-- Кнопка входа -->
-            <Button Grid.Row="5"
+                <!-- Кнопка входа -->
+                <Button Grid.Row="5"
                     Content="Войти"
                     Command="{Binding LoginCommand}"
                     CommandParameter="{Binding ElementName=txtPassword}"
@@ -157,8 +163,8 @@
                     FontWeight="Bold"
                     BorderThickness="0"/>
 
-            <!-- Ссылка на регистрацию -->
-            <TextBlock Grid.Row="6" 
+                <!-- Ссылка на регистрацию -->
+                <TextBlock Grid.Row="6" 
                        Text="Нет аккаунта? Зарегистрируйтесь" 
                        Margin="0,0,0,20"
                        HorizontalAlignment="Center"
@@ -168,14 +174,15 @@
                        TextDecorations="Underline"
                        MouseLeftButtonDown="RegisterText_MouseDown"/>
 
-            <!-- Кнопка закрытия -->
-            <Button Grid.Row="7"
+                <!-- Кнопка закрытия -->
+                <Button Grid.Row="7"
                     Content="Закрыть"
                      Click="CloseButton_Click"
                     Margin="10"
                     HorizontalAlignment="Right"
                     Width="80"
                     Style="{StaticResource FlatButton}"/>
-        </Grid>
+            </Grid>
+        </Border>
     </Border>
 </Window>

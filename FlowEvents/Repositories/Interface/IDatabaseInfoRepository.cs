@@ -8,7 +8,7 @@ namespace FlowEvents.Repositories.Interface
 {
     public interface IDatabaseInfoRepository
     {
-        Task<string> GetDatabaseVersionAsync(string connectionString);
+        Task<int> GetUserVersion(string connectionString);
         Task<bool> CheckDatabaseStructureAsync(string connectionString);
         Task<bool> TestConnectionAsync(string connectionString);
     }

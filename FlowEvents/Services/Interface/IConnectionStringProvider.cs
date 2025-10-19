@@ -5,5 +5,10 @@ namespace FlowEvents.Services.Interface
     {
         string GetConnectionString();
         void UpdateConnectionString(string newConnectionString);
+
+        // Создание строки подключения
+        string CreateConnectionString(string databasePath);
+
+        
     }
 }

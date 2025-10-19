@@ -25,14 +25,21 @@ namespace FlowEvents
 
     public class AppSettings
     {
+        // Свойства для окна
+        public double WindowLeft { get; set; } = -1; // -1 означает "не установлено"
+        public double WindowTop { get; set; } = -1;
+        public double WindowWidth { get; set; } = -1;
+        public double WindowHeight { get; set; } = -1;
+        public string WindowState { get; set; } = "Normal";
+
         // Параметры програы с параметрами по умолчанию
         public string pathDB { get; set; } = "C:\\";  // Путь к базе данных по умолчанию
-        public string VerDB { get; set; } = "0.1.0"; //Версия БД для проверки
+        public int VerDB { get; set; } = 1; //Версия БД для проверки
         public string UpdateRepository { get; set; } =  "G:\\VS Dev\\FlowEventsReleases"; //Путь к парке с обновлениями
 
         public string DomenName { get; set; } = "localhost"; // Имя домена по умолчанию
 
-        public int DefaultRole { get; set; } = 2; // Роль присваеваемая пользователь по умолчанию 
+        public int DefaultRole { get; set; } = 1; // Роль присваеваемая пользователю по умолчанию 
 
         // Свойства для хранения ширины столбцов
         // Ключ - заголовок столбца, значение - ширина в пикселях

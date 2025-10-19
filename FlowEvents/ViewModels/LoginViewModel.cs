@@ -97,8 +97,8 @@ namespace FlowEvents.ViewModels
                                     IsLocal = Convert.ToInt32(reader["IsLocal"])
                                 };
 
-                                MessageBox.Show($"Добро пожаловать, {Username}!", "Успех",
-                                    MessageBoxButton.OK, MessageBoxImage.Information);
+                                //MessageBox.Show($"Добро пожаловать, {Username}!", "Успех",
+                                //    MessageBoxButton.OK, MessageBoxImage.Information);
 
                                 // Закрываем окно с успешным результатом
                                 CloseAction?.Invoke();

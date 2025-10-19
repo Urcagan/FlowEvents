@@ -4,6 +4,7 @@ using Microsoft.Win32;
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
@@ -106,19 +107,6 @@ namespace FlowEvents.Settings
             }
 
             var newPath = openFileDialog.FileName;
-            //string Path;
-            ////Проверяем не является ли путь сетевым
-            //if (newPath.StartsWith("\\"))
-            //{
-            //    Path = "\\\\" + newPath;
-            //}
-            //else
-            //{
-            //    Path = newPath;
-            //}
-            MessageBox.Show($"Путь: {newPath} ");
-            Debug.WriteLine($"Новый путь: {newPath}");
-
             await ValidateAndSetDatabasePathAsync(newPath);
         }
 
@@ -140,7 +128,7 @@ namespace FlowEvents.Settings
 
                 Debug.WriteLine($"----Новый путь:--- {newPath}");
                 // Обновляем настройки строки подключения
-                var newConnectionString = $"Data Source={newPath};Version=3;foreign keys=true;";
+                var newConnectionString = _connectionProvider.CreateConnectionString(newPath); // $"Data Source={newPath};Version=3;foreign keys=true;";
                 _connectionProvider.UpdateConnectionString(newConnectionString);
 
                 App.Settings.pathDB = newPath; // Обновляем пут к базе данных в глобальной переменной для дальнейшего сохранения в файле конфигурации

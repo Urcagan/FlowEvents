@@ -109,7 +109,9 @@ namespace FlowEvents
             services.AddSingleton<IConnectionStringProvider>(provider =>
             {
                 var appSettings = provider.GetService<AppSettings>();
-                return new ConnectionStringProvider($"Data Source={appSettings.pathDB};Version=3;foreign keys=true;");
+                var connectionString = CreateConnectionString(appSettings.pathDB); // Формируем строку подключения
+                return new ConnectionStringProvider(connectionString); // Инициализируем провайдер строки подключения
+                //return new ConnectionStringProvider($"Data Source={appSettings.pathDB};Version=3;foreign keys=true;");
             });
 
             services.AddSingleton<IDatabaseInfoRepository>(provider => new DatabaseInfoRepository());
@@ -171,6 +173,24 @@ namespace FlowEvents
             CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
             FrameworkElement.LanguageProperty.OverrideMetadata(typeof(FrameworkElement),
                 new FrameworkPropertyMetadata(XmlLanguage.GetLanguage(CultureInfo.CurrentCulture.IetfLanguageTag)));
+        }
+
+
+        private string CreateConnectionString(string databasePath)
+        {
+
+            string Path;
+            //Проверяем не является ли путь сетевым
+            if (databasePath.StartsWith("\\"))
+            {
+                Path = "\\\\" + databasePath;
+            }
+            else
+            {
+                Path = databasePath;
+            }
+
+            return $"Data Source={Path};Version=3;foreign keys=true;";
         }
 
         //Получаем строку подключения к БД

@@ -9,7 +9,7 @@ namespace FlowEvents.Services.Interface
 {
     public interface IDatabaseValidationService
     {
-        Task<DatabaseValidationResult> ValidateDatabaseAsync(string databasePath, string expectedVersion); // Новый метод для валидации с путем и версией
+        Task<DatabaseValidationResult> ValidateDatabaseAsync(string databasePath, int expectedVersion); // Новый метод для валидации с путем и версией
         Task<DatabaseValidationResult> ValidateDatabaseAsync(DatabaseInfo databaseInfo); // Метод для валидации базы данных по объекту DatabaseInfo
         bool ValidateFile(string databasePath); // Метод для проверки наличия файла базы данных
     }

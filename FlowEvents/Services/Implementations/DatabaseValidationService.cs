@@ -3,25 +3,30 @@ using FlowEvents.Repositories.Interface;
 using FlowEvents.Services.Interface;
 using System;
 using System.Collections.Generic;
+using System.Data.Common;
+using System.Data.SQLite;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Shapes;
 
 namespace FlowEvents.Services.Implementations
 {
     public class DatabaseValidationService : IDatabaseValidationService
     {
         private readonly IDatabaseInfoRepository _databaseRepository;
+        private readonly IConnectionStringProvider _connectionStringProvider;
 
-        public DatabaseValidationService(IDatabaseInfoRepository databaseRepository)
+        public DatabaseValidationService(IDatabaseInfoRepository databaseRepository, IConnectionStringProvider connectionStringProvider)
         {
             _databaseRepository = databaseRepository;
+            _connectionStringProvider = connectionStringProvider;
         }
 
 
         // Новый метод для валидации с путем и версией
-        public async Task<DatabaseValidationResult> ValidateDatabaseAsync(string databasePath, string expectedVersion)
+        public async Task<DatabaseValidationResult> ValidateDatabaseAsync(string databasePath, int expectedVersion)
         {
             var databaseInfo = new DatabaseInfo
             {
@@ -36,23 +41,26 @@ namespace FlowEvents.Services.Implementations
         // Метод для валидации базы данных по объекту DatabaseInfo
         public async Task<DatabaseValidationResult> ValidateDatabaseAsync(DatabaseInfo databaseInfo)
         {
-            var PathToCheck = ConvertToOriginalPath(databaseInfo.Path);
+
             // 1. Проверка файла на существование по указанному пути
-            if (!ValidateFile(PathToCheck)) // Если файл не найден
+            if (!ValidateFile(databaseInfo.Path)) // Если файл не найден
             {
                 return new DatabaseValidationResult
                 {
                     IsValid = false,
-                    Message = $"Файл базы данных не найден: {PathToCheck}",
+                    Message = $"Файл базы данных не найден: {databaseInfo.Path}",
                     ErrorType = ValidationErrorType.FileNotFound,
                     DatabaseInfo = databaseInfo
 
                 };
             }
 
+            // Для сетевого расположения файла необходимо модифицыровать к пуи раложения файла добаавлять еще 4 слеша "\\\\" 
+
+
             databaseInfo.Exists = true; // Выставляем состояние существования файла базы данных
 
-            var connectionString = CreateConnectionString(databaseInfo.Path); // Создание строки подключения
+            var connectionString = _connectionStringProvider.CreateConnectionString(databaseInfo.Path); // Создание строки подключения
 
             // 2. Проверка подключения
             if (!await _databaseRepository.TestConnectionAsync(connectionString)) // Если не удалось подключиться
@@ -79,7 +87,7 @@ namespace FlowEvents.Services.Implementations
             }
 
             // 4. Проверка версии
-            var actualVersion = await _databaseRepository.GetDatabaseVersionAsync(connectionString); // Получение текущей версии из БД
+            var actualVersion = await _databaseRepository.GetUserVersion(connectionString); //.GetDatabaseVersionAsync(connectionString); // Получение текущей версии из БД
             if (actualVersion != databaseInfo.Version) // Если версия не совпадает
             {
                 return new DatabaseValidationResult
@@ -106,24 +114,11 @@ namespace FlowEvents.Services.Implementations
         }
 
 
-        // Обратное преобразование сетевого пути к файлу БД . Необходим для проверки наличия файла на HDD
-        public string ConvertToOriginalPath(string dbPath)
-        {
-            if (dbPath.StartsWith("\\\\\\\\")) // Если начинается с 4х слешей
-            {
-                return dbPath.Substring(2); // Убираем первые два слеша
-            }
-            return dbPath;
-        }
-
         public bool ValidateFile(string databasePath)
         {
+            // Проверка наличия файла по указанному пути
             return !string.IsNullOrWhiteSpace(databasePath) && File.Exists(databasePath);
         }
 
-        private string CreateConnectionString(string databasePath)
-        {
-            return $"Data Source={databasePath};Version=3;foreign keys=true;";
-        }
     }
 }

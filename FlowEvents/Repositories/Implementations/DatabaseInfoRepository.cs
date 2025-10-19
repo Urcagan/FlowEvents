@@ -1,4 +1,6 @@
 ﻿using FlowEvents.Repositories.Interface;
+using System;
+using System.Data.Common;
 using System.Data.SQLite;
 using System.Threading.Tasks;
 
@@ -6,27 +8,14 @@ namespace FlowEvents.Repositories.Implementations
 {
     public class DatabaseInfoRepository : IDatabaseInfoRepository
     {
-     
-       
-        public async Task<string> GetDatabaseVersionAsync(string connectionString) // Получение версии базы данных
+        // Получить текущую версию
+        public async Task<int> GetUserVersion(string connectionString)
         {
-            try
+            using (var connection = new SQLiteConnection(connectionString))
             {
-                using (var connection = new SQLiteConnection(connectionString))
-                {
-                    await connection.OpenAsync();
-
-                    const string query = "SELECT Value FROM Config WHERE Parameter = 'VersionDB'";
-                    using (var command = new SQLiteCommand(query, connection))
-                    {
-                        var result = await command.ExecuteScalarAsync();
-                        return result?.ToString();
-                    }
-                }
-            }
-            catch
-            {
-                return null;
+                await connection.OpenAsync();
+                using var cmd = new SQLiteCommand("PRAGMA user_version;", connection);
+                return Convert.ToInt32(cmd.ExecuteScalar());
             }
         }
 
@@ -39,7 +28,7 @@ namespace FlowEvents.Repositories.Implementations
                     await connection.OpenAsync();
 
                     // Проверяем наличие основных таблиц
-                    var tables = new[] { "Config", "Users", "Units", "Events"};
+                    var tables = new[] { "AttachedFiles", "Category","EventUnits", "Events", "Permissions", "RolePermissions", "Roles", "Units", "Users",  };
 
                     foreach (var table in tables)
                     {

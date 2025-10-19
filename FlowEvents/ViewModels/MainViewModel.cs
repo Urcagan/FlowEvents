@@ -7,18 +7,15 @@ using FlowEvents.Users;
 using FlowEvents.ViewModels;
 using FlowEvents.Views;
 using Microsoft.Extensions.DependencyInjection;
-using Squirrel.SimpleSplat;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Documents;
 
 namespace FlowEvents
 {
@@ -39,6 +36,7 @@ namespace FlowEvents
         //-----------------------------------------------------------------------------------
         #region Private Fields
         private bool _isLoading;
+        private bool _isBaseValid = false; // Флаг валидности базы данных
         private string _currentDbPath;
         private string _userName;
         private List<string> _currentUserPermissions = new List<string>(); // { "ViewDashboard" };
@@ -50,12 +48,50 @@ namespace FlowEvents
         private string _queryEvent; // Для хранения Запроса получения Events 
         private EventForView _selectedEvent; // Выбранное событие в таблице
         private UserInfo _currentUserWindows;   //Кеш инфориации о текущем пользователе залогоненым в Windows
+        private string _loginUserName; // Кеш имени пользователя для входа
 
         private ObservableCollection<Unit> _units { get; set; } = new ObservableCollection<Unit>();
         #endregion
 
         #region Public Properties
         public AppSettings appSettings; // Объект параметров приложения
+
+        public bool IsBaseValid
+        {
+            get => _isBaseValid;
+            set
+            {
+                _isBaseValid = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(ShowDatabaseErrorOverlay));
+            }
+        }
+        // Свойство для отображения оверлея с ошибкой БД
+        public bool ShowDatabaseErrorOverlay => !IsBaseValid;  // Если база не валидна
+
+        // Свойство для отображения оверлея с доступом
+        //public bool ShowAccessOverlay => !CanAccess && IsBaseValid; // Если нет доступа и база валидна
+        //Альтернативный метод с отладочной информацией
+        public bool ShowAccessOverlay
+        {
+            get
+            {
+                bool result = !CanAccess && IsBaseValid;
+                System.Diagnostics.Debug.WriteLine($"ShowAccessOverlay: {result}, CanAccess: {CanAccess}, IsBaseValid: {IsBaseValid}");
+                return result;
+            }
+        }
+
+        private string _overlayMessage;
+        public string OverlayMessage // Сообщение об ошибке для отображения на оверлее
+        {
+            get=> _overlayMessage;
+            set
+            {
+                _overlayMessage = value;
+                OnPropertyChanged();
+            }
+        }
 
         public bool IsLoading
         {
@@ -82,7 +118,7 @@ namespace FlowEvents
             {
                 _userName = value;
                 Global_Var.UserName = value;
-                OnPropertyChanged(nameof(UserName));
+                OnPropertyChanged();
             }
         }
 
@@ -92,7 +128,10 @@ namespace FlowEvents
             private set
             {
                 _currentUserPermissions = value;
-                OnPropertyChanged(nameof(CurrentUserPermissions));
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(CanAccess));
+                OnPropertyChanged(nameof(ShowAccessOverlay));
+                System.Diagnostics.Debug.WriteLine($"ShowAccessOverlay из CurrentUserPermissions:  CanAccess: {CanAccess}, IsBaseValid: {IsBaseValid}");
             }
         }
         public DateTime StartDate
@@ -208,14 +247,15 @@ namespace FlowEvents
         //    }
         //}
 
-       // public bool CanAccess => _currentUserPermissions != null && _currentUserPermissions.Any(); // Проверка что есть хоть одно право, кроме ViewDashboard
+        // public bool CanAccess => _currentUserPermissions != null && _currentUserPermissions.Any(); // Проверка что есть хоть одно право, кроме ViewDashboard
 
         public bool CanAccess
         {
             get
             {
-                bool result = _currentUserPermissions != null && _currentUserPermissions.Any();
-                System.Diagnostics.Debug.WriteLine($"CanAccess getter called: {result}, Permissions: {_currentUserPermissions?.Count ?? 0}");
+                bool result = CurrentUserPermissions != null && CurrentUserPermissions.Any();
+                //System.Diagnostics.Debug.WriteLine($"CanAccess getter called: {result}, Permissions: {CurrentUserPermissions?.Count ?? 0}");
+
                 return result;
             }
         }
@@ -236,7 +276,7 @@ namespace FlowEvents
         public RelayCommand UpDateCommand { get; }
         public RelayCommand CheckUpdateAppCommand { get; } // Кнопка проверки обновления программы 
         public RelayCommand LoginCommand { get; }
-        public RelayCommand LogoutCommand { get; }  
+        public RelayCommand LogoutCommand { get; }
         public RelayCommand UserWindowCommand { get; }
         #endregion
 
@@ -256,7 +296,8 @@ namespace FlowEvents
             _unitRepository = unitRepository;
             _userRepository = userRepository;
 
-            SettingOpenWindow = new RelayCommand(SettingsMenuItem, CanSettings);
+            SettingOpenWindow = new RelayCommand(SettingsMenuItem);
+            //SettingOpenWindow = new RelayCommand(SettingsMenuItem, CanSettings);
             UnitOpenWindow = new RelayCommand(UnitMenuItem, CanEditProduct);
             CategoryOpenWindow = new RelayCommand(CategoryMenuItem, CanEditProduct);
             EventAddWindow = new RelayCommand(AddNewEvent, CanEditEvent);
@@ -283,8 +324,10 @@ namespace FlowEvents
             // Полная информация о пользователе windows
             _currentUserWindows = _userInfoService.GetCurrentUserInfo();   // Получает данные о пользователе Windows
             UserName = _currentUserWindows.DisplayName; // Получаем имя текущего пользователя
+            _loginUserName = _currentUserWindows.Login; // Получаем логин текущего пользователя
 
-            System.Diagnostics.Debug.WriteLine($"Initial CanAccess: {CanAccess}");
+            //System.Diagnostics.Debug.WriteLine($"Конструктор - CanAccess: {CanAccess}, IsBaseValid: {IsBaseValid}");
+            //System.Diagnostics.Debug.WriteLine($"Initial CanAccess: {CanAccess}");
         }
 
         //==========================================================
@@ -315,15 +358,20 @@ namespace FlowEvents
             var requiredPermissions = new[] { "DeleteDocument", "ManageProduct", "ConfigureSystem" };
             return _currentUserPermissions?.Any(p => requiredPermissions.Contains(p)) == true;
         }
-                
+
         private bool CanLogout(object parameter) => IsUserLoggedIn; // Проверка возможности выхода
-        //private bool CanAccess(object parameter)
-        //{
-        //    var excludedPermissions = new[] { "ViewDashboard" };
-        //    return _currentUserPermissions?.Any(p => !excludedPermissions.Contains(p)) == true;
-        //}
+                                                                    //private bool CanAccess(object parameter)
+                                                                    //{
+                                                                    //    var excludedPermissions = new[] { "ViewDashboard" };
+                                                                    //    return _currentUserPermissions?.Any(p => !excludedPermissions.Contains(p)) == true;
+                                                                    //}
 
-
+        private bool CanLogin(object parameter)  // Проверка возможности входа
+        {
+            bool result = !IsUserLoggedIn && IsBaseValid;
+            System.Diagnostics.Debug.WriteLine($"Возможность зологинится : {result}, Пользователь вошол: {IsUserLoggedIn}, База валидна : {IsBaseValid}");
+            return result;
+        }
 
         //=======================================
         //      ИНИЦИАЛИЗАЦИЯ РАБОТЫ ПРОГРАММЫ   |
@@ -335,18 +383,20 @@ namespace FlowEvents
             try
             {
                 string pathDB = App.Settings.pathDB;
-
-                Debug.WriteLine($"Полученный путь из файла конфигурации: {pathDB}");
+                //Debug.WriteLine($"Полученный путь из файла конфигурации: {pathDB}");
 
                 var validationResult = await ValidateAndLoadDatabaseAsync(pathDB); // Проверка и загрузка БД в одном методе
-
+                IsBaseValid = validationResult.IsValid;
+                //System.Diagnostics.Debug.WriteLine($"[STARTUP] IsBaseValid set to: {IsBaseValid}");
                 if (!validationResult.IsValid)
                 {
                     // Если валидация не прошла, выходим из метода
                     return;
                 }
 
-                await GetCurrentUserFromDB();  //Загрузка информауию о текущем пользователе из БД 
+                await GetCurrentUserFromDB(_loginUserName);  //Загрузка информауию о текущем пользователе из БД 
+                //System.Diagnostics.Debug.WriteLine($"[STARTUP] Final - CanAccess: {CanAccess}, IsBaseValid: {IsBaseValid}");
+                OnPropertyChanged(nameof(ShowAccessOverlay));
 
                 CurrentDbPath = pathDB; // Отображаем текущий путь к базе данных в итерфейсе программы
 
@@ -364,29 +414,38 @@ namespace FlowEvents
         // Метод для выхода пользователя
         private async void Logout(object parameter)
         {
-            // Сбрасываем данные пользователя
-            _currentUser = null;
-            UserName = string.Empty;
-            _currentUserPermissions?.Clear();
-
-            // Уведомляем об изменениях
-            OnPropertyChanged(nameof(CurrentUserPermissions));
-            OnPropertyChanged(nameof(CanAccess));
-            OnPropertyChanged(nameof(IsUserLoggedIn));  
-
             // Очищаем данные
             Events.Clear();
             SelectedEvent = null;
 
+            // Сбрасываем данные пользователя
+            _currentUser = null;
+            UserName = string.Empty;
+            CurrentUserPermissions?.Clear();
+            // Полная информация о пользователе windows
+            _currentUserWindows = _userInfoService.GetCurrentUserInfo();   // Получает данные о пользователе Windows
+            UserName = _currentUserWindows.DisplayName; // Получаем имя текущего пользователя
+            _loginUserName = _currentUserWindows.Login;
+            GetCurrentUserFromDB(_loginUserName);  //Загрузка информауию о текущем пользователе из БД 
+
+            OnPropertyChanged(nameof(CurrentUserPermissions));
+            OnPropertyChanged(nameof(CanAccess));
+            OnPropertyChanged(nameof(IsUserLoggedIn));
+            OnPropertyChanged(nameof(ShowAccessOverlay));
+
+
             // Показываем сообщение
-            MessageBox.Show("Вы успешно вышли из системы \n Приложение будет перезапущено...", "Выход",
-                           MessageBoxButton.OK, MessageBoxImage.Information);
+            //MessageBox.Show("Вы успешно вышли из системы \n Приложение будет перезапущено...", "Выход",
+            //               MessageBoxButton.OK, MessageBoxImage.Information);
 
             // Автоматически открываем окно входа
             //Login(parameter);
             // Перезапускаем приложение
-            System.Diagnostics.Process.Start(Application.ResourceAssembly.Location);
-            Application.Current.Shutdown();
+
+            //System.Diagnostics.Process.Start(Application.ResourceAssembly.Location);
+            //Application.Current.Shutdown();
+
+            // Уведомляем об изменениях
         }
 
 
@@ -406,15 +465,16 @@ namespace FlowEvents
 
 
         private async Task HandleDatabaseValidationErrorAsync(DatabaseValidationResult result)
-        {
-            MessageBox.Show(result.Message, "Ошибка БД", MessageBoxButton.OK, MessageBoxImage.Error);
+        {            
+            OverlayMessage = result.Message;
 
+            //MessageBox.Show(result.Message, "Ошибка БД", MessageBoxButton.OK, MessageBoxImage.Error);
             // Можно предложить выбрать новый файл или другие действия
             // НАДО ЗАПРЕТИТЬ ДОСТУП К ИНТЕРФЕЙСУ ПРОГРАММЫ
         }
 
 
-        private void UpdateQuery()
+        private void UpdateQuery() 
         {
             QueryEvent = _eventRepository.BuildSQLQueryEvents(SelectedUnit, IsAllEvents ? null : (DateTime?)StartDate, IsAllEvents ? null : (DateTime?)EndDate, IsAllEvents);
         }
@@ -438,25 +498,27 @@ namespace FlowEvents
 
 
         //
-        private async Task GetCurrentUserFromDB() //Загрузка информауию о текущем пользователе из БД 
+        private async Task GetCurrentUserFromDB(string Login) //Загрузка данных о текущем пользователе из БД 
         {
-            if (string.IsNullOrEmpty(_userName))    // Проверка на пустое имя пользователя
+            if (string.IsNullOrEmpty(Login))    // Проверка на пустое имя пользователя
             {
-                MessageBox.Show("Имя ползователя не определено", "Обработка авторизации", MessageBoxButton.OK, MessageBoxImage.Error);
+                //MessageBox.Show("Имя ползователя не определено", "Обработка авторизации", MessageBoxButton.OK, MessageBoxImage.Error);
+                OverlayMessage = "Имя ползователя не определено";
                 return;
             }
 
-            bool UserExists = await _userRepository.UserExistsAsync(_userName); //Проверяем пользователя на наличие его в базе
+            bool UserExists = await _userRepository.UserExistsAsync(Login); //Проверяем пользователя на наличие его в базе
             if (!UserExists) // Если пользователя нет в базе, то выходим из метода
             {
                 _currentUser = null;
-                MessageBox.Show($"Ошибка: Пользователя {_userName} нет в перечне допущенных пользователей", "Обработка ошибки", MessageBoxButton.OK, MessageBoxImage.Error);
+                //MessageBox.Show($"Ошибка: Пользователя {_userName} нет в перечне допущенных пользователей", "Обработка ошибки", MessageBoxButton.OK, MessageBoxImage.Error);
+                OverlayMessage = $"Пользователя {Login} нет в перечне допущенных пользователей";
                 return;
             }
-            _currentUser = _authService.GetUser(_userName); 
-            CurrentUserPermissions = _authService.GetUserPermissions(UserName);
-            OnPropertyChanged(nameof(CanAccess));
-            OnPropertyChanged(nameof(IsUserLoggedIn));
+            _currentUser = _authService.GetUser(Login); // Получаем данные пользователя и помещаем их в пересеную используемую как кеш днных
+            CurrentUserPermissions = _authService.GetUserPermissions(Login);
+            //OnPropertyChanged(nameof(CanAccess));
+            //OnPropertyChanged(nameof(IsUserLoggedIn));
         }
 
         // Загрузкак комбобокса установок
@@ -593,15 +655,17 @@ namespace FlowEvents
                 if (authenticatedUser != null && authenticatedUser.IsAuthenticated)
                 {
                     // Используем пользователя в основном окне
-                    UserName = authenticatedUser.UserName;
-                    GetCurrentUserFromDB();  //Загрузка информауию о текущем пользователе из БД 
-                    await LoadEvents();
+                    UserName = authenticatedUser.DisplayName;
+                    _loginUserName = authenticatedUser.UserName;
+                    GetCurrentUserFromDB(_loginUserName);  //Загрузка информауию о текущем пользователе из БД 
 
                     // Уведомляем об изменениях
                     OnPropertyChanged(nameof(IsUserLoggedIn));
                     OnPropertyChanged(nameof(CanAccess));
+                    OnPropertyChanged(nameof(ShowAccessOverlay));
                     // Другие действия с пользователем...
 
+                    await LoadEvents();
                 }
             }
         }
@@ -771,39 +835,39 @@ namespace FlowEvents
         //Свойство для управления видимостью кнопок
 
         //Кнопка Создать
-        private bool _isCategoryButtonVisible;
-        public bool IsCategoryButtonVisible
-        {
-            get => _isCategoryButtonVisible;
-            set
-            {
-                _isCategoryButtonVisible = value;
-                OnPropertyChanged();
-            }
-        }
+        //private bool _isCategoryButtonVisible;
+        //public bool IsCategoryButtonVisible
+        //{
+        //    get => _isCategoryButtonVisible;
+        //    set
+        //    {
+        //        _isCategoryButtonVisible = value;
+        //        OnPropertyChanged();
+        //    }
+        //}
 
-        private bool _isUnitButtonVisible;
-        public bool IsUnitButtonVisible
-        {
-            get => _isUnitButtonVisible;
-            set
-            {
-                _isUnitButtonVisible = value;
-                OnPropertyChanged();
-            }
-        }
+        //private bool _isUnitButtonVisible;
+        //public bool IsUnitButtonVisible
+        //{
+        //    get => _isUnitButtonVisible;
+        //    set
+        //    {
+        //        _isUnitButtonVisible = value;
+        //        OnPropertyChanged();
+        //    }
+        //}
 
-        private bool _isToolBarVisible;
+        //private bool _isToolBarVisible;
 
-        public bool IsToolBarVisible
-        {
-            get { return _isToolBarVisible; }
-            set
-            {
-                _isToolBarVisible = value;
-                OnPropertyChanged();
-            }
-        }
+        //public bool IsToolBarVisible
+        //{
+        //    get { return _isToolBarVisible; }
+        //    set
+        //    {
+        //        _isToolBarVisible = value;
+        //        OnPropertyChanged();
+        //    }
+        //}
 
         // Реализация INotifyPropertyChanged
         public event PropertyChangedEventHandler PropertyChanged;
