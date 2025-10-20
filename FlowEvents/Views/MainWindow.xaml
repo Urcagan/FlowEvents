@@ -101,6 +101,7 @@
                 <ColumnDefinition Width="auto"/>
                 <ColumnDefinition Width="auto"/>
                 <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
                 <RowDefinition />
@@ -183,7 +184,14 @@
                         </MultiBinding>
                     </Button.Visibility>-->
                 </Button>
-
+                <!-- Кнопка ручного обновления -->
+                <Button Command="{Binding ManualRefreshCommand}"
+                        ToolTip="Обновить данные"
+                        Style="{StaticResource TransparentButtonStyle}"
+                        Margin="5,0">
+                    <Image Source="/Resource/Images/Icons/Refresh.bmp" Height="16"/>
+                </Button>
+                
                 <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="5,0,10,0"/>
             </StackPanel>
 
@@ -203,14 +211,45 @@
                 </Label>
             </Border>
 
+            <StackPanel Grid.Column="5" Orientation="Horizontal" HorizontalAlignment="Right">
+
+                <!-- Автообновление -->
+                <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" 
+                            Margin="10,0"/>
+
+                <CheckBox IsChecked="{Binding AutoRefreshEnabled}"
+              VerticalAlignment="Center"
+              ToolTip="Автообновление"
+              Content="Авто"
+              Margin="5,0"/>
+
+                <ComboBox ItemsSource="{Binding RefreshIntervals}"
+              SelectedItem="{Binding AutoRefreshInterval}"
+              Width="80"
+              VerticalAlignment="Center"
+              Margin="5,0"
+              ToolTip="Интервал обновления">
+                    <ComboBox.ItemContainerStyle>
+                        <Style TargetType="ComboBoxItem">
+                            <Setter Property="Content" Value="{Binding StringFormat={}{0} сек}"/>
+                        </Style>
+                    </ComboBox.ItemContainerStyle>
+                </ComboBox>
+
+            </StackPanel>
+
+
         </Grid>
 
         <!-- Основной контент -->
         <Grid Grid.Row="2">
             <Grid.RowDefinitions>
-                <RowDefinition Height="*"/>    <!-- Панель с таблицей событий -->
-                <RowDefinition Height="Auto"/> <!-- Панель с раскрвывающейся дополнительной информацией по выбранному событию -->
-                <RowDefinition Height="Auto"/> <!-- Панель пагинации -->
+                <RowDefinition Height="*"/>
+                <!-- Панель с таблицей событий -->
+                <RowDefinition Height="Auto"/>
+                <!-- Панель с раскрвывающейся дополнительной информацией по выбранному событию -->
+                <RowDefinition Height="Auto"/>
+                <!-- Панель пагинации -->
             </Grid.RowDefinitions>
 
             <Grid Grid.Row="0">
@@ -556,9 +595,9 @@
                      VerticalAlignment="Center"
                      HorizontalAlignment="Center"/>
             </Border>
-            
+
             <!-- Панель пагинации -->
-            <Border Grid.Row="2" Background="#F0F0F0" Padding="10,5" BorderThickness="0,1,0,0" BorderBrush="#CCCCCC">
+            <!--<Border Grid.Row="2" Background="#F0F0F0" Padding="10,5" BorderThickness="0,1,0,0" BorderBrush="#CCCCCC">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
@@ -567,13 +606,13 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <!-- Информация о странице -->
+                    --><!-- Информация о странице --><!--
                     <TextBlock Grid.Column="0" 
                        Text="{Binding PaginationInfo}"
                        VerticalAlignment="Center"
                        Margin="0,0,10,0"/>
 
-                    <!-- Элементы управления пагинацией -->
+                    --><!-- Элементы управления пагинацией --><!--
                     <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center">
                         <Button Content="⏮" 
                         Command="{Binding Pagination.FirstPageCommand}"
@@ -613,7 +652,7 @@
                         Margin="5,0,0,0"/>
                     </StackPanel>
 
-                    <!-- Размер страницы -->
+                    --><!-- Размер страницы --><!--
                     <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
                         <TextBlock Text="Строк на странице:" 
                            VerticalAlignment="Center"
@@ -624,14 +663,14 @@
                           VerticalAlignment="Center"/>
                     </StackPanel>
 
-                    <!-- Общее количество -->
+                    --><!-- Общее количество --><!--
                     <TextBlock Grid.Column="3" 
                        Text="{Binding TotalEventsCount, StringFormat='Всего записей: {0}'}"
                        VerticalAlignment="Center"
                        Margin="10,0,0,0"
                        FontWeight="Bold"/>
                 </Grid>
-            </Border>
+            </Border>-->
 
         </Grid>
 
@@ -646,7 +685,8 @@
         </StatusBar>
 
 
-        <!-- Overlay для ошибки доступа --><!--
+        <!-- Overlay для ошибки доступа -->
+        <!--
         <Border Grid.Row="1" Grid.RowSpan="2" 
             Background="#CCFFFFFF" 
             Visibility="{Binding ShowAccessOverlay, Converter={StaticResource BooleanToVisibilityConverter}}">
@@ -670,7 +710,9 @@
             </StackPanel>
         </Border>
 
-        --><!-- Overlay для ошибки базы данных --><!--
+        -->
+        <!-- Overlay для ошибки базы данных -->
+        <!--
         <Border Grid.Row="1" Grid.RowSpan="2" 
             Background="#CCFFFFFF" 
             Visibility="{Binding ShowDatabaseErrorOverlay, Converter={StaticResource BooleanToVisibilityConverter}}">

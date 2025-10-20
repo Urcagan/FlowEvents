@@ -13,10 +13,10 @@ namespace FlowEvents
 {
     public static class AppBaseConfig
     {
-        public static WindowsIdentity UserId = WindowsIdentity.GetCurrent();   // статическая переменная UserId типа WindowsIdentity, которая получает текущую идентичность пользователя Windows
-        public static string User_Name_Full = UserId.Name;  //Это свойство Name возвращает имя пользователя в формате, который обычно используется в Windows для идентификации пользователей.
-        public static string User_Name = UserId.Name.Substring(UserId.Name.IndexOf("\\") + 1); // Получаем только имя пользователя без домена
-        public static string User_Role;
+        //public static WindowsIdentity UserId = WindowsIdentity.GetCurrent();   // статическая переменная UserId типа WindowsIdentity, которая получает текущую идентичность пользователя Windows
+        //public static string User_Name_Full = UserId.Name;  //Это свойство Name возвращает имя пользователя в формате, который обычно используется в Windows для идентификации пользователей.
+        //public static string User_Name = UserId.Name.Substring(UserId.Name.IndexOf("\\") + 1); // Получаем только имя пользователя без домена
+        //public static string User_Role;
 
         public static readonly CultureInfo culture = new CultureInfo("ru-RU"); // Культура русского языка
         public static readonly string formatDate = "yyyy-MM-dd"; //Формат даты в приложении
@@ -55,6 +55,11 @@ namespace FlowEvents
             {"Мониторинг + Диспетчерский отчет", 150},
             {"Автор", 100}
         };
+
+        // Свойства для автообновления
+        public bool AutoRefreshEnabled { get; set; } = false;
+        public int AutoRefreshInterval { get; set; } = 60; // секунды
+
 
         //Путь к файлу настроек в папке AppData
         // private static string settingsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), 

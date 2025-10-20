@@ -32,6 +32,7 @@ namespace FlowEvents
         private readonly IUserInfoService _userInfoService; // сервис получения данных пользователя windows
         private readonly IUnitRepository _unitRepository;
         private readonly IUserRepository _userRepository;
+        private readonly IAutoRefreshService _autoRefreshService;
         #endregion
         //-----------------------------------------------------------------------------------
         #region Private Fields
@@ -49,6 +50,10 @@ namespace FlowEvents
         private EventForView _selectedEvent; // Выбранное событие в таблице
         private UserInfo _currentUserWindows;   //Кеш инфориации о текущем пользователе залогоненым в Windows
         private string _loginUserName; // Кеш имени пользователя для входа
+
+        // Новые свойства для автообновления
+        private bool _autoRefreshEnabled;
+        private int _autoRefreshInterval;
 
         private ObservableCollection<Unit> _units { get; set; } = new ObservableCollection<Unit>();
         #endregion
@@ -85,7 +90,7 @@ namespace FlowEvents
         private string _overlayMessage;
         public string OverlayMessage // Сообщение об ошибке для отображения на оверлее
         {
-            get=> _overlayMessage;
+            get => _overlayMessage;
             set
             {
                 _overlayMessage = value;
@@ -261,6 +266,36 @@ namespace FlowEvents
         }
 
         public bool IsUserLoggedIn => _currentUser != null && !string.IsNullOrEmpty(UserName); // Проверка что пользователь залогинен
+
+        public bool AutoRefreshEnabled
+        {
+            get => _autoRefreshEnabled;
+            set
+            {
+                _autoRefreshEnabled = value;
+                _autoRefreshService.IsEnabled = value;
+                App.Settings.AutoRefreshEnabled = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public int AutoRefreshInterval
+        {
+            get => _autoRefreshInterval;
+            set
+            {
+                _autoRefreshInterval = value;
+                _autoRefreshService.RefreshInterval = value;
+                App.Settings.AutoRefreshInterval = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public ObservableCollection<int> RefreshIntervals { get; } = new ObservableCollection<int>
+            {
+                30, 60, 120, 300, 600 // 30 сек, 1 мин, 2 мин, 5 мин, 10 мин
+            };
+
         #endregion
 
         //=======================================================================
@@ -278,6 +313,9 @@ namespace FlowEvents
         public RelayCommand LoginCommand { get; }
         public RelayCommand LogoutCommand { get; }
         public RelayCommand UserWindowCommand { get; }
+        public RelayCommand ToggleAutoRefreshCommand { get; }
+        public RelayCommand ManualRefreshCommand { get; }
+
         #endregion
 
         //===============================================================================================================================================
@@ -287,7 +325,8 @@ namespace FlowEvents
                             IDatabaseValidationService validationService,
                             IUserInfoService userInfoService,
                             IUnitRepository unitRepository,
-                            IUserRepository userRepository)
+                            IUserRepository userRepository,
+                            IAutoRefreshService autoRefreshService)
         {
             _authService = authService;
             _eventRepository = eventRepository;
@@ -295,6 +334,7 @@ namespace FlowEvents
             _userInfoService = userInfoService;
             _unitRepository = unitRepository;
             _userRepository = userRepository;
+            _autoRefreshService = autoRefreshService;
 
             SettingOpenWindow = new RelayCommand(SettingsMenuItem);
             //SettingOpenWindow = new RelayCommand(SettingsMenuItem, CanSettings);
@@ -308,7 +348,6 @@ namespace FlowEvents
             LoginCommand = new RelayCommand(Login);
             LogoutCommand = new RelayCommand(Logout, CanLogout);
             UserWindowCommand = new RelayCommand(UserInfoWindow);
-
             DownDateCommand = new RelayCommand((parameter) =>
             {
                 StartDate = StartDate.AddDays(-1);
@@ -319,6 +358,9 @@ namespace FlowEvents
                 EndDate = EndDate.AddDays(1);
                 StartDate = StartDate.AddDays(1);
             });
+            ToggleAutoRefreshCommand = new RelayCommand(ToggleAutoRefresh);
+            ManualRefreshCommand = new RelayCommand(async () => await ManualRefresh());
+
             //  User();
 
             // Полная информация о пользователе windows
@@ -326,13 +368,48 @@ namespace FlowEvents
             UserName = _currentUserWindows.DisplayName; // Получаем имя текущего пользователя
             _loginUserName = _currentUserWindows.Login; // Получаем логин текущего пользователя
 
+
             //System.Diagnostics.Debug.WriteLine($"Конструктор - CanAccess: {CanAccess}, IsBaseValid: {IsBaseValid}");
             //System.Diagnostics.Debug.WriteLine($"Initial CanAccess: {CanAccess}");
+
+            // Подписка на событие автообновления
+            _autoRefreshService.RefreshRequested += async () => await AutoRefresh();
+            // Загружаем настройки
+            LoadAutoRefreshSettings();
         }
+
+        //=========================================================
+        // Методы автообновления
+        //=========================================================
+        private void LoadAutoRefreshSettings()
+        {
+            AutoRefreshEnabled = App.Settings.AutoRefreshEnabled;
+            AutoRefreshInterval = App.Settings.AutoRefreshInterval;
+        }
+
+        private void ToggleAutoRefresh(object parameter)
+        {
+            AutoRefreshEnabled = !AutoRefreshEnabled;
+        }
+
+        private async Task ManualRefresh()
+        {
+            await LoadEvents();
+        }
+
+        private async Task AutoRefresh()
+        {
+            if (!CanAccess || IsLoading)
+                return;
+
+            await LoadEvents();
+        }
+
 
         //==========================================================
         //      Проверка доступности прав пользователя к командам   |
         //==========================================================
+        #region Can Permissiv
         private bool CanPermission(object parameter)
         {
             var requiredPermissions = new[] { "ManageUsers", "ConfigureSystem" };
@@ -372,6 +449,8 @@ namespace FlowEvents
             System.Diagnostics.Debug.WriteLine($"Возможность зологинится : {result}, Пользователь вошол: {IsUserLoggedIn}, База валидна : {IsBaseValid}");
             return result;
         }
+        #endregion
+
 
         //=======================================
         //      ИНИЦИАЛИЗАЦИЯ РАБОТЫ ПРОГРАММЫ   |
@@ -389,7 +468,7 @@ namespace FlowEvents
                 IsBaseValid = validationResult.IsValid;
                 //System.Diagnostics.Debug.WriteLine($"[STARTUP] IsBaseValid set to: {IsBaseValid}");
                 if (!validationResult.IsValid)
-                {                    
+                {
                     return; // Если валидация не прошла, выходим из метода
                 }
 
@@ -400,6 +479,12 @@ namespace FlowEvents
                 CurrentDbPath = pathDB; // Отображаем текущий путь к базе данных в итерфейсе программы
 
                 await LoadUnitsToComboBoxAsync(); // Загружаем перечень установок из базы данных
+
+                // Запускаем автообновление если включено
+                if (AutoRefreshEnabled)
+                {
+                    _autoRefreshService.Start();
+                }
 
                 // Другие инициализационные задачи
             }
@@ -451,7 +536,7 @@ namespace FlowEvents
 
 
         private async Task HandleDatabaseValidationErrorAsync(DatabaseValidationResult result)
-        {            
+        {
             OverlayMessage = result.Message;
 
             //MessageBox.Show(result.Message, "Ошибка БД", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -460,7 +545,7 @@ namespace FlowEvents
         }
 
 
-        private void UpdateQuery() 
+        private void UpdateQuery()
         {
             QueryEvent = _eventRepository.BuildSQLQueryEvents(SelectedUnit, IsAllEvents ? null : (DateTime?)StartDate, IsAllEvents ? null : (DateTime?)EndDate, IsAllEvents);
         }
@@ -539,7 +624,7 @@ namespace FlowEvents
                 return;
             Events.Clear();
 
-            if (QueryEvent == null) return;
+            if (string.IsNullOrEmpty(QueryEvent)) return;
             var eventsFromDb = await _eventRepository.GetEventsAsync(QueryEvent);  // Получаем данные из базы
 
             // Добавляем данные в коллекцию
