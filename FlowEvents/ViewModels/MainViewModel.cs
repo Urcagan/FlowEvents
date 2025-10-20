@@ -389,9 +389,8 @@ namespace FlowEvents
                 IsBaseValid = validationResult.IsValid;
                 //System.Diagnostics.Debug.WriteLine($"[STARTUP] IsBaseValid set to: {IsBaseValid}");
                 if (!validationResult.IsValid)
-                {
-                    // Если валидация не прошла, выходим из метода
-                    return;
+                {                    
+                    return; // Если валидация не прошла, выходим из метода
                 }
 
                 await GetCurrentUserFromDB(_loginUserName);  //Загрузка информауию о текущем пользователе из БД 
@@ -433,19 +432,6 @@ namespace FlowEvents
             OnPropertyChanged(nameof(IsUserLoggedIn));
             OnPropertyChanged(nameof(ShowAccessOverlay));
 
-
-            // Показываем сообщение
-            //MessageBox.Show("Вы успешно вышли из системы \n Приложение будет перезапущено...", "Выход",
-            //               MessageBoxButton.OK, MessageBoxImage.Information);
-
-            // Автоматически открываем окно входа
-            //Login(parameter);
-            // Перезапускаем приложение
-
-            //System.Diagnostics.Process.Start(Application.ResourceAssembly.Location);
-            //Application.Current.Shutdown();
-
-            // Уведомляем об изменениях
         }
 
 
@@ -830,44 +816,6 @@ namespace FlowEvents
             }
         }
 
-
-        //====================================================================================================
-        //Свойство для управления видимостью кнопок
-
-        //Кнопка Создать
-        //private bool _isCategoryButtonVisible;
-        //public bool IsCategoryButtonVisible
-        //{
-        //    get => _isCategoryButtonVisible;
-        //    set
-        //    {
-        //        _isCategoryButtonVisible = value;
-        //        OnPropertyChanged();
-        //    }
-        //}
-
-        //private bool _isUnitButtonVisible;
-        //public bool IsUnitButtonVisible
-        //{
-        //    get => _isUnitButtonVisible;
-        //    set
-        //    {
-        //        _isUnitButtonVisible = value;
-        //        OnPropertyChanged();
-        //    }
-        //}
-
-        //private bool _isToolBarVisible;
-
-        //public bool IsToolBarVisible
-        //{
-        //    get { return _isToolBarVisible; }
-        //    set
-        //    {
-        //        _isToolBarVisible = value;
-        //        OnPropertyChanged();
-        //    }
-        //}
 
         // Реализация INotifyPropertyChanged
         public event PropertyChangedEventHandler PropertyChanged;

@@ -208,15 +208,12 @@
         <!-- Основной контент -->
         <Grid Grid.Row="2">
             <Grid.RowDefinitions>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="200"/>
+                <RowDefinition Height="*"/>    <!-- Панель с таблицей событий -->
+                <RowDefinition Height="Auto"/> <!-- Панель с раскрвывающейся дополнительной информацией по выбранному событию -->
+                <RowDefinition Height="Auto"/> <!-- Панель пагинации -->
             </Grid.RowDefinitions>
 
             <Grid Grid.Row="0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="27*"/>
-                    <ColumnDefinition Width="29*"/>
-                </Grid.ColumnDefinitions>
                 <DataGrid x:Name="eventsDataGrid"
                       ItemsSource="{Binding Events}" 
                       SelectedItem="{Binding SelectedEvent, Mode=TwoWay}"
@@ -543,6 +540,99 @@
                 </Expander>
             </Grid>
 
+            <Border Background="#80FFFFFF" 
+            Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <ProgressBar IsIndeterminate="True" 
+                     Width="100" 
+                     Height="20"
+                     VerticalAlignment="Center"
+                     HorizontalAlignment="Center"/>
+            </Border>
+            <Border Background="#80FFFFFF" 
+            Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <ProgressBar IsIndeterminate="True" 
+                     Width="100" 
+                     Height="20"
+                     VerticalAlignment="Center"
+                     HorizontalAlignment="Center"/>
+            </Border>
+            
+            <!-- Панель пагинации -->
+            <Border Grid.Row="2" Background="#F0F0F0" Padding="10,5" BorderThickness="0,1,0,0" BorderBrush="#CCCCCC">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Информация о странице -->
+                    <TextBlock Grid.Column="0" 
+                       Text="{Binding PaginationInfo}"
+                       VerticalAlignment="Center"
+                       Margin="0,0,10,0"/>
+
+                    <!-- Элементы управления пагинацией -->
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center">
+                        <Button Content="⏮" 
+                        Command="{Binding Pagination.FirstPageCommand}"
+                        ToolTip="Первая страница"
+                        Style="{StaticResource StandardButtonStyle}"
+                        Width="30"/>
+
+                        <Button Content="◀" 
+                        Command="{Binding Pagination.PreviousPageCommand}"
+                        ToolTip="Предыдущая страница"
+                        Style="{StaticResource StandardButtonStyle}"
+                        Width="30"
+                        Margin="5,0,0,0"/>
+
+                        <ComboBox ItemsSource="{Binding PageNumbers}"
+                          SelectedItem="{Binding Pagination.CurrentPage}"
+                          Width="60"
+                          Margin="10,0"
+                          VerticalAlignment="Center"/>
+
+                        <TextBlock Text="/" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding Pagination.TotalPages}" 
+                           VerticalAlignment="Center"
+                           Margin="5,0,10,0"/>
+
+                        <Button Content="▶" 
+                        Command="{Binding Pagination.NextPageCommand}"
+                        ToolTip="Следующая страница"
+                        Style="{StaticResource StandardButtonStyle}"
+                        Width="30"/>
+
+                        <Button Content="⏭" 
+                        Command="{Binding Pagination.LastPageCommand}"
+                        ToolTip="Последняя страница"
+                        Style="{StaticResource StandardButtonStyle}"
+                        Width="30"
+                        Margin="5,0,0,0"/>
+                    </StackPanel>
+
+                    <!-- Размер страницы -->
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
+                        <TextBlock Text="Строк на странице:" 
+                           VerticalAlignment="Center"
+                           Margin="0,0,5,0"/>
+                        <ComboBox ItemsSource="{Binding Pagination.PageSizeOptions}"
+                          SelectedItem="{Binding Pagination.PageSize}"
+                          Width="60"
+                          VerticalAlignment="Center"/>
+                    </StackPanel>
+
+                    <!-- Общее количество -->
+                    <TextBlock Grid.Column="3" 
+                       Text="{Binding TotalEventsCount, StringFormat='Всего записей: {0}'}"
+                       VerticalAlignment="Center"
+                       Margin="10,0,0,0"
+                       FontWeight="Bold"/>
+                </Grid>
+            </Border>
+
         </Grid>
 
         <!-- Статус бар -->
@@ -556,7 +646,7 @@
         </StatusBar>
 
 
-        <!-- Overlay для ошибки доступа -->
+        <!-- Overlay для ошибки доступа --><!--
         <Border Grid.Row="1" Grid.RowSpan="2" 
             Background="#CCFFFFFF" 
             Visibility="{Binding ShowAccessOverlay, Converter={StaticResource BooleanToVisibilityConverter}}">
@@ -580,7 +670,7 @@
             </StackPanel>
         </Border>
 
-        <!-- Overlay для ошибки базы данных -->
+        --><!-- Overlay для ошибки базы данных --><!--
         <Border Grid.Row="1" Grid.RowSpan="2" 
             Background="#CCFFFFFF" 
             Visibility="{Binding ShowDatabaseErrorOverlay, Converter={StaticResource BooleanToVisibilityConverter}}">
@@ -600,7 +690,7 @@
                        TextAlignment="Center"
                        MaxWidth="300"/>
             </StackPanel>
-        </Border>
+        </Border>-->
     </Grid>
 
 </Window>
