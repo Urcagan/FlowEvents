@@ -359,6 +359,43 @@ namespace FlowEvents.Repositories
             return query;
         }
 
+        public (string Sql, List<SQLiteParameter> Parameters) BuildSQLQueryParametersEvents(Unit selectedUnit, DateTime? startDate, DateTime? endDate, bool isAllEvents)
+        {
+            var conditions = new List<string>();
+            var parameters = new List<SQLiteParameter>();
+
+            // Фильтрация по установке - БЕЗОПАСНАЯ версия
+            if (selectedUnit != null && selectedUnit.Id != -1)
+            {
+                conditions.Add($"Unit LIKE @UnitName");
+                parameters.Add(new SQLiteParameter("@UnitName", $"%{selectedUnit.UnitName}%"));
+            }
+
+            // Фильтрация по времени (если не выбрано "Все даты")
+            if (!isAllEvents)
+            {
+                var actualStartDate = startDate?.Date ?? DateTime.MinValue.Date;
+                var actualEndDate = endDate?.Date ?? DateTime.MaxValue.Date;
+
+                conditions.Add($"DateEvent BETWEEN @StartDate AND @EndDate");
+                parameters.Add(new SQLiteParameter("@StartDate", actualStartDate.ToString("yyyy-MM-dd")));
+                parameters.Add(new SQLiteParameter("@EndDate", actualEndDate.ToString("yyyy-MM-dd")));
+            }
+
+            // Основной запрос
+            string query = @"SELECT e.id, e.DateEvent, e.Unit, e.OilRefining, e.Category, e.Description, e.Action, e.DateCreate, e.Creator, 
+                    af.FileId, af.FileCategory, af.FileName, af.FilePath, af.FileSize, af.FileType, af.UploadDate
+                    FROM vwEvents e LEFT JOIN AttachedFiles af ON e.id = af.EventId";
+
+            // Добавляем условия, если они есть
+            if (conditions.Count > 0)
+            {
+                query += " WHERE " + string.Join(" AND ", conditions);
+            }
+
+            return (query, parameters);
+        }
+
         /// <summary>
         /// Удалить событие по Id
         /// </summary>

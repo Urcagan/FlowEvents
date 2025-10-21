@@ -9,19 +9,6 @@
     <!-- Loaded="Window_Loaded"> -->
 
     <Window.Resources>
-        <!--<local:InverseBooleanConverter x:Key="InverseBooleanConverter"/>-->
-        <!-- Регистрация конвертера в ресурсах -->
-
-        <!--<local:PermissionsToVisibilityConverter x:Key="PermissionsToVisibilityConverter"/>-->
-        <!-- -->
-        <!--<local:PermissionsToBoolConverter x:Key="PermissionsConverter"/>-->
-        <!-- Конвертер для преобразования null в Visibility -->
-        <!--<local:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>-->
-
-        <!-- Обратный конвертер (Inverse) -->
-        <!--<local:InverseNullToVisibilityConverter x:Key="InverseNullToVisibilityConverter"/>-->
-
-        <!--<BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>-->
         <!-- Стиль для текста с переносом строк -->
         <Style x:Key="WrappedTextBlockStyle" TargetType="TextBlock">
             <Setter Property="TextWrapping" Value="Wrap"/>
@@ -182,10 +169,10 @@
                         <TextBlock Text="Событие" TextAlignment="Center" Margin ="0,0,0,2"/>
                         
                         <ComboBox 
-                               ItemsSource="{Binding Units}"
-                               DisplayMemberPath="UnitName"
+                               ItemsSource="{Binding Categories}"
+                               DisplayMemberPath="Name"
                                SelectedValuePath="Id"
-                               SelectedItem="{Binding SelectedUnit}"                      
+                               SelectedItem="{Binding SelectedCategory}"                      
                                HorizontalAlignment="Left" VerticalAlignment="Center" Width="150" 
                                IsEditable="False" StaysOpenOnEdit="True" IsDropDownOpen="False"/>
                         
@@ -227,6 +214,7 @@
                         </MultiBinding>
                     </Button.Visibility>-->
                     </Button>
+                    <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}"/>
                     <!-- Кнопка ручного обновления -->
                     <Button Command="{Binding ManualRefreshCommand}"
                         ToolTip="Обновить данные"

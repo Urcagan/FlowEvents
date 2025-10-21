@@ -140,10 +140,7 @@ namespace FlowEvents
         }
 
         public ObservableCollection<Unit> Units { get; set; } = new ObservableCollection<Unit>();
-        public ObservableCollection<Category> Categories { get; set; } = new ObservableCollection<Category>
-        {
-            new Category { Id = -1, Name = "Выбор события" }
-        };
+        public ObservableCollection<Category> Categories { get; set; } = new ObservableCollection<Category>();
 
         // Свойство с Id выбранных элементов
         public IEnumerable<int> SelectedIds => Units.Where(u => u.IsSelected).Select(u => u.Id).ToList();

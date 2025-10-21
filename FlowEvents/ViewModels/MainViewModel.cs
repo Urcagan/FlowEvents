@@ -1,4 +1,5 @@
 ﻿using FlowEvents.Models;
+using FlowEvents.Repositories.Implementations;
 using FlowEvents.Repositories.Interface;
 using FlowEvents.Services;
 using FlowEvents.Services.Interface;
@@ -34,6 +35,7 @@ namespace FlowEvents
         private readonly IUnitRepository _unitRepository;
         private readonly IUserRepository _userRepository;
         private readonly IAutoRefreshService _autoRefreshService;
+        private readonly ICategoryRepository _categoryRepository;
         #endregion
         //-----------------------------------------------------------------------------------
         #region Private Fields
@@ -46,6 +48,7 @@ namespace FlowEvents
         private DateTime _sartDate = DateTime.Now; // Значение по умолчанию
         private DateTime _endDate = DateTime.Now; // Значение по умолчанию
         private Unit _selectedUnit;
+        private Category _selectedCategory;
         private bool _isAllEvents;
         private string _queryEvent; // Для хранения Запроса получения Events 
         private EventForView _selectedEvent; // Выбранное событие в таблице
@@ -98,7 +101,6 @@ namespace FlowEvents
                 OnPropertyChanged();
             }
         }
-
         public bool IsLoading
         {
             get => _isLoading;
@@ -176,6 +178,16 @@ namespace FlowEvents
                 UpdateQuery();
             }
         }
+        public Category SelectedCategory
+        {
+            get => _selectedCategory;
+            set
+            {
+                _selectedCategory = value;
+                OnPropertyChanged();
+                UpdateQuery();
+            }
+        }
         public bool IsAllEvents
         {
             get => _isAllEvents;
@@ -220,6 +232,7 @@ namespace FlowEvents
             }
         }
 
+        public ObservableCollection<Category> Categories { get; set; } = new ObservableCollection<Category>(); // Коллекция для категорий событий
         public ObservableCollection<EventForView> Events { get; set; } = new ObservableCollection<EventForView>(); // Коллекция для записей журнала (автоматически уведомляет об изменениях)
 
         //public bool CanAccess => _currentUserPermissions?.Contains("ViewDashboard") == true; // Проверка наличия конкретного права ViewDashboard
@@ -301,7 +314,8 @@ namespace FlowEvents
                             IUserInfoService userInfoService,
                             IUnitRepository unitRepository,
                             IUserRepository userRepository,
-                            IAutoRefreshService autoRefreshService)
+                            IAutoRefreshService autoRefreshService,
+                            ICategoryRepository categoryRepository)
         {
             _authService = authService;
             _eventRepository = eventRepository;
@@ -310,6 +324,7 @@ namespace FlowEvents
             _unitRepository = unitRepository;
             _userRepository = userRepository;
             _autoRefreshService = autoRefreshService;
+            _categoryRepository = categoryRepository;
 
             SettingOpenWindow = new RelayCommand(SettingsMenuItem);
             //SettingOpenWindow = new RelayCommand(SettingsMenuItem, CanSettings);
@@ -333,7 +348,7 @@ namespace FlowEvents
                 EndDate = EndDate.AddDays(1);
                 StartDate = StartDate.AddDays(1);
             });
-            //ToggleAutoRefreshCommand = new RelayCommand(ToggleAutoRefresh);
+
             ManualRefreshCommand = new RelayCommand(async () => await ManualRefresh());
 
             //  User();
@@ -345,31 +360,15 @@ namespace FlowEvents
 
             // Подписка на события автообновления
             _autoRefreshService.RefreshRequested += async () => await AutoRefresh();
-            _autoRefreshService.OnSettingsChanged += OnAutoRefreshSettingsChanged;
-           
-            // Загружаем настройки
-            //LoadAutoRefreshSettings();
+            _autoRefreshService.OnSettingsChanged += OnAutoRefreshSettingsChanged;            
+
         }
 
-        //=========================================================
-        // Методы автообновления
-        //=========================================================
-        //private void LoadAutoRefreshSettings()
-        //{
-        //    AutoRefreshEnabled = App.Settings.AutoRefreshEnabled;
-        //    AutoRefreshInterval = App.Settings.AutoRefreshInterval;
-        //}
 
-        //private void ToggleAutoRefresh(object parameter)
-        //{
-        //    AutoRefreshEnabled = !AutoRefreshEnabled;
-        //}
 
         private void OnAutoRefreshSettingsChanged()
         {
             // Уведомляем об изменении свойств для обновления привязок
-            //OnPropertyChanged(nameof(AutoRefreshEnabled));
-            //OnPropertyChanged(nameof(AutoRefreshInterval));
             OnPropertyChanged(nameof(AutoRefreshStatus));
         }
 
@@ -384,7 +383,7 @@ namespace FlowEvents
                 return;
 
             await LoadEvents();
-            Debug.WriteLine($"Авто обновление сработало {DateTime.Now} "); 
+            Debug.WriteLine($"Авто обновление сработало {DateTime.Now} ");
         }
 
 
@@ -459,6 +458,7 @@ namespace FlowEvents
                 CurrentDbPath = pathDB; // Отображаем текущий путь к базе данных в итерфейсе программы
 
                 await LoadUnitsToComboBoxAsync(); // Загружаем перечень установок из базы данных
+                await LoadCategoriesToComboBoxAsync(); // Загружаем перечень категорий из базы данных
 
                 // Запускаем автообновление если включено
                 // Загружаем настройки в сервис
@@ -590,6 +590,26 @@ namespace FlowEvents
             {
                 MessageBox.Show($"Ошибка: {ex.Message}");
             }
+        }
+
+        // Загрузка комбобокса категорий
+        public async Task LoadCategoriesToComboBoxAsync()
+        {
+            Categories.Clear();
+            Categories.Add(new Category { Id = -1, Name = "Все события" });
+            try
+            {
+                // 1. Получение перечня категорий для комбобокса из Category
+                var categories = await _categoryRepository.GetAllCategoriesAsync();
+                foreach (var category in categories) // Добавляем категории из БД в комбобокс категорий
+                {
+                    Categories.Add(category);
+                }
+            }
+            catch (Exception )
+            {
+            }
+            SelectedCategory = Categories.FirstOrDefault(); // Установка категории по умолчанию
         }
 
 
