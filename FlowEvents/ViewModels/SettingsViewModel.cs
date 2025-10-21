@@ -1,7 +1,9 @@
 ﻿using FlowEvents.Services;
+using FlowEvents.Services.Implementations;
 using FlowEvents.Services.Interface;
 using Microsoft.Win32;
 using System;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
@@ -15,6 +17,7 @@ namespace FlowEvents.Settings
     {
         private readonly IConnectionStringProvider _connectionProvider;
         private readonly IDatabaseValidationService _validationService;
+        private readonly IAutoRefreshService _autoRefreshService;
 
         private string _pathToDB;
         private string _pathRelises;
@@ -75,16 +78,60 @@ namespace FlowEvents.Settings
             }
         }
 
+        // Свойства автообновления
+        //----------------------------------
+        public bool AutoRefreshEnabled
+        {
+            get => _autoRefreshService.IsEnabled;
+            set
+            {
+                if (_autoRefreshService.IsEnabled != value)
+                {
+                    _autoRefreshService.IsEnabled = value;
+                    App.Settings.AutoRefreshEnabled = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        public int AutoRefreshInterval
+        {
+            get => _autoRefreshService.RefreshInterval;
+            set
+            {
+                if (_autoRefreshService.RefreshInterval != value)
+                {
+                    _autoRefreshService.RefreshInterval = value;
+                    App.Settings.AutoRefreshInterval = value;
+                    OnPropertyChanged();                   
+                }
+            }
+        }       
+
+        public ObservableCollection<int> RefreshIntervals { get; } = new ObservableCollection<int>
+        {
+            30, 60, 120, 300, 600 // 30 сек, 1 мин, 2 мин, 5 мин, 10 мин
+        };
+        //--------------------------------------
+
         public RelayCommand SetPathDBCommand { get; }
         public RelayCommand WindowClossingCommand { get; }
 
-        public SettingsViewModel(IDatabaseValidationService validationService, IConnectionStringProvider connectionProvider)
+        public SettingsViewModel(IDatabaseValidationService validationService, IConnectionStringProvider connectionProvider, IAutoRefreshService autoRefreshService)
         { 
             _connectionProvider = connectionProvider;
             _validationService = validationService;
+            _autoRefreshService = autoRefreshService;
 
+            // Загружаем настройки
             PathToDB = App.Settings.pathDB;
             PathRelises = App.Settings.UpdateRepository;
+            //AutoRefreshEnabled = App.Settings.AutoRefreshEnabled;
+            //AutoRefreshInterval = App.Settings.AutoRefreshInterval;
+
+            // Загружаем настройки в сервис
+            //_autoRefreshService.IsEnabled = App.Settings.AutoRefreshEnabled;
+            //_autoRefreshService.RefreshInterval = App.Settings.AutoRefreshInterval;
 
             //SetPathDBCommand = new RelayCommand(FileDialogToPathDB);
             SetPathDBCommand = new RelayCommand(async () => await FileDialogToPathDBAsync());

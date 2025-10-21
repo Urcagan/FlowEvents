@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -259,42 +260,16 @@ namespace FlowEvents
             get
             {
                 bool result = CurrentUserPermissions != null && CurrentUserPermissions.Any();
-                //System.Diagnostics.Debug.WriteLine($"CanAccess getter called: {result}, Permissions: {CurrentUserPermissions?.Count ?? 0}");
-
                 return result;
             }
         }
 
         public bool IsUserLoggedIn => _currentUser != null && !string.IsNullOrEmpty(UserName); // Проверка что пользователь залогинен
 
-        public bool AutoRefreshEnabled
-        {
-            get => _autoRefreshEnabled;
-            set
-            {
-                _autoRefreshEnabled = value;
-                _autoRefreshService.IsEnabled = value;
-                App.Settings.AutoRefreshEnabled = value;
-                OnPropertyChanged();
-            }
-        }
-
-        public int AutoRefreshInterval
-        {
-            get => _autoRefreshInterval;
-            set
-            {
-                _autoRefreshInterval = value;
-                _autoRefreshService.RefreshInterval = value;
-                App.Settings.AutoRefreshInterval = value;
-                OnPropertyChanged();
-            }
-        }
-
-        public ObservableCollection<int> RefreshIntervals { get; } = new ObservableCollection<int>
-            {
-                30, 60, 120, 300, 600 // 30 сек, 1 мин, 2 мин, 5 мин, 10 мин
-            };
+        // Поля для автообновления 
+        private bool AutoRefreshEnabled => _autoRefreshService.IsEnabled;
+        private int AutoRefreshInterval => _autoRefreshService.RefreshInterval;
+        public string AutoRefreshStatus => AutoRefreshEnabled ? $"Автообновление каждые {AutoRefreshInterval} сек" : "Автообновление выключено";
 
         #endregion
 
@@ -358,7 +333,7 @@ namespace FlowEvents
                 EndDate = EndDate.AddDays(1);
                 StartDate = StartDate.AddDays(1);
             });
-            ToggleAutoRefreshCommand = new RelayCommand(ToggleAutoRefresh);
+            //ToggleAutoRefreshCommand = new RelayCommand(ToggleAutoRefresh);
             ManualRefreshCommand = new RelayCommand(async () => await ManualRefresh());
 
             //  User();
@@ -368,28 +343,34 @@ namespace FlowEvents
             UserName = _currentUserWindows.DisplayName; // Получаем имя текущего пользователя
             _loginUserName = _currentUserWindows.Login; // Получаем логин текущего пользователя
 
-
-            //System.Diagnostics.Debug.WriteLine($"Конструктор - CanAccess: {CanAccess}, IsBaseValid: {IsBaseValid}");
-            //System.Diagnostics.Debug.WriteLine($"Initial CanAccess: {CanAccess}");
-
-            // Подписка на событие автообновления
+            // Подписка на события автообновления
             _autoRefreshService.RefreshRequested += async () => await AutoRefresh();
+            _autoRefreshService.OnSettingsChanged += OnAutoRefreshSettingsChanged;
+           
             // Загружаем настройки
-            LoadAutoRefreshSettings();
+            //LoadAutoRefreshSettings();
         }
 
         //=========================================================
         // Методы автообновления
         //=========================================================
-        private void LoadAutoRefreshSettings()
-        {
-            AutoRefreshEnabled = App.Settings.AutoRefreshEnabled;
-            AutoRefreshInterval = App.Settings.AutoRefreshInterval;
-        }
+        //private void LoadAutoRefreshSettings()
+        //{
+        //    AutoRefreshEnabled = App.Settings.AutoRefreshEnabled;
+        //    AutoRefreshInterval = App.Settings.AutoRefreshInterval;
+        //}
 
-        private void ToggleAutoRefresh(object parameter)
+        //private void ToggleAutoRefresh(object parameter)
+        //{
+        //    AutoRefreshEnabled = !AutoRefreshEnabled;
+        //}
+
+        private void OnAutoRefreshSettingsChanged()
         {
-            AutoRefreshEnabled = !AutoRefreshEnabled;
+            // Уведомляем об изменении свойств для обновления привязок
+            //OnPropertyChanged(nameof(AutoRefreshEnabled));
+            //OnPropertyChanged(nameof(AutoRefreshInterval));
+            OnPropertyChanged(nameof(AutoRefreshStatus));
         }
 
         private async Task ManualRefresh()
@@ -403,6 +384,7 @@ namespace FlowEvents
                 return;
 
             await LoadEvents();
+            Debug.WriteLine($"Авто обновление сработало {DateTime.Now} "); 
         }
 
 
@@ -466,14 +448,12 @@ namespace FlowEvents
 
                 var validationResult = await ValidateAndLoadDatabaseAsync(pathDB); // Проверка и загрузка БД в одном методе
                 IsBaseValid = validationResult.IsValid;
-                //System.Diagnostics.Debug.WriteLine($"[STARTUP] IsBaseValid set to: {IsBaseValid}");
                 if (!validationResult.IsValid)
                 {
                     return; // Если валидация не прошла, выходим из метода
                 }
 
                 await GetCurrentUserFromDB(_loginUserName);  //Загрузка информауию о текущем пользователе из БД 
-                //System.Diagnostics.Debug.WriteLine($"[STARTUP] Final - CanAccess: {CanAccess}, IsBaseValid: {IsBaseValid}");
                 OnPropertyChanged(nameof(ShowAccessOverlay));
 
                 CurrentDbPath = pathDB; // Отображаем текущий путь к базе данных в итерфейсе программы
@@ -481,10 +461,10 @@ namespace FlowEvents
                 await LoadUnitsToComboBoxAsync(); // Загружаем перечень установок из базы данных
 
                 // Запускаем автообновление если включено
-                if (AutoRefreshEnabled)
-                {
-                    _autoRefreshService.Start();
-                }
+                // Загружаем настройки в сервис
+                _autoRefreshService.IsEnabled = App.Settings.AutoRefreshEnabled;
+                _autoRefreshService.RefreshInterval = App.Settings.AutoRefreshInterval;
+                //OnAutoRefreshSettingsChanged();
 
                 // Другие инициализационные задачи
             }
@@ -573,7 +553,6 @@ namespace FlowEvents
         {
             if (string.IsNullOrEmpty(Login))    // Проверка на пустое имя пользователя
             {
-                //MessageBox.Show("Имя ползователя не определено", "Обработка авторизации", MessageBoxButton.OK, MessageBoxImage.Error);
                 OverlayMessage = "Имя ползователя не определено";
                 return;
             }
@@ -582,14 +561,11 @@ namespace FlowEvents
             if (!UserExists) // Если пользователя нет в базе, то выходим из метода
             {
                 _currentUser = null;
-                //MessageBox.Show($"Ошибка: Пользователя {_userName} нет в перечне допущенных пользователей", "Обработка ошибки", MessageBoxButton.OK, MessageBoxImage.Error);
                 OverlayMessage = $"Пользователя {Login} нет в перечне допущенных пользователей";
                 return;
             }
             _currentUser = _authService.GetUser(Login); // Получаем данные пользователя и помещаем их в пересеную используемую как кеш днных
             CurrentUserPermissions = _authService.GetUserPermissions(Login);
-            //OnPropertyChanged(nameof(CanAccess));
-            //OnPropertyChanged(nameof(IsUserLoggedIn));
         }
 
         // Загрузкак комбобокса установок

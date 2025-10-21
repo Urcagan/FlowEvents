@@ -1,9 +1,6 @@
 ﻿using FlowEvents.Services.Interface;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Diagnostics;
 using System.Windows.Threading;
 
 namespace FlowEvents.Services.Implementations
@@ -19,9 +16,17 @@ namespace FlowEvents.Services.Implementations
             get => _isEnabled;
             set
             {
-                _isEnabled = value;
-                if (value) Start();
-                else Stop();
+                if (_isEnabled != value)
+                {
+                    _isEnabled = value;
+                    if (value)
+                        Start();
+                    else
+                        Stop();
+
+                    OnSettingsChanged?.Invoke(); // вызываем событие OnSettingsChanged
+                    Debug.WriteLine($"Статус автоообновления {value} ");
+                }
             }
         }
 
@@ -30,12 +35,18 @@ namespace FlowEvents.Services.Implementations
             get => _refreshInterval;
             set
             {
-                _refreshInterval = value;
-                _timer.Interval = TimeSpan.FromSeconds(value);
+                if (_refreshInterval != value)
+                {
+                    _refreshInterval = value;
+                    _timer.Interval = TimeSpan.FromSeconds(value);
+                    OnSettingsChanged?.Invoke(); // вызываем событие OnSettingsChanged
+                    Debug.WriteLine($"Устоновлен интервал времени автоообновления {value} ");
+                }
             }
         }
 
         public event Action RefreshRequested;
+        public event Action OnSettingsChanged;  // Событие уведомления об изменении настроек
 
         public AutoRefreshService()
         {

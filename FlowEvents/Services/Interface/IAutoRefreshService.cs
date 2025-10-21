@@ -13,5 +13,6 @@ namespace FlowEvents.Services.Interface
         void Start();
         void Stop();
         event Action RefreshRequested;
+        event Action OnSettingsChanged;
     }
 }

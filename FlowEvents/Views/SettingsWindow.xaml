@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:FlowEvents" 
+        xmlns:converters="clr-namespace:FlowEvents.Converters"
         xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
         mc:Ignorable="d"
         WindowStartupLocation="CenterOwner"
@@ -18,14 +19,15 @@
         
         <Grid.RowDefinitions>
             <RowDefinition Height="80"/>
-            <RowDefinition Height=" 20"/>
+            <RowDefinition Height="20"/>
             <RowDefinition Height="80"/>
+            <RowDefinition Height="20"/>
+            <RowDefinition Height="120"/>
         </Grid.RowDefinitions>
-        <!-- Контейнер для элементов настроек с рамкой -->
+
+        <!-- Настройки базы данных -->
         <Border BorderBrush="Gray" BorderThickness="1" Margin="4,4,4,4" Grid.Row="0">
-            <!-- Внутри Border добавим StackPanel для заголовка и настроек -->
             <StackPanel Orientation ="Vertical">
-                <!-- TextBlock слева -->
                 <TextBlock Text="Путь к базе данных" VerticalAlignment="Center" Margin="10" />
                 <Grid >
                     <Grid.ColumnDefinitions >
@@ -39,7 +41,6 @@
                     <TextBox x:Name="FilePathTextBox"  
                              Text="{Binding PathToDB}"
                              VerticalAlignment="Center" Margin="10" Grid.Column="1"/>
-                    <!--IsReadOnly="True"-->
                     <!-- Кнопка для открытия диалогового окна выбора файла -->
                     <Button  Grid.Column="2"
                              Content="Выбрать файл..." 
@@ -51,8 +52,8 @@
             </StackPanel>
         </Border>
 
+        <!-- Настройки обновления программы -->
         <Border Grid.Row="2" BorderThickness="1" BorderBrush="Gray" Margin="5">
-            
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition/>
@@ -70,10 +71,61 @@
                          Grid.Row="1" Grid.Column="1" 
                          Margin="5" Width="Auto"/>
             </Grid>
-            
         </Border>
-        
 
+        <!-- Настройки автообновления данных -->
+        <Border Grid.Row="4" BorderThickness="1" BorderBrush="Gray" Margin="5">
+            <StackPanel Orientation="Vertical">
+                <TextBlock Text="Автообновление данных" Margin="10" FontWeight="Bold"/>
+                <Grid Margin="10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Включение автообновления -->
+                    <CheckBox Grid.Row="0" Grid.Column="0"
+                              IsChecked="{Binding AutoRefreshEnabled, Mode=TwoWay}"
+                              VerticalAlignment="Center"
+                              Margin="0,0,10,0">
+                        <TextBlock Text="Включить автообновление данных" Margin="5,0"/>
+                    </CheckBox>
+
+                    <!-- Интервал обновления -->
+                    <TextBlock Grid.Row="1" Grid.Column="0"
+                               Text="Интервал обновления:"
+                               VerticalAlignment="Center"
+                               Margin="0,10,10,0"/>
+
+                    <ComboBox Grid.Row="1" Grid.Column="1"
+                              ItemsSource="{Binding RefreshIntervals}"
+                              SelectedValue="{Binding AutoRefreshInterval, Mode=TwoWay}"
+                              Width="100"
+                              VerticalAlignment="Center"
+                              Margin="0,10,10,0">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding StringFormat={}{0} сек}"/>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+
+                    <!-- Статус -->
+                    <TextBlock Grid.Row="1" Grid.Column="2"
+                               VerticalAlignment="Center"
+                               Margin="10,10,0,0"
+                               FontStyle="Italic">
+                        <Run Text="Текущий статус:"/>
+                        <Run Text="{Binding AutoRefreshEnabled, Converter={x:Static converters:BoolToStatusConverter.Instance}}"/>
+                    </TextBlock>
+                </Grid>
+            </StackPanel>
+        </Border>
 
 
     </Grid>

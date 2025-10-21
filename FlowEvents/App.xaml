@@ -17,6 +17,7 @@
                     <converters:PermissionsToBoolConverter x:Key="PermissionsToBoolConverter"/>
                     <converters:PermissionsToVisibilityConverter x:Key="PermissionsToVisibilityConverter"/>
                     <converters:InverseNullToVisibilityConverter x:Key="InverseNullToVisibilityConverter"/>
+                    <converters:BoolToStatusConverter x:Key="BoolToStatusConverter"/>
                     <!-- Добавьте здесь другие глобальные конвертеры -->
                 </ResourceDictionary>
             </ResourceDictionary.MergedDictionaries>
