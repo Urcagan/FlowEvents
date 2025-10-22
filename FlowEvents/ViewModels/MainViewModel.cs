@@ -12,10 +12,13 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Data.SQLite;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices.ComTypes;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 using System.Windows;
 
@@ -54,10 +57,7 @@ namespace FlowEvents
         private EventForView _selectedEvent; // Выбранное событие в таблице
         private UserInfo _currentUserWindows;   //Кеш инфориации о текущем пользователе залогоненым в Windows
         private string _loginUserName; // Кеш имени пользователя для входа
-
-        // Новые свойства для автообновления
-        private bool _autoRefreshEnabled;
-        private int _autoRefreshInterval;
+        private bool _isInitializing = true; // Флаг состояния инициализации приложения
 
         private ObservableCollection<Unit> _units { get; set; } = new ObservableCollection<Unit>();
         #endregion
@@ -151,7 +151,7 @@ namespace FlowEvents
                 {
                     _sartDate = value;
                     OnPropertyChanged(nameof(StartDate));
-                    UpdateQuery();
+                    _ = LoadEvents();
                 }
             }
         }
@@ -164,7 +164,7 @@ namespace FlowEvents
                 {
                     _endDate = value;
                     OnPropertyChanged(nameof(EndDate));
-                    UpdateQuery();
+                    _ = LoadEvents();
                 }
             }
         }
@@ -175,7 +175,8 @@ namespace FlowEvents
             {
                 _selectedUnit = value;
                 OnPropertyChanged();
-                UpdateQuery();
+                _ = LoadEvents();
+                Debug.WriteLine("Сработал SelectedUnit");
             }
         }
         public Category SelectedCategory
@@ -185,7 +186,8 @@ namespace FlowEvents
             {
                 _selectedCategory = value;
                 OnPropertyChanged();
-                UpdateQuery();
+                _ = LoadEvents();
+                Debug.WriteLine("Сработал SelectedCategory");
             }
         }
         public bool IsAllEvents
@@ -195,7 +197,8 @@ namespace FlowEvents
             {
                 _isAllEvents = value;
                 OnPropertyChanged();
-                UpdateQuery();
+                _ = LoadEvents();
+                Debug.WriteLine("Сработал IsAllEvents");
             }
         }
         public string QueryEvent
@@ -303,6 +306,8 @@ namespace FlowEvents
         public RelayCommand UserWindowCommand { get; }
         public RelayCommand ToggleAutoRefreshCommand { get; }
         public RelayCommand ManualRefreshCommand { get; }
+        public RelayCommand ResetFiltersCommand { get; }
+        public RelayCommand ResetTimeCommand {  get; }
 
         #endregion
 
@@ -351,6 +356,25 @@ namespace FlowEvents
 
             ManualRefreshCommand = new RelayCommand(async () => await ManualRefresh());
 
+            ResetFiltersCommand = new RelayCommand(() =>
+            {
+                _isInitializing = true;
+                SelectedUnit = Units.FirstOrDefault();
+                SelectedCategory = Categories.FirstOrDefault();
+                _isInitializing = false;
+                _ = LoadEvents();
+
+            });
+
+            ResetTimeCommand = new RelayCommand(() =>
+            {
+                _isInitializing = true;
+                StartDate = DateTime.Now;
+                EndDate = DateTime.Now;
+                _isInitializing = false;
+                _ = LoadEvents();
+            });
+
             //  User();
 
             // Полная информация о пользователе windows
@@ -383,7 +407,7 @@ namespace FlowEvents
                 return;
 
             await LoadEvents();
-            Debug.WriteLine($"Авто обновление сработало {DateTime.Now} ");
+            //Debug.WriteLine($"Авто обновление сработало {DateTime.Now} ");
         }
 
 
@@ -406,11 +430,15 @@ namespace FlowEvents
             var requiredPermissions = new[] { "ManageProduct", "ConfigureSystem" };
             return _currentUserPermissions?.Any(p => requiredPermissions.Contains(p)) == true;
         }
+
+        public bool CanEditEventVisible => CanEditEvent(null); // Свойство для UI для пользователей которые могут редактировать
         private bool CanEditEvent(object parameter)
         {
             var requiredPermissions = new[] { "EditDocument", "ManageProduct", "ConfigureSystem" };
             return _currentUserPermissions?.Any(p => requiredPermissions.Contains(p)) == true;
         }
+        
+
         private bool CanDeleteEvent(object parameter)
         {
             var requiredPermissions = new[] { "DeleteDocument", "ManageProduct", "ConfigureSystem" };
@@ -460,13 +488,17 @@ namespace FlowEvents
                 await LoadUnitsToComboBoxAsync(); // Загружаем перечень установок из базы данных
                 await LoadCategoriesToComboBoxAsync(); // Загружаем перечень категорий из базы данных
 
-                // Запускаем автообновление если включено
-                // Загружаем настройки в сервис
-                _autoRefreshService.IsEnabled = App.Settings.AutoRefreshEnabled;
-                _autoRefreshService.RefreshInterval = App.Settings.AutoRefreshInterval;
-                //OnAutoRefreshSettingsChanged();
+                
+                // Загружаем настройки авто обновления данных Events в сервис
+                _autoRefreshService.IsEnabled = App.Settings.AutoRefreshEnabled;        // состояние авто обновления
+                _autoRefreshService.RefreshInterval = App.Settings.AutoRefreshInterval; // время автообновления
+
+                _isInitializing = false; // По щкончанию инициализации снимаем флаг
+                
+                _ = LoadEvents();  //Далее загружаем данные
 
                 // Другие инициализационные задачи
+
             }
             finally
             {
@@ -477,26 +509,26 @@ namespace FlowEvents
 
         // Метод для выхода пользователя
         private async void Logout(object parameter)
-        {
-            // Очищаем данные
-            Events.Clear();
+        {            
+            Events.Clear();         // Очищаем данные
             SelectedEvent = null;
 
             // Сбрасываем данные пользователя
-            _currentUser = null;
+            _currentUser = null;    
             UserName = string.Empty;
             CurrentUserPermissions?.Clear();
+
             // Полная информация о пользователе windows
             _currentUserWindows = _userInfoService.GetCurrentUserInfo();   // Получает данные о пользователе Windows
             UserName = _currentUserWindows.DisplayName; // Получаем имя текущего пользователя
             _loginUserName = _currentUserWindows.Login;
-            GetCurrentUserFromDB(_loginUserName);  //Загрузка информауию о текущем пользователе из БД 
+            _ = GetCurrentUserFromDB(_loginUserName);  //Загрузка информауию о текущем пользователе из БД 
 
             OnPropertyChanged(nameof(CurrentUserPermissions));
             OnPropertyChanged(nameof(CanAccess));
             OnPropertyChanged(nameof(IsUserLoggedIn));
             OnPropertyChanged(nameof(ShowAccessOverlay));
-
+            await LoadEvents();
         }
 
 
@@ -506,28 +538,20 @@ namespace FlowEvents
 
             if (!result.IsValid)
             {
-                await HandleDatabaseValidationErrorAsync(result);
+                HandleDatabaseValidationErrorAsync(result);
                 return result;
             }
-
             return result;
         }
 
 
-
-        private async Task HandleDatabaseValidationErrorAsync(DatabaseValidationResult result)
+        private void HandleDatabaseValidationErrorAsync(DatabaseValidationResult result)
         {
             OverlayMessage = result.Message;
 
             //MessageBox.Show(result.Message, "Ошибка БД", MessageBoxButton.OK, MessageBoxImage.Error);
             // Можно предложить выбрать новый файл или другие действия
             // НАДО ЗАПРЕТИТЬ ДОСТУП К ИНТЕРФЕЙСУ ПРОГРАММЫ
-        }
-
-
-        private void UpdateQuery()
-        {
-            QueryEvent = _eventRepository.BuildSQLQueryEvents(SelectedUnit, IsAllEvents ? null : (DateTime?)StartDate, IsAllEvents ? null : (DateTime?)EndDate, IsAllEvents);
         }
 
 
@@ -545,7 +569,6 @@ namespace FlowEvents
                 SelectedEvent == null
                     ? new ObservableCollection<EventForView>()
                     : new ObservableCollection<EventForView> { SelectedEvent };
-
 
 
         //
@@ -566,13 +589,15 @@ namespace FlowEvents
             }
             _currentUser = _authService.GetUser(Login); // Получаем данные пользователя и помещаем их в пересеную используемую как кеш днных
             CurrentUserPermissions = _authService.GetUserPermissions(Login);
+
+            OnPropertyChanged(nameof(CanEditEventVisible));
         }
 
         // Загрузкак комбобокса установок
         public async Task LoadUnitsToComboBoxAsync()
         {
             Units.Clear();
-            Units.Insert(0, new Unit { Id = -1, UnitName = "Все" });
+            Units.Insert(0, new Unit { Id = -1, UnitName = "Все объекты" });
 
             try
             {
@@ -612,22 +637,29 @@ namespace FlowEvents
             SelectedCategory = Categories.FirstOrDefault(); // Установка категории по умолчанию
         }
 
-
-        // Метод для загрузки данных из базы
+        private int CountLoad = 0;
+        // Метод для загрузки данных из базы       
         public async Task LoadEvents()
         {
+            if (_isInitializing) return; // Проверка состояние начальной инициализации приложения
+
             if (!CanAccess)
                 return;
             Events.Clear();
 
-            if (string.IsNullOrEmpty(QueryEvent)) return;
-            var eventsFromDb = await _eventRepository.GetEventsAsync(QueryEvent);  // Получаем данные из базы
+            (string query, List < SQLiteParameter > parameters) = _eventRepository.BuildSQLQueryParametersEvents(SelectedUnit, SelectedCategory, IsAllEvents ? null : (DateTime?)StartDate, IsAllEvents ? null : (DateTime?)EndDate, IsAllEvents);
+
+            if (string.IsNullOrEmpty(query)) return;
+            var eventsFromDb = await _eventRepository.GetEventsParamsAsync( query, parameters);
 
             // Добавляем данные в коллекцию
             foreach (var eventModel in eventsFromDb)
             {
                 Events.Add(eventModel);
             }
+            CountLoad++;
+            Debug.WriteLine($"Сработал LoadEvents {CountLoad} раз");
+
         }
 
         private void UserInfoWindow(object parameter)
@@ -724,7 +756,7 @@ namespace FlowEvents
                     // Используем пользователя в основном окне
                     UserName = authenticatedUser.DisplayName;
                     _loginUserName = authenticatedUser.UserName;
-                    GetCurrentUserFromDB(_loginUserName);  //Загрузка информауию о текущем пользователе из БД 
+                    _ = GetCurrentUserFromDB(_loginUserName);  //Загрузка информауию о текущем пользователе из БД 
 
                     // Уведомляем об изменениях
                     OnPropertyChanged(nameof(IsUserLoggedIn));

@@ -40,7 +40,7 @@ namespace FlowEvents.ViewModels
                 }
             }
         }
-        public string MaxResults
+        public string MaxResults    // Максимальное число результатов поиска
         {
             get => _maxResults;
             set
@@ -106,7 +106,7 @@ namespace FlowEvents.ViewModels
             { _domainNameToFaind = value; OnPropertyChanged(); }
         }
 
-        private const int DefaultRoleId = 2; // ID роли "user"
+        private const int DefaultRoleId = 1; // ID роли "user"
 
         public bool IsLoading
         {
@@ -145,10 +145,6 @@ namespace FlowEvents.ViewModels
             AddDomainUserCommand = new RelayCommand(AddDomainUser);
             WindowClossingCommand = new RelayCommand(OnWindowsClosing);
         }
-
-
-
-
 
         private async void AddDomainUser() // Добавить доменного пользователя
         {
@@ -196,7 +192,6 @@ namespace FlowEvents.ViewModels
             }
         }
 
-
         private bool IsValidMaxResults()
         {
             return int.TryParse(MaxResults, out int result) && result >= 1 && result <= 1000;
@@ -214,12 +209,12 @@ namespace FlowEvents.ViewModels
             {
                 int maxResultsValue = int.Parse(MaxResults);
 
-                var options = new DomainSearchOptions // Настраеваем конфигурацию поиска 
+                var options = new DomainSearchOptions       // Настраеваем конфигурацию поиска 
                 {
-                    SearchTerm = SearchTerm,                                                // искомыое имя пользоваьеля 
-                    DomainController = DomainNameToFaind, //Задаем домен поиска
-                    MaxResults = maxResultsValue,                                           // количество искомых пользователей
-                    OnlyActive = OnlyActive                                                 // состояние активности пользователя
+                    SearchTerm = SearchTerm,                // искомыое имя пользоваьеля 
+                    DomainController = DomainNameToFaind,   //Задаем домен поиска
+                    MaxResults = maxResultsValue,           // количество искомых пользователей
+                    OnlyActive = OnlyActive                 // состояние активности пользователя
                 };
 
                 var result = await _adService.SearchUsersAsync(options, _cancellationTokenSource.Token);

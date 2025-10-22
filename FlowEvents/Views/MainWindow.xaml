@@ -101,41 +101,57 @@
                     Padding="5">
 
                 <StackPanel >
+
                     <TextBlock Text="Выбор даты" TextAlignment="Center" Margin ="0,0,0,2"/>
-                    <StackPanel Orientation="Horizontal" 
-                        IsEnabled="{Binding IsAllEvents, Converter={StaticResource InverseBooleanConverter}}">
-                        <Button x:Name="_btnBack" 
-                            Command="{Binding DownDateCommand}"
-                            ToolTip="Back" HorizontalAlignment="Left" VerticalAlignment="Center" BorderBrush="Gray" Margin="0,0,5,0">
-                            <Image Source="/Resource/Images/Icons/Back.png" Height="16"/>
-                        </Button>
+                    <StackPanel Orientation="Horizontal">
 
-                        <DatePicker x:Name="_datePickerStart"
-                            SelectedDate="{Binding StartDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                            VerticalAlignment="Center"
-                            FirstDayOfWeek="Monday"
-                            SelectedDateFormat="Short"/>
+                        <StackPanel Orientation="Horizontal" 
+                                IsEnabled="{Binding IsAllEvents, Converter={StaticResource InverseBooleanConverter}}">
 
-                        <Label Content=" - " VerticalAlignment="Center"/>
-                        <DatePicker x:Name="_datePickerEnd"
-                            SelectedDate="{Binding EndDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                            VerticalAlignment="Center"
-                            FirstDayOfWeek="Monday"
-                            SelectedDateFormat="Short"/>
+                            <Button x:Name="_btnBack" 
+                                    Command="{Binding DownDateCommand}"
+                                    ToolTip="Back" HorizontalAlignment="Left" VerticalAlignment="Center" BorderBrush="Gray" Margin="0,0,5,0">
+                                <Image Source="/Resource/Images/Icons/Back.png" Height="16"/>
+                            </Button>
 
+                            <DatePicker x:Name="_datePickerStart"
+                                    SelectedDate="{Binding StartDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                    VerticalAlignment="Center"
+                                    FirstDayOfWeek="Monday"
+                                    SelectedDateFormat="Short"/>
+
+                            <Label Content=" - " VerticalAlignment="Center"/>
+
+                            <DatePicker x:Name="_datePickerEnd"
+                                    SelectedDate="{Binding EndDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                    VerticalAlignment="Center"
+                                    FirstDayOfWeek="Monday"
+                                    SelectedDateFormat="Short"/>    
+                        </StackPanel>
+                             
                         <Button x:Name="_btnForvard" 
                             Command="{Binding UpDateCommand}"
                             ToolTip="Forvard" HorizontalAlignment="Left" VerticalAlignment="Center" BorderBrush="Gray" Margin="5,0,0,0">
                             <Image Source="/Resource/Images/Icons/Forward.png" Height="16"/>
                         </Button>
-
+                        
+                        <!--Кнопка сброса к текущей дате-->
+                        <Button Command="{Binding ResetTimeCommand}"
+                                ToolTip="Сбросить фильтр"
+                                Style="{StaticResource TransparentButtonStyle}"
+                                Margin="20, 0">
+                            <Image Source="/Resource/Images/Icons/Erase.png" Height="16"/>
+                        </Button>
+                        
                         <!--Чекбокс включить все сообщения без учета выбора даты-->
-                        <CheckBox Margin="10,0,0,0"
-                            IsChecked="{Binding IsAllEvents, Mode=TwoWay}" VerticalAlignment="Center" >
+                        <CheckBox Margin="10,0"
+                                IsChecked="{Binding IsAllEvents, Mode=TwoWay}" VerticalAlignment="Center" 
+                                Visibility="{Binding CanEditEventVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
                             <TextBlock Text="Все даты" />
                         </CheckBox>
 
                     </StackPanel>
+
                 </StackPanel>
             </Border>
 
@@ -145,29 +161,29 @@
                 BorderThickness="1" 
                 Margin="0,0,0,10"
                 Padding="5">
-                
+
                 <StackPanel Orientation="Horizontal">
                     <!--Фильтруем установки-->
                     <StackPanel IsEnabled="{Binding  CanAccess}">
-                        
+
                         <TextBlock Text="Установка" TextAlignment="Center" Margin ="0,0,0,2"/>
                         <!--<Label Content="Установка" HorizontalAlignment="Center"/>-->
-                        
-                            <ComboBox x:Name="CB_Units"
+
+                        <ComboBox x:Name="CB_Units"
                                ItemsSource="{Binding Units}"
                                DisplayMemberPath="UnitName"
                                SelectedValuePath="Id"
                                SelectedItem="{Binding SelectedUnit}"                      
                                HorizontalAlignment="Left" VerticalAlignment="Center" Width="150" 
                                IsEditable="False" StaysOpenOnEdit="True" IsDropDownOpen="False"/>
-                       
+
                     </StackPanel>
 
                     <!--Фильтруем по событиям-->
                     <StackPanel Margin="10,0,0,0">
-                        
+
                         <TextBlock Text="Событие" TextAlignment="Center" Margin ="0,0,0,2"/>
-                        
+
                         <ComboBox 
                                ItemsSource="{Binding Categories}"
                                DisplayMemberPath="Name"
@@ -175,7 +191,19 @@
                                SelectedItem="{Binding SelectedCategory}"                      
                                HorizontalAlignment="Left" VerticalAlignment="Center" Width="150" 
                                IsEditable="False" StaysOpenOnEdit="True" IsDropDownOpen="False"/>
+
+                    </StackPanel>
+                    <StackPanel Margin="10,0,0,0">
                         
+                        <TextBlock  Margin ="0,0,0,5"/>
+                        
+                        <Button Command="{Binding ResetFiltersCommand}"
+                            ToolTip="Сбросить фильтр"
+                            Style="{StaticResource TransparentButtonStyle}"
+                            Margin="20, 0">
+                            <Image Source="/Resource/Images/Icons/Erase.png" Height="16"/>
+                        </Button>
+
                     </StackPanel>
 
                 </StackPanel>
@@ -186,7 +214,6 @@
                 BorderThickness="1" 
                 Margin="0,0,0,10"
                 Padding="5">
-
 
                 <StackPanel Grid.Column="3" Orientation="Horizontal" >
                     <StackPanel.Resources>
@@ -203,7 +230,9 @@
 
                     <Button x:Name="AddEvent" 
                         Command="{Binding EventAddWindow}"
-                        ToolTip="Добавить событие" >
+                        ToolTip="Добавить событие" 
+                            Margin="10,0,10,0"
+                            Visibility="{Binding CanEditEventVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <Image Source="/Resource/Images/Icons/Create.png" />
                         <!--<Button.Visibility>
                         <MultiBinding Converter="{StaticResource PermissionsToVisibilityConverter}">
@@ -214,12 +243,14 @@
                         </MultiBinding>
                     </Button.Visibility>-->
                     </Button>
+                    
                     <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}"/>
+                    
                     <!-- Кнопка ручного обновления -->
                     <Button Command="{Binding ManualRefreshCommand}"
                         ToolTip="Обновить данные"
                         Style="{StaticResource TransparentButtonStyle}"
-                        Margin="5,0">
+                        Margin="10,0,10,0">
                         <Image Source="/Resource/Images/Icons/Refresh.bmp" Height="16"/>
                     </Button>
 
@@ -721,8 +752,8 @@
 
 
         <!-- Overlay для ошибки доступа -->
-        <!--
-        <Border Grid.Row="1" Grid.RowSpan="2" 
+        
+        <!--<Border Grid.Row="1" Grid.RowSpan="2" 
             Background="#CCFFFFFF" 
             Visibility="{Binding ShowAccessOverlay, Converter={StaticResource BooleanToVisibilityConverter}}">
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Background="White" >
@@ -745,9 +776,9 @@
             </StackPanel>
         </Border>
 
-        -->
-        <!-- Overlay для ошибки базы данных -->
-        <!--
+        
+         --><!--Overlay для ошибки базы данных--><!-- 
+        
         <Border Grid.Row="1" Grid.RowSpan="2" 
             Background="#CCFFFFFF" 
             Visibility="{Binding ShowDatabaseErrorOverlay, Converter={StaticResource BooleanToVisibilityConverter}}">

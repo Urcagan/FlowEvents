@@ -19,7 +19,7 @@ namespace FlowEvents.Users
         private readonly IUserService _userService;
 
         private bool _isLoading;
-        private const int DefaultRoleId =  2; // ID роли "user"
+        private const int DefaultRoleId =  1; // ID роли "user"
 
         private string _username;
         private string _password;

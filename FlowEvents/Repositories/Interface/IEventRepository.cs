@@ -12,10 +12,12 @@ namespace FlowEvents.Repositories.Interface
         List<EventForView> GetEvents(string queryEvent);
         Task<List<EventForView>> GetEventsAsync(string queryEvent);
 
+        Task<List<EventForView>> GetEventsParamsAsync(string query, List<SQLiteParameter> parameters); // Метод получения данных защищенный от инекций.
+
         List<AttachedFileForEvent> GetIdFilesOnEvent(int EventId); //Получение списка файлов, прикрепленных к событию
         
         string BuildSQLQueryEvents(Unit selectedUnit, DateTime? startDate, DateTime? endDate, bool isAllEvents); // Формирует строку SQL запроса для вывода данных в таблицу
-        public (string Sql, List<SQLiteParameter> Parameters) BuildSQLQueryParametersEvents(Unit selectedUnit, DateTime? startDate, DateTime? endDate, bool isAllEvents); // Формирует строку SQL запроса для вывода данных в таблицу с параметрами
+        public (string Sql, List<SQLiteParameter> Parameters) BuildSQLQueryParametersEvents(Unit selectedUnit, Category selectedCategory, DateTime? startDate, DateTime? endDate, bool isAllEvents); // Формирует строку SQL запроса для вывода данных в таблицу с параметрами
 
 
         Task<bool> DeleteEventAsync(int eventId); // Удалить событие по Id

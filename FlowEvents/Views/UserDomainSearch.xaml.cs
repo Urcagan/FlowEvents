@@ -14,20 +14,5 @@ namespace FlowEvents.Views
             InitializeComponent();
         }
 
-        //private void DataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        //{
-        //    if (DataContext is UserDomainSearchViewModel viewModel)
-        //    {
-        //        if (sender is DataGrid dataGrid && dataGrid.SelectedItem is DomainUser selectedUser)
-        //        {
-        //            // Загружаем свойства выбранного пользователя
-        //          //  viewModel.LoadUserProperties(selectedUser);
-        //        }
-        //        else
-        //        {
-        //            viewModel.SelectedUserProperties = "Выберите пользователя в таблице для просмотра свойств";
-        //        }
-        //    }
-        //}
     }
 }

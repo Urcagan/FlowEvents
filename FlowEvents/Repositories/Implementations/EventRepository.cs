@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 
 namespace FlowEvents.Repositories
@@ -221,6 +222,64 @@ namespace FlowEvents.Repositories
             return eventsDict.Values.ToList();
         }
 
+        public async Task<List<EventForView>> GetEventsParamsAsync(string query, List<SQLiteParameter> parameters)
+        {
+            var _connectionString = _connectionProvider.GetConnectionString(); // Получение актуальной строки подключения
+
+            var eventsDict = new Dictionary<int, EventForView>();
+
+            using (var connection = new SQLiteConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+
+                var command = new SQLiteCommand(query, connection);
+                
+                command.Parameters.AddRange(parameters.ToArray()); // Добавляем параметры к команде
+
+                using (var reader = await command.ExecuteReaderAsync().ConfigureAwait(false))
+                {
+                    while (await reader.ReadAsync().ConfigureAwait(false))
+                    {
+                        int eventId = reader.GetInt32(reader.GetOrdinal("id"));
+
+                        // Если события еще нет в словаре, добавляем его
+                        if (!eventsDict.TryGetValue(eventId, out var eventModel))
+                        {
+                            eventModel = new EventForView
+                            {
+                                Id = eventId,
+                                DateEventString = reader.GetString(reader.GetOrdinal("DateEvent")),
+                                Unit = reader.GetString(reader.GetOrdinal("Unit")),
+                                OilRefining = reader.IsDBNull(reader.GetOrdinal("OilRefining")) ? null : reader.GetString(reader.GetOrdinal("OilRefining")),
+                                Category = reader.GetString(reader.GetOrdinal("Category")),
+                                Description = reader.IsDBNull(reader.GetOrdinal("Description")) ? null : reader.GetString(reader.GetOrdinal("Description")),
+                                Action = reader.IsDBNull(reader.GetOrdinal("Action")) ? null : reader.GetString(reader.GetOrdinal("Action")),
+                                DateCreate = reader.GetString(reader.GetOrdinal("DateCreate")),
+                                Creator = reader.IsDBNull(reader.GetOrdinal("Creator")) ? null : reader.GetString(reader.GetOrdinal("Creator"))
+                            };
+                            eventsDict[eventId] = eventModel;
+                        }
+
+                        // Если есть прикрепленный файл, добавляем его
+                        //if (!reader.IsDBNull(reader.GetOrdinal("FileId")))
+                        if (!await reader.IsDBNullAsync(reader.GetOrdinal("FileId")).ConfigureAwait(false))
+                        {
+                            eventModel.AttachedFiles.Add(new AttachedFileModel() // Передаем строку подключения
+                            {
+                                FileId = reader.GetInt32(reader.GetOrdinal("FileId")),
+                                FileCategory = reader.GetString(reader.GetOrdinal("FileCategory")),
+                                FileName = reader.GetString(reader.GetOrdinal("FileName")),
+                                FilePath = reader.GetString(reader.GetOrdinal("FilePath")),
+                                FileSize = reader.GetInt64(reader.GetOrdinal("FileSize")),
+                                FileType = reader.GetString(reader.GetOrdinal("FileType")),
+                                UploadDate = DateTime.Parse(reader.GetString(reader.GetOrdinal("UploadDate")))
+                            });
+                        }
+                    }
+                }
+            }
+            return eventsDict.Values.ToList();
+        }
 
         public List<EventForView> GetEvents(string queryEvent)
         {
@@ -359,16 +418,23 @@ namespace FlowEvents.Repositories
             return query;
         }
 
-        public (string Sql, List<SQLiteParameter> Parameters) BuildSQLQueryParametersEvents(Unit selectedUnit, DateTime? startDate, DateTime? endDate, bool isAllEvents)
+        public (string Sql, List<SQLiteParameter> Parameters) BuildSQLQueryParametersEvents(Unit selectedUnit, Category selectedCategory, DateTime? startDate, DateTime? endDate, bool isAllEvents)
         {
             var conditions = new List<string>();
             var parameters = new List<SQLiteParameter>();
 
-            // Фильтрация по установке - БЕЗОПАСНАЯ версия
+            // Фильтрация по установке 
             if (selectedUnit != null && selectedUnit.Id != -1)
             {
                 conditions.Add($"Unit LIKE @UnitName");
                 parameters.Add(new SQLiteParameter("@UnitName", $"%{selectedUnit.UnitName}%"));
+            }
+
+            // Фильтрация по категории 
+            if (selectedCategory != null && selectedCategory.Id != -1)
+            {
+                conditions.Add($"Category = @CategoryName");
+                parameters.Add(new SQLiteParameter("@CategoryName", selectedCategory.Name));
             }
 
             // Фильтрация по времени (если не выбрано "Все даты")
