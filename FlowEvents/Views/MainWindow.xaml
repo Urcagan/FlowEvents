@@ -144,7 +144,7 @@
                         </Button>
                         
                         <!--Чекбокс включить все сообщения без учета выбора даты-->
-                        <CheckBox Margin="10,0"
+                        <CheckBox 
                                 IsChecked="{Binding IsAllEvents, Mode=TwoWay}" VerticalAlignment="Center" 
                                 Visibility="{Binding CanEditEventVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
                             <TextBlock Text="Все даты" />
@@ -166,7 +166,7 @@
                     <!--Фильтруем установки-->
                     <StackPanel IsEnabled="{Binding  CanAccess}">
 
-                        <TextBlock Text="Установка" TextAlignment="Center" Margin ="0,0,0,2"/>
+                        <TextBlock Text="Объект" TextAlignment="Center" Margin ="0,0,0,2"/>
                         <!--<Label Content="Установка" HorizontalAlignment="Center"/>-->
 
                         <ComboBox x:Name="CB_Units"
@@ -251,7 +251,17 @@
                         ToolTip="Обновить данные"
                         Style="{StaticResource TransparentButtonStyle}"
                         Margin="10,0,10,0">
-                        <Image Source="/Resource/Images/Icons/Refresh.bmp" Height="16"/>
+                        <Image Source="/Resource/Images/Icons/Refresh.bmp" Width="18" Height="18"/>
+                    </Button>
+
+                    <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}"/>
+
+                    <!-- Кнопка экспорта в Excel -->
+                    <Button Command="{Binding ExportToExcelCommand}"
+                         ToolTip="Экспорт в Excel"
+                         Style="{StaticResource TransparentButtonStyle}"
+                         Margin="10,0,10,0">
+                        <Image Source="/Resource/Images/Icons/mimetypes_excel_611 (32px).png" Width ="24" Height="24"  />
                     </Button>
 
                     <!--<Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="5,0,10,0"/>-->
@@ -490,7 +500,7 @@
                                         <ItemsControl.ItemTemplate>
 
                                             <DataTemplate>
-                                                <!-- Ваш шаблон для документов -->
+                                                <!-- Шаблон для документов -->
                                                 <Border Background="#FFFFFF" Margin="0,0,0,3" CornerRadius="2">
                                                     <DockPanel LastChildFill="True" Margin="2">
                                                         <!-- Кнопка фиксируется справа -->
@@ -753,7 +763,7 @@
 
         <!-- Overlay для ошибки доступа -->
         
-        <!--<Border Grid.Row="1" Grid.RowSpan="2" 
+        <Border Grid.Row="1" Grid.RowSpan="2" 
             Background="#CCFFFFFF" 
             Visibility="{Binding ShowAccessOverlay, Converter={StaticResource BooleanToVisibilityConverter}}">
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Background="White" >
@@ -777,7 +787,7 @@
         </Border>
 
         
-         --><!--Overlay для ошибки базы данных--><!-- 
+         <!--Overlay для ошибки базы данных--> 
         
         <Border Grid.Row="1" Grid.RowSpan="2" 
             Background="#CCFFFFFF" 
@@ -798,7 +808,7 @@
                        TextAlignment="Center"
                        MaxWidth="300"/>
             </StackPanel>
-        </Border>-->
+        </Border>
     </Grid>
 
 </Window>

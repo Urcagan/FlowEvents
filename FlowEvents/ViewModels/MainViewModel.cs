@@ -1,4 +1,5 @@
-﻿using FlowEvents.Models;
+﻿using ClosedXML.Excel;
+using FlowEvents.Models;
 using FlowEvents.Repositories.Implementations;
 using FlowEvents.Repositories.Interface;
 using FlowEvents.Services;
@@ -8,6 +9,7 @@ using FlowEvents.Users;
 using FlowEvents.ViewModels;
 using FlowEvents.Views;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -150,7 +152,7 @@ namespace FlowEvents
                 if (value.Date <= EndDate.Date)
                 {
                     _sartDate = value;
-                    OnPropertyChanged(nameof(StartDate));
+                    OnPropertyChanged();
                     _ = LoadEvents();
                 }
             }
@@ -163,7 +165,7 @@ namespace FlowEvents
                 if (value.Date >= StartDate.Date)
                 {
                     _endDate = value;
-                    OnPropertyChanged(nameof(EndDate));
+                    OnPropertyChanged();
                     _ = LoadEvents();
                 }
             }
@@ -309,6 +311,8 @@ namespace FlowEvents
         public RelayCommand ResetFiltersCommand { get; }
         public RelayCommand ResetTimeCommand {  get; }
 
+        public RelayCommand ExportToExcelCommand { get; }
+
         #endregion
 
         //===============================================================================================================================================
@@ -345,13 +349,19 @@ namespace FlowEvents
             UserWindowCommand = new RelayCommand(UserInfoWindow);
             DownDateCommand = new RelayCommand((parameter) =>
             {
+                _isInitializing = true;
                 StartDate = StartDate.AddDays(-1);
                 EndDate = EndDate.AddDays(-1);
+                _isInitializing = false;
+                _ = LoadEvents();
             });
             UpDateCommand = new RelayCommand((parameter) =>
             {
+                _isInitializing = true;
                 EndDate = EndDate.AddDays(1);
                 StartDate = StartDate.AddDays(1);
+                _isInitializing = false;
+                _ = LoadEvents();
             });
 
             ManualRefreshCommand = new RelayCommand(async () => await ManualRefresh());
@@ -369,10 +379,16 @@ namespace FlowEvents
             ResetTimeCommand = new RelayCommand(() =>
             {
                 _isInitializing = true;
+                EndDate = DateTime.Now;
                 StartDate = DateTime.Now;
                 EndDate = DateTime.Now;
                 _isInitializing = false;
                 _ = LoadEvents();
+            });
+
+            ExportToExcelCommand = new RelayCommand(() =>
+            {
+                ExportToExcelWithDialog();
             });
 
             //  User();
@@ -937,5 +953,61 @@ namespace FlowEvents
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
+
+        public void ExportToExcelWithClosedXML(ObservableCollection<EventForView> events, string filePath)
+        {
+            using (var workbook = new XLWorkbook())
+            {
+                var worksheet = workbook.Worksheets.Add("Events");
+
+                // Заголовки
+                var headers = new[] { "Дата события", "Объект", "Категория события", "Описание", "Примечание", "Дата создания", "Автор" };
+
+                for (int i = 0; i < headers.Length; i++)
+                {
+                    worksheet.Cell(1, i + 1).Value = headers[i];
+                }
+
+                // Данные
+                for (int i = 0; i < events.Count; i++)
+                {
+                    var eventItem = events[i];
+                    worksheet.Cell(i + 2, 1).Value = eventItem.DateEvent;
+                    worksheet.Cell(i + 2, 2).Value = eventItem.Unit;
+                    worksheet.Cell(i + 2, 3).Value = eventItem.Category;
+                    worksheet.Cell(i + 2, 4).Value = eventItem.Description;
+                    worksheet.Cell(i + 2, 5).Value = eventItem.Action;
+                    worksheet.Cell(i + 2, 6).Value = eventItem.DateCreate;
+                    worksheet.Cell(i + 2, 7).Value = eventItem.Creator;
+                }
+
+                // Автоподбор ширины колонок
+                worksheet.Columns().AdjustToContents();
+
+                workbook.SaveAs(filePath);
+            }
+        }
+
+        public void ExportToExcelWithDialog()
+        {
+            var saveFileDialog = new SaveFileDialog
+            {
+                Filter = "Excel files (*.xlsx)|*.xlsx",
+                FileName = $"Events_{DateTime.Now:yyyy-MM-dd_HH-mm}.xlsx"
+            };
+
+            if (saveFileDialog.ShowDialog() == true)
+            {
+                try
+                {
+                    ExportToExcelWithClosedXML(Events, saveFileDialog.FileName);
+                    MessageBox.Show("Данные успешно экспортированы в Excel!");
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Ошибка при экспорте: {ex.Message}");
+                }
+            }
+        }
     }
 }
