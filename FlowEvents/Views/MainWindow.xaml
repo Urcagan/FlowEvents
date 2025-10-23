@@ -5,7 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:FlowEvents"
         mc:Ignorable="d"
-        Title="Журнал событий" Height="750" Width="1400" >
+         Height="750" Width="1400" >
+    <!--Title="Журнал событий"-->
     <!-- Loaded="Window_Loaded"> -->
 
     <Window.Resources>
@@ -69,14 +70,21 @@
                 <Separator />
 
                 <MenuItem Header="Настройка" Command="{Binding SettingOpenWindow}"/>
+                
                 <MenuItem Header="О программе"></MenuItem>
+                
                 <Separator/>
+                
                 <MenuItem Header="Проверить обновление" Command="{Binding CheckUpdateAppCommand}"/>
+                
                 <Separator />
+                
                 <MenuItem Header="Login" Command="{Binding LoginCommand}"/>
+                
                 <MenuItem Header="Выйти" 
                         Command="{Binding LogoutCommand}"
                         Visibility="{Binding IsUserLoggedIn, Converter={StaticResource  BooleanToVisibilityConverter}}"/>
+            
             </MenuItem>
         </Menu>
 

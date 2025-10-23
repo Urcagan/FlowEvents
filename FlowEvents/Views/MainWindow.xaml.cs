@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -14,7 +15,12 @@ namespace FlowEvents
         public MainWindow()
         {
             InitializeComponent();
-                 
+
+            // Установка заголовка окна программы с версией
+            var version = Assembly.GetExecutingAssembly().GetName().Version;
+            this.Title = $"Журнал событий v{version.Major}.{version.Minor}.{version.Build}";
+            // this.Title = $"Журнал событий v{version}";
+
             // Подписываемся на события загрузки и закрытия окна
             Loaded += MainWindow_Loaded;
 

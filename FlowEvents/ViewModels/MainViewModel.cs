@@ -363,6 +363,7 @@ namespace FlowEvents
                 _isInitializing = false;
                 _ = LoadEvents();
             });
+
             UpDateCommand = new RelayCommand((parameter) =>
             {
                 _isInitializing = true;
@@ -906,8 +907,6 @@ namespace FlowEvents
         //Проверка обновления программы
         private void CheckUpdateApp(object parameter)
         {
-            MessageBox.Show("Проверка обновлений");
-
             try
             {
                 string repositoryPath = App.Settings.UpdateRepository; //Получаем из конфигурации путь к файлу с параметрами обновления приложения
