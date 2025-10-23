@@ -1,6 +1,4 @@
-﻿using ClosedXML.Excel;
-using FlowEvents.Models;
-using FlowEvents.Repositories.Implementations;
+﻿using FlowEvents.Models;
 using FlowEvents.Repositories.Interface;
 using FlowEvents.Services;
 using FlowEvents.Services.Interface;
@@ -9,7 +7,6 @@ using FlowEvents.Users;
 using FlowEvents.ViewModels;
 using FlowEvents.Views;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -19,8 +16,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices.ComTypes;
-using System.Security.Cryptography;
 using System.Threading.Tasks;
 using System.Windows;
 
@@ -278,7 +273,20 @@ namespace FlowEvents
             get
             {
                 bool result = CurrentUserPermissions != null && CurrentUserPermissions.Any();
+                //Debug.WriteLine("Сработал CanAccess проверка на доступ");
+                OnPropertyChanged(nameof(CanImportData));
+                OnPropertyChanged(nameof(CanEditEventVisible));
                 return result;
+            }
+        }
+
+        public bool CanImportData
+        {
+            get
+            {
+                var basicPermissions = new[] { "ImportData" };
+                //Debug.WriteLine("Сработал CanImportData проверка на доступ к импорту данных");
+                return _currentUserPermissions?.Any(p => basicPermissions.Contains(p)) == true;
             }
         }
 
@@ -309,7 +317,7 @@ namespace FlowEvents
         public RelayCommand ToggleAutoRefreshCommand { get; }
         public RelayCommand ManualRefreshCommand { get; }
         public RelayCommand ResetFiltersCommand { get; }
-        public RelayCommand ResetTimeCommand {  get; }
+        public RelayCommand ResetTimeCommand { get; }
 
         public RelayCommand ExportToExcelCommand { get; }
 
@@ -386,12 +394,12 @@ namespace FlowEvents
                 _ = LoadEvents();
             });
 
-            ExportToExcelCommand = new RelayCommand(() =>
+            ExportToExcelCommand = new RelayCommand(() =>               // Экспотр в Excel
             {
-                ExportToExcelWithDialog();
+                ExportToExcel exportToExcel = new ExportToExcel(Events);
+                exportToExcel.ExportToExcelWithDialog();
+                exportToExcel = null;
             });
-
-            //  User();
 
             // Полная информация о пользователе windows
             _currentUserWindows = _userInfoService.GetCurrentUserInfo();   // Получает данные о пользователе Windows
@@ -400,7 +408,7 @@ namespace FlowEvents
 
             // Подписка на события автообновления
             _autoRefreshService.RefreshRequested += async () => await AutoRefresh();
-            _autoRefreshService.OnSettingsChanged += OnAutoRefreshSettingsChanged;            
+            _autoRefreshService.OnSettingsChanged += OnAutoRefreshSettingsChanged;
 
         }
 
@@ -453,7 +461,7 @@ namespace FlowEvents
             var requiredPermissions = new[] { "EditDocument", "ManageProduct", "ConfigureSystem" };
             return _currentUserPermissions?.Any(p => requiredPermissions.Contains(p)) == true;
         }
-        
+
 
         private bool CanDeleteEvent(object parameter)
         {
@@ -504,13 +512,13 @@ namespace FlowEvents
                 await LoadUnitsToComboBoxAsync(); // Загружаем перечень установок из базы данных
                 await LoadCategoriesToComboBoxAsync(); // Загружаем перечень категорий из базы данных
 
-                
+
                 // Загружаем настройки авто обновления данных Events в сервис
                 _autoRefreshService.IsEnabled = App.Settings.AutoRefreshEnabled;        // состояние авто обновления
                 _autoRefreshService.RefreshInterval = App.Settings.AutoRefreshInterval; // время автообновления
 
                 _isInitializing = false; // По щкончанию инициализации снимаем флаг
-                
+
                 _ = LoadEvents();  //Далее загружаем данные
 
                 // Другие инициализационные задачи
@@ -525,12 +533,12 @@ namespace FlowEvents
 
         // Метод для выхода пользователя
         private async void Logout(object parameter)
-        {            
+        {
             Events.Clear();         // Очищаем данные
             SelectedEvent = null;
 
             // Сбрасываем данные пользователя
-            _currentUser = null;    
+            _currentUser = null;
             UserName = string.Empty;
             CurrentUserPermissions?.Clear();
 
@@ -587,7 +595,6 @@ namespace FlowEvents
                     : new ObservableCollection<EventForView> { SelectedEvent };
 
 
-        //
         private async Task GetCurrentUserFromDB(string Login) //Загрузка данных о текущем пользователе из БД 
         {
             if (string.IsNullOrEmpty(Login))    // Проверка на пустое имя пользователя
@@ -606,7 +613,7 @@ namespace FlowEvents
             _currentUser = _authService.GetUser(Login); // Получаем данные пользователя и помещаем их в пересеную используемую как кеш днных
             CurrentUserPermissions = _authService.GetUserPermissions(Login);
 
-            OnPropertyChanged(nameof(CanEditEventVisible));
+            //OnPropertyChanged(nameof(CanEditEventVisible));
         }
 
         // Загрузкак комбобокса установок
@@ -623,7 +630,6 @@ namespace FlowEvents
                 {
                     Units.Add(unit);
                 }
-
 
                 SelectedUnit = Units.FirstOrDefault();
             }
@@ -647,7 +653,7 @@ namespace FlowEvents
                     Categories.Add(category);
                 }
             }
-            catch (Exception )
+            catch (Exception)
             {
             }
             SelectedCategory = Categories.FirstOrDefault(); // Установка категории по умолчанию
@@ -663,10 +669,10 @@ namespace FlowEvents
                 return;
             Events.Clear();
 
-            (string query, List < SQLiteParameter > parameters) = _eventRepository.BuildSQLQueryParametersEvents(SelectedUnit, SelectedCategory, IsAllEvents ? null : (DateTime?)StartDate, IsAllEvents ? null : (DateTime?)EndDate, IsAllEvents);
+            (string query, List<SQLiteParameter> parameters) = _eventRepository.BuildSQLQueryParametersEvents(SelectedUnit, SelectedCategory, IsAllEvents ? null : (DateTime?)StartDate, IsAllEvents ? null : (DateTime?)EndDate, IsAllEvents);
 
             if (string.IsNullOrEmpty(query)) return;
-            var eventsFromDb = await _eventRepository.GetEventsParamsAsync( query, parameters);
+            var eventsFromDb = await _eventRepository.GetEventsParamsAsync(query, parameters);
 
             // Добавляем данные в коллекцию
             foreach (var eventModel in eventsFromDb)
@@ -951,63 +957,6 @@ namespace FlowEvents
         protected void OnPropertyChanged([CallerMemberName] string propertyName = null) // Метод для генерации события
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-
-
-        public void ExportToExcelWithClosedXML(ObservableCollection<EventForView> events, string filePath)
-        {
-            using (var workbook = new XLWorkbook())
-            {
-                var worksheet = workbook.Worksheets.Add("Events");
-
-                // Заголовки
-                var headers = new[] { "Дата события", "Объект", "Категория события", "Описание", "Примечание", "Дата создания", "Автор" };
-
-                for (int i = 0; i < headers.Length; i++)
-                {
-                    worksheet.Cell(1, i + 1).Value = headers[i];
-                }
-
-                // Данные
-                for (int i = 0; i < events.Count; i++)
-                {
-                    var eventItem = events[i];
-                    worksheet.Cell(i + 2, 1).Value = eventItem.DateEvent;
-                    worksheet.Cell(i + 2, 2).Value = eventItem.Unit;
-                    worksheet.Cell(i + 2, 3).Value = eventItem.Category;
-                    worksheet.Cell(i + 2, 4).Value = eventItem.Description;
-                    worksheet.Cell(i + 2, 5).Value = eventItem.Action;
-                    worksheet.Cell(i + 2, 6).Value = eventItem.DateCreate;
-                    worksheet.Cell(i + 2, 7).Value = eventItem.Creator;
-                }
-
-                // Автоподбор ширины колонок
-                worksheet.Columns().AdjustToContents();
-
-                workbook.SaveAs(filePath);
-            }
-        }
-
-        public void ExportToExcelWithDialog()
-        {
-            var saveFileDialog = new SaveFileDialog
-            {
-                Filter = "Excel files (*.xlsx)|*.xlsx",
-                FileName = $"Events_{DateTime.Now:yyyy-MM-dd_HH-mm}.xlsx"
-            };
-
-            if (saveFileDialog.ShowDialog() == true)
-            {
-                try
-                {
-                    ExportToExcelWithClosedXML(Events, saveFileDialog.FileName);
-                    MessageBox.Show("Данные успешно экспортированы в Excel!");
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"Ошибка при экспорте: {ex.Message}");
-                }
-            }
         }
     }
 }

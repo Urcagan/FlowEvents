@@ -228,6 +228,7 @@
                         </Style>
                     </StackPanel.Resources>
 
+                    <!--Кнопка добавления события-->
                     <Button x:Name="AddEvent" 
                         Command="{Binding EventAddWindow}"
                         ToolTip="Добавить событие" 
@@ -260,7 +261,8 @@
                     <Button Command="{Binding ExportToExcelCommand}"
                          ToolTip="Экспорт в Excel"
                          Style="{StaticResource TransparentButtonStyle}"
-                         Margin="10,0,10,0">
+                         Margin="10,0,10,0"
+                         Visibility="{Binding CanImportData, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <Image Source="/Resource/Images/Icons/mimetypes_excel_611 (32px).png" Width ="24" Height="24"  />
                     </Button>
 
@@ -756,8 +758,6 @@
             <StatusBarItem Grid.Column="4">
                 <TextBlock Text="{Binding AutoRefreshStatus}" ToolTip="Статус автообновления данных" Margin="0,0,10,0"/>
             </StatusBarItem>
-
-
         </StatusBar>
 
 

@@ -83,6 +83,7 @@
     <Compile Include="App.cs" />
     <Compile Include="Converters\BoolToStatusConverter.cs" />
     <Compile Include="Converters\InvertedBooleanToVisibilityConverter.cs" />
+    <Compile Include="ExportToExcel.cs" />
     <Compile Include="Models\DatabaseInfo.cs" />
     <Compile Include="Models\PagedResult.cs" />
     <Compile Include="Models\PaginationInfo.cs" />
