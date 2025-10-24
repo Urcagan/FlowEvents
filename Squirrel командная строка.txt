@@ -1,1 +1,1 @@
-Squirrel --releasify FlowEvents.1.0.1.nupkg --no-msi
+Squirrel --releasify FlowEvents.1.0.0.nupkg --no-msi

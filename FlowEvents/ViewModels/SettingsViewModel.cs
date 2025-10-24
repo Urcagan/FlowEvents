@@ -110,7 +110,7 @@ namespace FlowEvents.Settings
 
         public ObservableCollection<int> RefreshIntervals { get; } = new ObservableCollection<int>
         {
-            30, 60, 120, 300, 600 // 30 сек, 1 мин, 2 мин, 5 мин, 10 мин
+            300, 600, 1200, 1800 // 5 мин, 10 мин, 20 мин, 30 мин, 
         };
         //--------------------------------------
 

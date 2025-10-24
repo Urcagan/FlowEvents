@@ -35,7 +35,7 @@ namespace FlowEvents
         // Параметры програы с параметрами по умолчанию
         public string pathDB { get; set; } = "C:\\";  // Путь к базе данных по умолчанию
         public int VerDB { get; set; } = 1; //Версия БД для проверки
-        public string UpdateRepository { get; set; } =  "G:\\VS Dev\\FlowEventsReleases"; //Путь к парке с обновлениями
+        public string UpdateRepository { get; set; } =  "C:\\Releases"; //Путь к парке с обновлениями
 
         public string DomenName { get; set; } = "localhost"; // Имя домена по умолчанию
 
@@ -58,7 +58,7 @@ namespace FlowEvents
 
         // Свойства для автообновления
         public bool AutoRefreshEnabled { get; set; } = false;
-        public int AutoRefreshInterval { get; set; } = 60; // секунды
+        public int AutoRefreshInterval { get; set; } = 300; // секунды
 
 
         //Путь к файлу настроек в папке AppData

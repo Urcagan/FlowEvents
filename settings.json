@@ -1,0 +1,26 @@
+{
+  "WindowLeft": 226.0,
+  "WindowTop": 136.0,
+  "WindowWidth": 1400.0,
+  "WindowHeight": 750.0,
+  "WindowState": "Normal",
+  "pathDB": "\\\\c-vgdfs21\\Мониторинг\\ТП\\ЦО\\Судовой журнал\\FlowEvents.db",
+  "VerDB": 1,
+  "UpdateRepository": "\\\\c-vgdfs21\\Мониторинг\\ТП\\ЦО\\Судовой журнал\\UpdateReleases",
+  "DomenName": "corp.lukoil.com",
+  "DefaultRole": 1,
+  "DataGridColumnWidths": {
+    "Дата": 100.0,
+    "Установка": 150.0,
+    "Переработка": 150.0,
+    "Вид": 100.0,
+    "Событие": 200.0,
+    "Примечание, пояснение": 200.0,
+    "Документ": 200.0,
+    "Мониторинг + Диспетчерский отчет": 150.0,
+    "Автор": 100.0
+  },
+  "AutoRefreshEnabled": false,
+  "AutoRefreshInterval": 300,
+  "SizeFileAttachment": 10.0
+}
