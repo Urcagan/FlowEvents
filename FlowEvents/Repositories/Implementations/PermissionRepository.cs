@@ -1,4 +1,5 @@
-﻿using FlowEvents.Models;
+﻿using DocumentFormat.OpenXml.Spreadsheet;
+using FlowEvents.Models;
 using FlowEvents.Repositories.Interface;
 using FlowEvents.Services.Interface;
 using System;
@@ -7,6 +8,7 @@ using System.Data.SQLite;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Controls.Primitives;
 
 namespace FlowEvents.Repositories.Implementations
 {
@@ -56,9 +58,29 @@ namespace FlowEvents.Repositories.Implementations
             return permissions;
         }
 
-        public Task<List<Permission>> GetPermissionsByRoleIdAsync(int roleId)
+        public async Task<List<Permission>> GetPermissionsByRoleIdAsync(int roleId) // Получение прав по ID пользователя 
         {
-            throw new NotImplementedException();
+            var _connectionString = _connectionProvider.GetConnectionString(); // Получение актуальной строки подключения
+            var permissions = new List<Permission>();
+
+            using (var connection = new SQLiteConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+
+                var command = connection.CreateCommand();
+
+                command.CommandText = $" Select r.RoleId, r.PermissionId , p.PermissionName " + 
+                                        "FROM RolePermissions r " + "" +
+                                        "JOIN Permissions p ON r.PermissionId = p.PermissionId " + "" +
+                                        "Where r.RoleId = @RoleID";
+
+                conditions.Add($"Unit LIKE @UnitName");
+                parameters.Add(new SQLiteParameter("@UnitName", $"%{selectedUnit.UnitName}%"));
+
+
+            }
+
+                throw new NotImplementedException();
         }
 
 

@@ -384,14 +384,14 @@ namespace FlowEvents.Users
         // Загрузка прав к выбранной роли
         private void LoadRolePermissions()
         {
-            if (SelectedUser == null) return;
-            int roleUser = SelectedUser.RoleId;
+            if ( SelectedRole == null) return;
+            int roleID = SelectedRole.RoleId;
             // Заглушка - в следующей итерации реализуем загрузку прав роли
             foreach (var permission in Permissions)
             {
                 //  permission.IsGrantedBool = (SelectedRole?.RoleId % 2 == 0); // Простая логика для демонстрации
 
-                permission.IsGrantedBool = (SelectedRole?.RoleId == SelectedUser.RoleId);
+                //permission.IsGrantedBool = (SelectedRole?.RoleId == SelectedUser.RoleId);
             }
         }
 
