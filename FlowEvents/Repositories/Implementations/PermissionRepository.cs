@@ -58,29 +58,38 @@ namespace FlowEvents.Repositories.Implementations
             return permissions;
         }
 
-        public async Task<List<Permission>> GetPermissionsByRoleIdAsync(int roleId) // Получение прав по ID пользователя 
+        public async Task<List<Permission>> GetPermissionsByRoleIdAsync(int roleId) // Получение прав пользователя по ID пользователя 
         {
             var _connectionString = _connectionProvider.GetConnectionString(); // Получение актуальной строки подключения
-            var permissions = new List<Permission>();
+            List<Permission> permissions = new List<Permission>();
+
+            string query = $" Select r.RoleId, r.PermissionId , p.PermissionName " +
+                                        "FROM RolePermissions r " +
+                                        "JOIN Permissions p ON r.PermissionId = p.PermissionId " + 
+                                        "Where r.RoleId = @RoleID";
+
+            var parameters = new SQLiteParameter();
 
             using (var connection = new SQLiteConnection(_connectionString))
             {
                 await connection.OpenAsync();
 
-                var command = connection.CreateCommand();
-
-                command.CommandText = $" Select r.RoleId, r.PermissionId , p.PermissionName " + 
-                                        "FROM RolePermissions r " + "" +
-                                        "JOIN Permissions p ON r.PermissionId = p.PermissionId " + "" +
-                                        "Where r.RoleId = @RoleID";
-
-                conditions.Add($"Unit LIKE @UnitName");
-                parameters.Add(new SQLiteParameter("@UnitName", $"%{selectedUnit.UnitName}%"));
-
-
+                var command = new SQLiteCommand(query, connection);
+                command.Parameters.AddWithValue("@RoleID", $"{roleId}");
+                using (var reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        var permit = new Permission
+                        {
+                            PermissionId= reader.GetInt32(1),
+                            PermissionName = reader.GetString(2),
+                        };
+                        permissions.Add(permit);
+                    }
+                }
             }
-
-                throw new NotImplementedException();
+            return permissions;
         }
 
 

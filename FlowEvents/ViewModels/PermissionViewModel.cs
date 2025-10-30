@@ -5,7 +5,9 @@ using FlowEvents.Services.Interface;
 using FlowEvents.ViewModels;
 using FlowEvents.Views;
 using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
@@ -25,6 +27,7 @@ namespace FlowEvents.Users
         private readonly IUserService _userService;   
         private readonly IRoleServices _roleServices;
 
+        private readonly IPermissionRepository _permissionRepository;
         private readonly IPermissionService _permissionService;
 
         private ObservableCollection<User> _users;
@@ -108,12 +111,15 @@ namespace FlowEvents.Users
         public RelayCommand<User> UpdateUserAccessCommand { get; }
         public RelayCommand<User> UpdateUserRoleCommand { get; }    // Команда обновления роли пользователя
 
-        public PermissionViewModel( IUserService userService, IRoleServices roleServices, IPermissionService permissionService)
+        public PermissionViewModel( IUserService userService, 
+                                    IRoleServices roleServices, 
+                                    IPermissionRepository permissionRepository,
+                                    IPermissionService permissionService)
         {
             
             _userService = userService;
             _roleServices = roleServices;
-
+            _permissionRepository = permissionRepository;
             _permissionService = permissionService;
 
             Users = new ObservableCollection<User>();
@@ -382,16 +388,22 @@ namespace FlowEvents.Users
         }
 
         // Загрузка прав к выбранной роли
-        private void LoadRolePermissions()
+        private async Task LoadRolePermissions()
         {
             if ( SelectedRole == null) return;
             int roleID = SelectedRole.RoleId;
             // Заглушка - в следующей итерации реализуем загрузку прав роли
+            
+            var permissionsForRole = await _permissionRepository.GetPermissionsByRoleIdAsync(roleID);
+            
             foreach (var permission in Permissions)
             {
-                //  permission.IsGrantedBool = (SelectedRole?.RoleId % 2 == 0); // Простая логика для демонстрации
-
-                //permission.IsGrantedBool = (SelectedRole?.RoleId == SelectedUser.RoleId);
+                permission.IsGrantedBool = false;
+                foreach (var permis in permissionsForRole)
+                {
+                    if (permission.PermissionId == permis.PermissionId)
+                        permission.IsGrantedBool = true;                        
+                }
             }
         }
 

@@ -10,5 +10,7 @@ namespace FlowEvents.Services.Interface
     public interface IPermissionService
     {
         Task<List<Permission>> GetPermissionsAsync();
+
+        Task<List<Permission>> GetRolePermissionsAsync(int roleId);
     }
 }
