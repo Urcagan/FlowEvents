@@ -381,10 +381,10 @@ namespace FlowEvents.Users
         private void LoadUserPermissions()
         {
             // Заглушка - в следующей итерации реализуем загрузку прав пользователя
-            foreach (var permission in Permissions)
-            {
-                permission.IsGrantedBool = false;
-            }
+            //foreach (var permission in Permissions)
+            //{
+            //    permission.IsGrantedBool = false;
+            //}
         }
 
         // Загрузка прав к выбранной роли
