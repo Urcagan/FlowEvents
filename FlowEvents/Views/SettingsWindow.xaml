@@ -8,7 +8,7 @@
         xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
         mc:Ignorable="d"
         WindowStartupLocation="CenterOwner"
-        Title="SettingsWindow" Height="450" Width="800" ResizeMode="NoResize" Closing="Window_Closing">
+        Title="SettingsWindow" Height="550" Width="800" ResizeMode="NoResize" Closing="Window_Closing">
     
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="Closing">
@@ -23,6 +23,8 @@
             <RowDefinition Height="80"/>
             <RowDefinition Height="20"/>
             <RowDefinition Height="120"/>
+            <RowDefinition Height="20"/>
+            <RowDefinition Height="80"/>
         </Grid.RowDefinitions>
 
         <!-- Настройки базы данных -->
@@ -126,6 +128,30 @@
                 </Grid>
             </StackPanel>
         </Border>
+
+        <!-- Настройки Excel -->
+        <Border Grid.Row="6" BorderThickness="1" BorderBrush="Gray" Margin="5">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Row="0" Text="Excel"   Margin="10" FontWeight="Bold"/>
+                <!-- Включение автообновления -->
+                <CheckBox Grid.Row="1" Grid.Column="0"
+                            IsChecked="{Binding AutoOpenExcel, Mode=TwoWay}"
+                            VerticalAlignment="Center"
+                            Margin="10,0,10,0">
+                    <TextBlock Text="Автоматическое открытие файла после экспорта данных" Margin="5,0"/>
+                </CheckBox>
+            </Grid>
+        </Border>
+
 
 
     </Grid>

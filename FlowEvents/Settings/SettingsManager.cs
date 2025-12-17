@@ -61,6 +61,10 @@ namespace FlowEvents
         public int AutoRefreshInterval { get; set; } = 300; // секунды
 
 
+        //Свойства для обеспечения экспорта отчета в Excel
+        public bool AutoOpenExcel { get; set; } = false; // Автоматическое открытие Excel после завершения экспорта.
+
+
         //Путь к файлу настроек в папке AppData
         // private static string settingsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), 
         //     "MyApp", //Папка приложения

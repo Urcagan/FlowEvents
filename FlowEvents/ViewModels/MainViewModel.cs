@@ -710,6 +710,7 @@ namespace FlowEvents
             unitsView.Closed += ClosedHandler;                                              // 5. Подписываемся на событие Closed окна UnitsView
 
             unitsView.Owner = Application.Current.MainWindow;                               // 6. Устанавливает главное окно приложения как владельца (owner) для окна 
+            unitsView.WindowStartupLocation = WindowStartupLocation.CenterOwner;
             if (unitsView.ShowDialog() == true) { }                                         // 7. Показываем модально
         }
 
@@ -719,6 +720,14 @@ namespace FlowEvents
             var categoryViewModel = App.ServiceProvider.GetRequiredService<CategoryViewModel>();    // 1. Берем ViewModel из контейнера
             var categoryView = new CategoryView();                                                  // 2. Создаем окно обычным способом
             categoryView.DataContext = categoryViewModel;                                           // 3. Связываем ViewModel с окном 
+
+            async void ClosedHandler(object sender, EventArgs e)                                  // 4. Создает обработчик события Closed, который автоматически отписывается от события после первого срабатывания.
+            {
+                categoryView.Closed -= ClosedHandler; // Отвязываем
+                await LoadCategoriesToComboBoxAsync(); // Перезагружаем установки после закрытия окна UnitsView
+            }
+            categoryView.Closed += ClosedHandler;
+
             categoryView.Owner = Application.Current.MainWindow;                                    // 4. Устанавливает главное окно приложения как владельца (owner) для окна                                                                                                        
             categoryView.WindowStartupLocation = WindowStartupLocation.CenterOwner;                 // 5. Центрируем относительно владельца если не прописано м xaml (WindowStartupLocation="CenterOwner")
             if (categoryView.ShowDialog() == true) { }                                              // 6. Показываем модально         

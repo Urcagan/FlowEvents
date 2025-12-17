@@ -1,8 +1,10 @@
 ﻿using ClosedXML.Excel;
 using FlowEvents.Models;
 using Microsoft.Win32;
+using SharpCompress.Common;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Windows;
@@ -34,7 +36,7 @@ namespace FlowEvents
                 {
                     Filter = "Excel files (*.xlsx)|*.xlsx|All files (*.*)|*.*",
                     FilterIndex = 1,
-                    FileName = $"Events_{DateTime.Now:yyyy-MM-dd_HH-mm}.xlsx",
+                    FileName = $"Events_{DateTime.Now:yyyy-MM-dd}.xlsx",
                     OverwritePrompt = true,
                     CheckPathExists = true
                 };
@@ -48,6 +50,12 @@ namespace FlowEvents
                         MessageBox.Show($"Данные успешно экспортированы в Excel!\n\nФайл: {Path.GetFileName(result.FilePath)}\nЭкспортировано записей: {result.ExportedRecords}",
                                       "Успешный экспорт",
                                       MessageBoxButton.OK, MessageBoxImage.Information);
+
+                        if (App.Settings.AutoOpenExcel) // Проверяем автоматическое открытие файла 
+                        {
+                            OpenExcelFileSimple(result.FilePath); // Открываем файл 
+                        }
+
                     }
                     else
                     {
@@ -63,8 +71,7 @@ namespace FlowEvents
             }
 
         }
-
-
+    
         private ExportResult ExportToExcelWithClosedXML(IEnumerable<EventForView> events, string filePath)
         {
             var result = new ExportResult { FilePath = filePath };
@@ -143,8 +150,8 @@ namespace FlowEvents
         {
             var headers = new[]
             {
-            "Дата события", "Объект", "Категория события", "Описание",
-            "Примечание", "Дата создания", "Автор"
+            "Дата", "Установка", "Переработка нефти", "Вид события", "Событие",
+            "Примечание, пояснение", "Дата создания", "Автор"
         };
 
             for (int i = 0; i < headers.Length; i++)
@@ -168,11 +175,12 @@ namespace FlowEvents
                     // Безопасное присвоение значений
                     worksheet.Cell(row, 1).Value = eventItem.DateEvent;
                     worksheet.Cell(row, 2).Value = eventItem.Unit ?? string.Empty;
-                    worksheet.Cell(row, 3).Value = eventItem.Category ?? string.Empty;
-                    worksheet.Cell(row, 4).Value = eventItem.Description ?? string.Empty;
-                    worksheet.Cell(row, 5).Value = eventItem.Action ?? string.Empty;
-                    worksheet.Cell(row, 6).Value = eventItem.DateCreate;
-                    worksheet.Cell(row, 7).Value = eventItem.Creator ?? string.Empty;
+                    worksheet.Cell(row, 3).Value = eventItem.OilRefining ?? string.Empty;
+                    worksheet.Cell(row, 4).Value = eventItem.Category ?? string.Empty;
+                    worksheet.Cell(row, 5).Value = eventItem.Description ?? string.Empty;
+                    worksheet.Cell(row, 6).Value = eventItem.Action ?? string.Empty;
+                    worksheet.Cell(row, 7).Value = eventItem.DateCreate;
+                    worksheet.Cell(row, 8).Value = eventItem.Creator ?? string.Empty;
 
                     successCount++;
                     row++;
@@ -199,11 +207,22 @@ namespace FlowEvents
             {
                 // Автоподбор ширины колонок
                 worksheet.Columns().AdjustToContents();
+                                
+                //Настройка строки заголовка
+                var dataRange = worksheet.Range(1, 1, 1, 8);
+                dataRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
 
                 // Добавляем границы для всей таблицы
-                var dataRange = worksheet.Range(1, 1, dataRowsCount + 1, 7);
+                dataRange = worksheet.Range(1, 1, dataRowsCount + 1, 8);
+                
+                dataRange.Style.Alignment.WrapText = true;
+                dataRange.Style.Alignment.Vertical = XLAlignmentVerticalValues.Top;
+
+                // Настройкак рамок 
                 dataRange.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
                 dataRange.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+
+                
             }
         }
 
@@ -276,6 +295,32 @@ namespace FlowEvents
         }
 
         #region Вспомогательные классы
+
+        // Открытие файла в Excel
+        public void OpenExcelFileSimple(string filePath)
+        {
+            if (!File.Exists(filePath))
+            {
+                MessageBox.Show("Файл не найден!");
+                return;
+            }
+
+            try
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = filePath,
+                    UseShellExecute = true // Использует ассоциации файлов Windows
+                });
+
+                // Или просто:
+                // Process.Start(filePath);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка: {ex.Message}");
+            }
+        }
 
         private class ExportResult
         {

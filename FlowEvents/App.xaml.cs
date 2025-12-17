@@ -201,5 +201,20 @@ namespace FlowEvents
             return $"Data Source={pathDB};Version=3;foreign keys=true;";
         }
 
+
+        //Проверяет и позволяет запустить только одну копию приложения
+        System.Threading.Mutex mutex;
+        private void App_Status(object sender, StartupEventArgs e)
+        {
+            bool createdNew;
+            string mutName = "Приложение";
+            mutex = new System.Threading.Mutex(true, mutName, out createdNew);
+            if (!createdNew)
+            {
+                MessageBox.Show("Приложение уже запущено");
+                this.Shutdown();
+            }
+        }
+
     }
 }

@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Input;
 
 namespace FlowEvents
 {
@@ -16,7 +17,6 @@ namespace FlowEvents
         #region
         private readonly IUnitRepository _unitRepository;
         private bool _isSaving;
-        private bool _isDeleting;
         private bool _isLoading;
         private bool _visibleBar;
 
@@ -35,17 +35,6 @@ namespace FlowEvents
             }
         }
 
-        public bool IsDeleting
-        {
-            get => _isDeleting;
-            set
-            {
-                _isDeleting = value;
-                VisibleBar = value;
-                OnPropertyChanged();
-                // UpdateCanExecute();
-            }
-        }
         public bool IsLoading
         {
             get => _isLoading;
@@ -67,7 +56,6 @@ namespace FlowEvents
             }
         }
         
-
         public ObservableCollection<Unit> Units // Коллекция для хранения категорий (источник данных (коллекцию))
         {
             get => _units;
@@ -84,6 +72,8 @@ namespace FlowEvents
         public RelayCommand SaveCommand { get; }
         public RelayCommand DeleteCommand { get; }
         public RelayCommand UpdateCommand { get; }
+        public RelayCommand EditCommand { get; }
+        public RelayCommand SaveUnitCommand { get; }
 
         #endregion
 
@@ -96,12 +86,12 @@ namespace FlowEvents
             CancelCommand = new RelayCommand(CancelEdit);
             SaveCommand = new RelayCommand( async () => await SaveNewUnitAsync(), () => CanExecuteSave());
             UpdateCommand = new RelayCommand(async () => await UpdateAsync(), () => CanExecuteUpdate());
-            DeleteCommand = new RelayCommand(async () => await DeleteUnitAsync(), () =>  CanExecuteDelete());
+            DeleteCommand = new RelayCommand(async () => await DeleteUnitAsync());  //, () =>  CanExecuteDelete());
+            EditCommand = new RelayCommand(EditUnit);
             
             _ = InitializeAsync(); // Асинхронная загрузка данных из БД
 
             IsAddButtonVisible = true; // Показать кнопку "Добавить"
-            IsDeleteButtonVisible = false; // Скрыть кнопку "Удалить"
         }
 
 
@@ -138,6 +128,25 @@ namespace FlowEvents
             }
         }
 
+        private void EditUnit()
+        {
+            // В случае если выбрана какая либо строка , то загружаем данные этой троки в поля для редактирования и отображаем окно редактирования
+            if (_selectedUnit != null)
+            {
+                // Заполните поля данными выбранной категории
+                Unit = _selectedUnit.UnitName;
+                Description = _selectedUnit.Description;
+
+                // Покажите правую панель
+                IsEditPanelVisible = true;
+
+                // Управление видимостью кнопок
+                IsEditButtonVisible = true;     //Кнопка редактировать
+
+                IsSaveButtonVisible = true;    // Кнопка "Создать"
+                IsAddButtonVisible = false;     // Кнопка "Добавить"
+            }
+        }
 
         //Сохранение в БД новой категории
         private async Task SaveNewUnitAsync()
@@ -249,10 +258,7 @@ namespace FlowEvents
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Question);
             if (confirm != MessageBoxResult.Yes) return;
-
-            IsDeleting = true;
-
-            
+                        
             try
             {
                 var success = await _unitRepository.DeleteUnitAsync(SelectedUnit.Id);
@@ -282,10 +288,6 @@ namespace FlowEvents
             {
                 ShowError($"Ошибка при удалении: {ex.Message}");
             }
-            finally
-            {
-                IsDeleting = false;
-            }
             CancelEdit(); //Очищаем и закрываем поле редактирования
         }
 
@@ -303,10 +305,9 @@ namespace FlowEvents
             IsEditPanelVisible = true; //показываем панель редактирования
 
             // Управление видимостью кнопок
-            IsCreateButtonVisible = true;  // Показать кнопку "Создать"
-            IsUpdateButtonVisible = false; // Скрыть кнопку "Обновить"
-            IsAddButtonVisible = false; // Скрыть кнопку "Добавить"
-            SelectedUnit = null; // Снимаем выделение строки
+            IsSaveButtonVisible = true;   // Показать кнопку "Создать"
+            IsAddButtonVisible = false;     // Скрыть кнопку "Добавить"
+            SelectedUnit = null;            // Снимаем выделение строки
         }
 
        
@@ -328,9 +329,10 @@ namespace FlowEvents
         {            
             Unit = string.Empty;
             Description = string.Empty;
-            IsEditPanelVisible = false; // Скрыть панель редактирования
-            SelectedUnit = null; // Снимаем выделение строки
-            IsAddButtonVisible = true; // Показать кнопку "Добавить"
+            IsEditButtonVisible = false;    // Скрыть кнопку "Создать"
+            IsEditPanelVisible = false;     // Скрыть панель редактирования
+            SelectedUnit = null;            // Снимаем выделение строки
+            IsAddButtonVisible = true;      // Показать кнопку "Добавить"
         }
 
         private bool CanExecuteSave()
@@ -389,23 +391,8 @@ namespace FlowEvents
                 // В случае если выбрана какая либо строка , то загружаем данные этой троки в поля для редактирования и отображаем окно редактирования
                 if (_selectedUnit != null)
                 {
-                    // Заполните поля данными выбранной категории
-                    Unit = _selectedUnit.UnitName;
-                    Description = _selectedUnit.Description;
-
-                    // Покажите правую панель
-                    IsEditPanelVisible = true;
-
-                    // Управление видимостью кнопок
-                    IsCreateButtonVisible = false; // Скрыть кнопку "Создать"
-                    IsUpdateButtonVisible = true;  // Показать кнопку "Обновить"
-                    IsAddButtonVisible = false; // Скрыть кнопку "Добавить"
-                    IsDeleteButtonVisible = true; // Показать кнопку "Удалить"
-                }
-                else
-                {
-                    // Если строка не выбрана, скрываем кнопку "Удалить"
-                    IsDeleteButtonVisible = false;
+                    IsSaveButtonVisible = false;    // Кнопка "Создать"
+                    IsAddButtonVisible = true;     // Кнопка "Добавить"
                 }
             }
         }
@@ -427,28 +414,37 @@ namespace FlowEvents
         //Свойство для управления видимостью кнопок
 
         //Кнопка Создать
-        private bool _isCreateButtonVisible;
-        public bool IsCreateButtonVisible
+        private bool _isSeveButtonVisible;
+        public bool IsSaveButtonVisible
         {
-            get => _isCreateButtonVisible;
+            get => _isSeveButtonVisible;
             set
             {
-                _isCreateButtonVisible = value;
+                _isSeveButtonVisible = value;
                 OnPropertyChanged();
             }
         }
 
-        //Кнопка Обновить
-        private bool _isUpdateButtonVisible;
-        public bool IsUpdateButtonVisible
+
+        //Кнопка Редактировать
+        private bool _isEditButtonVisible;
+        public bool IsEditButtonVisible
         {
-            get => _isUpdateButtonVisible;
+            get => _isEditButtonVisible;
             set
             {
-                _isUpdateButtonVisible = value;
+                _isEditButtonVisible = value;
                 OnPropertyChanged();
+                OnPropertyChanged(nameof(SaveUpdateButtonText));
+                OnPropertyChanged(nameof(SaveUpdateCommand));
             }
         }
+
+        // Текст кнопки в зависимости от режима
+        public string SaveUpdateButtonText => IsEditButtonVisible ? "Обновить" : "Сохранить";
+
+        // Команда в зависимости от режима
+        public ICommand SaveUpdateCommand => IsEditButtonVisible ? UpdateCommand : SaveCommand;
 
         //Кнопка Добавить
         private bool _isAddButtonVisible; // Видимость кнопки "Добавить"
@@ -459,18 +455,6 @@ namespace FlowEvents
             {
                 _isAddButtonVisible = value;
                 OnPropertyChanged();
-            }
-        }
-
-        //Кнопка Удалить
-        private bool _isDellButtonVisible;   // Видимость кнопки "Удалить"
-        public bool IsDeleteButtonVisible
-        {
-            get { return _isDellButtonVisible; }
-            set
-            {
-                _isDellButtonVisible = value;
-                OnPropertyChanged(nameof(IsDeleteButtonVisible));
             }
         }
 

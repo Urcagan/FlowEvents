@@ -112,7 +112,25 @@ namespace FlowEvents.Settings
         {
             300, 600, 1200, 1800 // 5 мин, 10 мин, 20 мин, 30 мин, 
         };
+
+
         //--------------------------------------
+
+        // Свойства экспорта Excel
+        //----------------------------------
+        public bool AutoOpenExcel
+        {
+            get => App.Settings.AutoOpenExcel;
+            set
+            {
+                if (App.Settings.AutoOpenExcel != value)
+                {
+                    App.Settings.AutoOpenExcel = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
 
         public RelayCommand SetPathDBCommand { get; }
         public RelayCommand WindowClossingCommand { get; }

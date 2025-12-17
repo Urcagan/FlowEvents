@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:FlowEvents"
         mc:Ignorable="d"
         WindowStartupLocation="CenterOwner"
-        Title="CategoryView" Height="400" Width="600" ResizeMode="NoResize">
+        Title="Категория события" Height="400" Width="600" ResizeMode="NoResize">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
         <!--
@@ -33,8 +33,8 @@
                 <TextBlock Text="Обновление данных..." Margin="0 10 0 0" HorizontalAlignment="Center"/>
             </StackPanel>
         </Border>
-        
-        
+
+
         <DataGrid Grid.Column="0"
                   ItemsSource="{Binding Categories}" 
                   SelectedItem="{Binding SelectedCategory, Mode=TwoWay}" 
@@ -59,6 +59,18 @@
                 <DataGridTextColumn Header="Название" Binding="{Binding Name}" Width="100"/>
                 <DataGridTextColumn Header="Описание" Binding="{Binding Description}" Width="*"/>
                 <DataGridTextColumn Header="Цвет" Binding="{Binding Colour}" Width="50"/>
+                <DataGridTemplateColumn Header="Actions">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <Button Content="✏️" Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" Margin=" 5 0 5 0"/>
+                                <Button Content="🗑️" 
+                    Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
+                    Margin="0 0 5 0"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
             </DataGrid.Columns>
         </DataGrid>
         <Grid Grid.Column="1" 
@@ -67,54 +79,72 @@
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
+            <Border
+                 BorderBrush="LightGray" 
+                 BorderThickness="1" 
+                 CornerRadius="3"
+                 Padding="10,5">
 
-            <StackPanel Grid.Row="0"
+                <StackPanel Grid.Row="0"
                         Visibility="{Binding IsEditPanelVisible, Converter={StaticResource BoolToVisibilityConverter}}">
-                <TextBlock Text="Название:"/>
-                <TextBox x:Name="NameTextBox" 
-                         Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" 
-                         Margin="0 5 0 10"/>
 
-                <TextBlock Text="Описание:"/>
-                <TextBox x:Name="DescriptionTextBox" 
-                         Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}" 
-                         Margin="0 5 0 10"/>
+                    <Label  Content="Описание категории"
+                            HorizontalAlignment="Center" 
+                            FontWeight="Bold" FontSize="14"/>
+                    <StackPanel Orientation="Vertical" VerticalAlignment="Center"
+                                Margin="0,20,0,0">
+                        
+                        <TextBox x:Name="NameTextBox" 
+                         Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"/>
+                        <TextBlock Text="Название:"
+                                   HorizontalAlignment="Center"
+                                    Margin="0,1,0,0"
+                                    FontSize="11" Foreground="Gray" FontStyle="Italic"/>
+                    </StackPanel>
 
-                <TextBlock Text="Цвет (HEX):"/>
-                <TextBox x:Name="ColourTextBox" 
+                    <StackPanel Orientation="Vertical" VerticalAlignment="Center"
+                                Margin="0,20,0,0">
+                        <TextBox x:Name="DescriptionTextBox" 
+                         Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}"/>
+                        <TextBlock Text="Описание:"
+                                   HorizontalAlignment="Center"
+                                    Margin="0,1,0,0"
+                                    FontSize="11" Foreground="Gray" FontStyle="Italic"/>
+                    </StackPanel>
+
+                    <!--<TextBlock Text="Цвет (HEX):"/>
+                    <TextBox x:Name="ColourTextBox" 
                          Text="{Binding Colour, UpdateSourceTrigger=PropertyChanged}" 
-                         Margin="0 5 0 15"/>
-                <!--
+                         Margin="0 5 0 15"/>-->
+                    <!--
                     Привязка TextBox к свойствам:
                     Text="{Binding Name}" связывает текст в TextBox с свойством Name в ViewModel.
                     UpdateSourceTrigger=PropertyChanged обновляет свойство в ViewModel при каждом изменении текста (без необходимости нажимать Enter или терять фокус).
                     Двусторонняя синхронизация:
                     Если значение свойства в ViewModel изменяется, TextBox автоматически обновляется.
                     Если пользователь вводит текст в TextBox, свойство в ViewModel автоматически обновляется.
-                -->
+                    -->
 
-              
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                    <Button Content="Создать" 
-                            Command="{Binding SaveCommand}"
-                            Width="80" 
-                            Margin="0 0 10 0" 
-                            IsDefault="True" 
-                            Visibility="{Binding IsCreateButtonVisible, Converter={StaticResource BoolToVisibilityConverter}}"/>
 
-                    <Button Content="Обновить"
-                            Command="{Binding UpdateCommand}"
-                            Width="80" 
-                            Margin="0 0 10 0"
-                            Visibility="{Binding IsUpdateButtonVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
+                    <StackPanel Orientation="Horizontal" 
+                                HorizontalAlignment="Center"
+                                Margin="20">
+                        <Button Content="{Binding SaveUpdateButtonText}" 
+                                Command="{Binding SaveUpdateCommand}" 
+                                Width="80" 
+                                Margin="0 0 10 0" 
+                                IsDefault="True" />
 
-                    <Button Content="Отмена" 
-                            Command="{Binding CancelCommand}"
-                            Width="80" 
-                            IsCancel="True"/>
+                        <!-- Кнопка "Отмена" -->
+                        <Button Content="❌ Отмена" 
+                                Command="{Binding CancelCommand }" 
+                                Width="80" 
+                                IsCancel="True" />
+                    </StackPanel>
+
                 </StackPanel>
-            </StackPanel>
-
+                              
+            </Border>
             <StackPanel Grid.Row="1"
                         Orientation="Horizontal" 
                         HorizontalAlignment="Right">
@@ -124,32 +154,12 @@
                         VerticalAlignment="Bottom" 
                         Height="30" Width="80" Margin="10" 
                         Visibility="{Binding IsAddButtonVisible ,Converter={StaticResource BoolToVisibilityConverter}}"/>
-<!--
-                <Button Content="Удалить"  
-                        Command="{Binding DeleteCommand}" 
-                        Height="30" Width="80" Margin="10"
-                        Visibility="{Binding IsDeleteButtonVisible, Converter={StaticResource BoolToVisibilityConverter} }"/>
-  -->               
-                <Button Command="{Binding DeleteCommand}" 
-                        Content="Удалить"
-                        Margin="10"
-                        Height="30" 
-                        Width="80" 
-                        ToolTip="Удалить выбранную категорию">
-                    <Button.Style>
-                        <Style TargetType="Button">
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding IsDeleting}" Value="True">
-                                    <Setter Property="Content" Value="Удаление..."/>
-                                    <Setter Property="IsEnabled" Value="False"/>
-                                </DataTrigger>
-                                <DataTrigger Binding="{Binding SelectedCategory}" Value="{x:Null}">
-                                    <Setter Property="IsEnabled" Value="False"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Button.Style>
-                 </Button>       
+             
+                <Button Content="Закрыть"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Bottom" 
+                        Height="30" Width="80" Margin="10" 
+                        Click="CloseButton_Click"/>
 
 
             </StackPanel>

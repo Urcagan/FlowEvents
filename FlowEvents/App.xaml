@@ -2,7 +2,9 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:FlowEvents"
-             xmlns:converters="clr-namespace:FlowEvents.Converters">
+             xmlns:converters="clr-namespace:FlowEvents.Converters"
+             ShutdownMode="OnMainWindowClose"
+             Startup="App_Status">
     <!-- " StartupUri="Views/MainWindow.xaml" >-->
     <Application.Resources>
         <!-- Создадим словарь ресурсов для доступа к обьявленным ресурсам во всем приложении        -->

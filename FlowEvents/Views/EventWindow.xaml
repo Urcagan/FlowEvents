@@ -55,7 +55,7 @@
                     Height="22"
                     Width="200"/>
 
-                        <Label Content="Вид события:" Margin="20,0,0,0" VerticalAlignment="Center"/>
+                        <Label Content="* Вид события:" Margin="20,0,0,0" VerticalAlignment="Center"/>
                         <ComboBox 
                     x:Name="Category"
                     ItemsSource="{Binding Categories}"
@@ -76,6 +76,7 @@
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="auto" />
                         </Grid.ColumnDefinitions>
                     </Grid>
                 </ItemsPanelTemplate>
@@ -83,17 +84,19 @@
             <StatusBarItem>
                 <Border BorderBrush="Black" BorderThickness="1" Width="400" Margin="50,0,0,0">
                 <Label Content="{Binding SelectedUnitsText}"  Height="20" Padding="0" Background="#F0F0F0"/>
-            </Border>
-                
+            </Border>                
             </StatusBarItem>
-            
             <StatusBarItem Grid.Column="2">
+                <Label Content="* обязательные поле" Margin="0,0,50,0" HorizontalAlignment="Right"/>
+
+            </StatusBarItem>
+            <StatusBarItem Grid.Column="3">
                 <Button Content="Сохранить" 
                 Command="{Binding SaveCommand}"
                 Width="80" Height="30" Margin ="10" 
                 IsEnabled="{Binding CanSave}" />
             </StatusBarItem>
-            <StatusBarItem Grid.Column="3">    
+            <StatusBarItem Grid.Column="4">    
                 <Button Content="Отмена" 
                 Command="{Binding CancelCommand}"
                 Width="80" Height="30" Margin ="10" />
@@ -113,7 +116,7 @@
             </Grid.ColumnDefinitions>
 
             <!-- Объект -->
-            <GroupBox Header="Обьект" Grid.Column="0" Grid.Row="1" >
+            <GroupBox Header="* Обьект" Grid.Column="0" Grid.Row="1" >
                 <ListBox ItemsSource="{Binding Units}" 
                  ScrollViewer.VerticalScrollBarVisibility="Auto"
                  ScrollViewer.HorizontalScrollBarVisibility="Disabled" BorderBrush="{x:Null}">
@@ -133,9 +136,10 @@
             </GroupBox>
 
             <!-- Событие -->
-            <GroupBox Header="Событие" Grid.Column="1" Grid.Row="1">
+            <GroupBox Header="* Событие" Grid.Column="1" Grid.Row="1">
                 <TextBox x:Name="TextEvent"
-                         Text="{Binding Description, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"    
+                         Text="{Binding Description, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                         SpellCheck.IsEnabled="True" Language="ru-ru"
                          AcceptsReturn="True"
                          AcceptsTab="True"
                          TextWrapping="Wrap"
@@ -148,6 +152,7 @@
             <GroupBox Header="Мероприятие, пояснение" Grid.Column="2" Grid.Row="1">
                 <TextBox x:Name="TextAction"
                         Text="{Binding Action, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                        SpellCheck.IsEnabled="True" Language="ru-ru"
                         AcceptsReturn="True"
                         AcceptsTab="True"
                         TextWrapping="Wrap"

@@ -6,18 +6,10 @@
         xmlns:local="clr-namespace:FlowEvents"
         mc:Ignorable="d"
         WindowStartupLocation="CenterOwner"
-        Title="Перечень установок" Height="450" Width="750" ResizeMode="NoResize">
+        Title="Перечень установок" Height="450" Width="700" ResizeMode="NoResize">
 
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
-        <!--
-        Добавляем конвертер в ресурсы окна 
-        BooleanToVisibilityConverter — встроенный конвертер в WPF
-        x:Key="BoolToVisibilityConverter" — задает ключ, по которому можно ссылаться на этот конвертер.
-        Конвертер преобразует:
-            true → Visibility.Visible
-            false → Visibility.Collapsed
-        -->
 
         <!-- Стиль для круглой кнопки -->
         <Style x:Key="RoundDeleteButtonStyle" TargetType="Button">
@@ -61,41 +53,14 @@
             <Setter Property="Width" Value="30"/>
             <Setter Property="Height" Value="30"/>
         </Style>
-
+        
     </Window.Resources>
 
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="450"></ColumnDefinition>
+            <ColumnDefinition Width="422"></ColumnDefinition>
             <ColumnDefinition Width="*"></ColumnDefinition>
         </Grid.ColumnDefinitions>
-        <DataGrid ItemsSource="{Binding Units}" 
-                  SelectedItem="{Binding SelectedUnit, Mode=TwoWay}" 
-                  AutoGenerateColumns="False" 
-                  CanUserAddRows="False" 
-                  IsReadOnly="True"
-                  SelectionMode="Single"
-                  Margin="5" Grid.Column="0">
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="40"/>
-                <DataGridTextColumn Header="Объект" Binding="{Binding UnitName}" Width="100" />
-                <DataGridTextColumn Header="Описание" Binding="{Binding Description}" Width="*" />
-                <!--
-                <DataGridTemplateColumn Header="Actions">
-                <DataGridTemplateColumn.CellTemplate>
-                    <DataTemplate>
-                        <StackPanel Orientation="Horizontal">-->
-                <!-- <Button Content="Edit" Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" Margin=" 5 0 5 0"/> -->
-                <!--             <Button Content="Delete" 
-                                    Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
-                                    Margin="0 0 5 0"/>
-                        </StackPanel>
-                    </DataTemplate>
-                </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
-                -->
-            </DataGrid.Columns>
-        </DataGrid>
 
         <Border Grid.Row="0" Grid.RowSpan="3" Background="#CCFFFFFF" 
                 Visibility="{Binding VisibleBar, Converter={StaticResource BooleanToVisibilityConverter}}"
@@ -106,48 +71,111 @@
             </StackPanel>
         </Border>
 
-        <Grid Grid.Column="1" Margin="10">
+        <DataGrid ItemsSource="{Binding Units}" 
+                  SelectedItem="{Binding SelectedUnit, Mode=TwoWay}" 
+                  AutoGenerateColumns="False" 
+                  CanUserAddRows="False" 
+                  IsReadOnly="True"
+                  SelectionMode="Single"
+                  Margin="5,5,5,5" Grid.Column="0">
+            <!-- Добавляем стиль с триггером -->
+            <DataGrid.Style>
+                <Style TargetType="DataGrid">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsEditButtonVisible}" Value="True">
+                            <Setter Property="IsEnabled" Value="False"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </DataGrid.Style>
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="40"/>
+                <DataGridTextColumn Header="Объект" Binding="{Binding UnitName}" Width="100" />
+                <DataGridTextColumn Header="Описание" Binding="{Binding Description}" Width="*" />
+                
+                <DataGridTemplateColumn Header="Actions">
+                <DataGridTemplateColumn.CellTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal">
+                                <Button Content="✏️" Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" Margin=" 5 0 5 0"/>
+                                <Button Content="🗑️" 
+                                    Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
+                                    Margin="0 0 5 0"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <Grid Grid.Column="2" Margin="5,5,5,5">
             <Grid.RowDefinitions>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
-
-            <StackPanel Grid.Row="0"
-                        Visibility="{Binding IsEditPanelVisible, Converter={StaticResource BoolToVisibilityConverter}}">
-                <!-- Поля для ввода данных -->
-                <TextBlock Text="Название объекта:"/>
-                <TextBox x:Name="UnitTextBox" 
-                         Text="{Binding Unit, UpdateSourceTrigger=PropertyChanged}"
-                         Margin="10" Width="200" />
-                <TextBlock Text="Описание объекта:"/>
-                <TextBox x:Name="DescriptionTextBox" 
-                         Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}"
-                         Margin="10" Width="200" />
+            <Border
+                BorderBrush="LightGray" 
+                BorderThickness="1" 
+                CornerRadius="3"
+                Padding="10,5">
 
 
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                    <!-- Кнопка "Создать" -->
-                    <Button Content="Создать" 
-                            Command="{Binding SaveCommand}" 
-                            Width="80" 
-                            Margin="0 0 10 0" 
-                            IsDefault="True" 
-                            Visibility="{Binding IsCreateButtonVisible, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                <StackPanel Grid.Row="0"
+                            Visibility="{Binding IsEditPanelVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <Label
+                        Content="Описание объекта"
+                        HorizontalAlignment="Center" 
+                        FontWeight="Bold" FontSize="14"/>
+                    <!-- Поля для ввода данных -->
+                    <StackPanel Orientation="Vertical" VerticalAlignment="Center"
+                                Margin="0,20,0,0">
+                        <TextBox x:Name="UnitTextBox" 
+                                 Text="{Binding Unit, UpdateSourceTrigger=PropertyChanged}"
+                                 Width="200"
+                                 HorizontalAlignment="Center"/>
+                        <TextBlock Text="Название объекта" 
+                                   HorizontalAlignment="Center"
+                                   Margin="0,1,0,0"
+                                   FontSize="11"
+                                   Foreground="Gray"
+                                   FontStyle="Italic"/>
+                    </StackPanel>
 
-                    <!-- Кнопка "Обновить" -->
-                    <Button Content="Обновить" 
-                            Command="{Binding UpdateCommand}" 
-                            Width="80" 
-                            Margin="0 0 10 0"
-                            Visibility="{Binding IsUpdateButtonVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
+                    <StackPanel Orientation="Vertical" VerticalAlignment="Center"
+                                Margin="0,20,0,0">
+                        <TextBox x:Name="DescriptionTextBox" 
+                                 Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}"
+                                 Width="200"
+                                 HorizontalAlignment="Center"/>
+                        <TextBlock Text="Описание объекта" 
+                                   HorizontalAlignment="Center"
+                                   Margin="0,1,0,0"
+                                   FontSize="11"
+                                   Foreground="Gray"
+                                   FontStyle="Italic"/>
+                    </StackPanel>
 
-                    <!-- Кнопка "Отмена" -->
-                    <Button Content="Отмена" 
-                            Command="{Binding CancelCommand }" 
-                            Width="80" 
-                            IsCancel="True" />
+                    <StackPanel Orientation="Horizontal" 
+                                HorizontalAlignment="Center"
+                                Margin="20">
+                        <Button Content="{Binding SaveUpdateButtonText}" 
+                                    Command="{Binding SaveUpdateCommand}" 
+                                    Width="80" 
+                                    Margin="0 0 10 0" 
+                                    IsDefault="True" 
+                                    Visibility="{Binding IsSaveButtonVisible, Converter={StaticResource BoolToVisibilityConverter}}"/>
+
+                       
+                        <!-- Кнопка "Отмена" -->
+                        <Button Content="❌ Отмена" 
+                                Command="{Binding CancelCommand }" 
+                                Width="80" 
+                                IsCancel="True" />
+                    </StackPanel>
+
                 </StackPanel>
-            </StackPanel>
+            </Border >
             <StackPanel Grid.Row="1"
                         Orientation="Horizontal" 
                         HorizontalAlignment="Right">
@@ -157,12 +185,14 @@
                         HorizontalAlignment="Left" 
                         VerticalAlignment="Bottom" 
                         Height="30" Width="80" Margin="10" 
-                        Visibility="{Binding IsAddButtonVisible ,Converter={StaticResource BoolToVisibilityConverter}}"/>
+                        IsEnabled="{Binding IsAddButtonVisible}"/>
+               
+                <Button Content="Закрыть"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Bottom" 
+                        Height="30" Width="80" Margin="10" 
+                         Click="CloseButton_Click"/>
 
-                <Button Content="Удалить"  
-                        Command="{Binding DeleteCommand}" 
-                        Height="30" Width="80" Margin="10"
-                        Visibility="{Binding IsDeleteButtonVisible, Converter={StaticResource BoolToVisibilityConverter} }"/>
             </StackPanel>
         </Grid>
     </Grid>

@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Input;
 
 namespace FlowEvents
 {
@@ -134,6 +135,7 @@ namespace FlowEvents
         public RelayCommand SaveCommand { get; }
         public RelayCommand DeleteCommand { get; }
         public RelayCommand UpdateCommand { get; }
+        public RelayCommand EditCommand {  get; }
 
 
         public CategoryViewModel(ICategoryRepository categoryRepository)
@@ -145,7 +147,8 @@ namespace FlowEvents
             CancelCommand = new RelayCommand(CancelEdit);
             SaveCommand = new RelayCommand(async () => await SaveNewCategoryAsync(), () => CanExecuteSave());
             UpdateCommand = new RelayCommand(async () => await UpdateCategoryAsync(), CanExecuteUpdate);
-            DeleteCommand = new RelayCommand(async () => await DeleteCategoryAsync(), () => CanExecuteDelete());
+            DeleteCommand = new RelayCommand(async () => await DeleteCategoryAsync());
+            EditCommand = new RelayCommand(EditCategory);
   
             //Как работает RelayCommand?
             //Он принимает два делегата:
@@ -173,6 +176,28 @@ namespace FlowEvents
             }
         }
 
+
+        // Редактирование категории
+        private void EditCategory()
+        {
+            if (_selectedCategory != null)
+            {
+                // Заполните поля данными выбранной категории
+                Name = _selectedCategory.Name;
+                Description = _selectedCategory.Description;
+                //Colour = _selectedCategory.Colour;
+
+                // Покажите правую панель
+                IsEditPanelVisible = true;
+                IsEditMode = true;          //Режим редактирования записи
+
+                // Управление видимостью кнопок
+                IsCreateButtonVisible = false; // Скрыть кнопку "Создать"
+              //  IsUpdateButtonVisible = true;  // Показать кнопку "Обновить"
+                IsAddButtonVisible = false; // Скрыть кнопку "Добавить"
+                IsDeleteButtonVisible = true; // Показать кнопку "Удалить"
+            }
+        }
 
         // Загрузка категорий при инициализации
         private async Task LoadCategoriesAsync()
@@ -362,7 +387,7 @@ namespace FlowEvents
             IsEditPanelVisible = true; //показываем панель редактирования
             // Управление видимостью кнопок
             IsCreateButtonVisible = true;  // Показать кнопку "Создать"
-            IsUpdateButtonVisible = false; // Скрыть кнопку "Обновить"
+           // IsUpdateButtonVisible = false; // Скрыть кнопку "Обновить"
             IsAddButtonVisible = false; // Скрыть кнопку "Добавить"
             SelectedCategory = null; // Снимаем выделение строки
         }
@@ -390,6 +415,7 @@ namespace FlowEvents
             Description = string.Empty;
             Colour = string.Empty;
             IsEditPanelVisible = false; // Скрыть панель редактирования
+            IsEditMode = false;          //Режим редактирования записи
             SelectedCategory = null; // Снимаем выделение строки
             IsAddButtonVisible = true; // Показать кнопку "Добавить"
         }
@@ -426,23 +452,23 @@ namespace FlowEvents
             if (_selectedCategory != null)
             {
                 // Заполните поля данными выбранной категории
-                Name = _selectedCategory.Name;
-                Description = _selectedCategory.Description;
-                Colour = _selectedCategory.Colour;
+                //Name = _selectedCategory.Name;
+                //Description = _selectedCategory.Description;
+                //Colour = _selectedCategory.Colour;
 
                 // Покажите правую панель
-                IsEditPanelVisible = true;
+                //IsEditPanelVisible = true;
 
                 // Управление видимостью кнопок
                 IsCreateButtonVisible = false; // Скрыть кнопку "Создать"
-                IsUpdateButtonVisible = true;  // Показать кнопку "Обновить"
-                IsAddButtonVisible = false; // Скрыть кнопку "Добавить"
-                IsDeleteButtonVisible = true; // Показать кнопку "Удалить"
+               // IsUpdateButtonVisible = true;  // Показать кнопку "Обновить"
+                //IsAddButtonVisible = false; // Скрыть кнопку "Добавить"
+                //IsDeleteButtonVisible = true; // Показать кнопку "Удалить"
             }
             else
             {
                 // Если строка не выбрана, скрываем кнопку "Удалить"
-                IsDeleteButtonVisible = false;
+                //IsDeleteButtonVisible = false;
             }
         }
 
@@ -476,16 +502,16 @@ namespace FlowEvents
         }
 
         //Кнопка Обновить
-        private bool _isUpdateButtonVisible;
-        public bool IsUpdateButtonVisible
-        {
-            get => _isUpdateButtonVisible;
-            set
-            {
-                _isUpdateButtonVisible = value;
-                OnPropertyChanged();
-            }
-        }
+        //private bool _isUpdateButtonVisible;
+        //public bool IsUpdateButtonVisible
+        //{
+        //    get => _isUpdateButtonVisible;
+        //    set
+        //    {
+        //        _isUpdateButtonVisible = value;
+        //        OnPropertyChanged();
+        //    }
+        //}
 
         //Кнопка Добавить
         private bool _isAddButtonVisible; // Видимость кнопки "Добавить"
@@ -510,6 +536,27 @@ namespace FlowEvents
                 OnPropertyChanged(nameof(IsDeleteButtonVisible));
             }
         }
+
+     
+        //Кнопка Редактировать
+        private bool _isEditMode;
+        public bool IsEditMode
+        {
+            get => _isEditMode;
+            set
+            {
+                _isEditMode = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(SaveUpdateButtonText));
+                OnPropertyChanged(nameof(SaveUpdateCommand));
+            }
+        }
+
+        // Текст кнопки в зависимости от режима
+        public string SaveUpdateButtonText => IsEditMode ? "Обновить" : "Сохранить";
+
+        // Команда в зависимости от режима
+        public ICommand SaveUpdateCommand => IsEditMode ? UpdateCommand : SaveCommand;
 
 
 
